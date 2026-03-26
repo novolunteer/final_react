@@ -1,6 +1,6 @@
 // src/layout/Sidebar.jsx
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 
 const Sidebar = () => {
   // 나중에 role 값에 따라 메뉴 다르게 보이게 하면 됨
@@ -18,6 +18,7 @@ const Sidebar = () => {
     { path: "/statistics", label:"통계"},
     { path: "/communication", label:"커뮤니케이션"},
     { path: "/notification", label:"알림"},
+    { path: "/login", label: "로그인" }
   ];
 
   return (
@@ -26,7 +27,7 @@ const Sidebar = () => {
 
       <nav className="sidebar-nav">
         {menuItems.map((item) => (
-          <Link
+          <NavLink
             key={item.path}
             to={item.path}
             className={({ isActive }) =>
@@ -34,7 +35,7 @@ const Sidebar = () => {
             }
           >
             {item.label}
-          </Link>
+          </NavLink>
         ))}
       </nav>
     </aside>

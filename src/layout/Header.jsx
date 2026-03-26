@@ -1,12 +1,21 @@
 // src/layout/Header.jsx
 import React from "react";
+import { useDispatch } from "react-redux";
+import { logout } from "../store/authSlice";
 
 const Header = () => {
   const userName = "관리자"; // 나중에 로그인 정보로 교체
 
+  const dispatch=useDispatch();
+
   const handleLogout = () => {
-    // 나중에 토큰 삭제 + 로그인 페이지 이동으로 바꾸면 됨
-    alert("로그아웃");
+    try{
+      dispatch(logout())
+      alert("로그아웃 성공!")
+    }catch(error){
+      console.log(error);
+      alert("로그아웃 실패!");
+    }
   };
 
   return (
