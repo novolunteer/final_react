@@ -8,6 +8,7 @@ import BillingPage from "../pages/billing/BillingPage";
 import DashboardPage from "../pages/dashboard/DashboardPage";
 import PatientPage from "../pages/patient/PatientPage";
 import ReservationPage from "../pages/reservation/ReservationPage";
+import ReceptionPage from "../pages/reception/ReceptionPage";
 import EmergencyPage from "../pages/emergency/EmergencyPage";
 import MedicalRecordPage from "../pages/medical/MedicalRecordPage";
 import WardPage from "../pages/ward/WardPage";
@@ -15,8 +16,12 @@ import StaffPage from "../pages/staff/StaffPage";
 import StatisticsPage from "../pages/statistics/StatisticsPage";
 import NotificationPage from "../pages/notification/NotificationPage";
 import LoginPage from "../pages/login/LoginPage";
+<<<<<<< HEAD
 import ChatRoomList from "../pages/chat/component/ChatRoomList";
 import ChatLayout from "../pages/chat/Layout/ChatLayout";
+=======
+import ReservationConfirm from "../pages/reservation/ReservationConfirm";
+>>>>>>> d577177436668ad510825a9d8264119c56448dc4
 
 
 const Router = () => {
@@ -29,6 +34,8 @@ const Router = () => {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/patient" element={<PatientPage />} />
           <Route path="/reservation" element={<ReservationPage />} />
+          <Route path="/reservationconfrim" element={<ReservationConfirm />} />
+          <Route path="/reception" element={<ReceptionPage />} />
           <Route path="/medical" element={<MedicalRecordPage />} />
           <Route path="/emergency" element={<EmergencyPage />} />
           <Route path="/admission" element={<AdmissionPage />} />
