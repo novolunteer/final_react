@@ -16,12 +16,8 @@ import StaffPage from "../pages/staff/StaffPage";
 import StatisticsPage from "../pages/statistics/StatisticsPage";
 import NotificationPage from "../pages/notification/NotificationPage";
 import LoginPage from "../pages/login/LoginPage";
-<<<<<<< HEAD
-import ChatRoomList from "../pages/chat/component/ChatRoomList";
 import ChatLayout from "../pages/chat/Layout/ChatLayout";
-=======
 import ReservationConfirm from "../pages/reservation/ReservationConfirm";
->>>>>>> d577177436668ad510825a9d8264119c56448dc4
 
 
 const Router = () => {
