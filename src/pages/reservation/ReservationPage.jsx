@@ -10,13 +10,13 @@ const ReservationPage = () => {
   const [symptom, setSymptom] = useState("");
 
   useEffect(()=>{
-    axios.get('http://localhost:8080/api/department').then((res) => {
-        setDepartment(res.data.content)
-      })
-      .catch((err) => {
-        console.error(err)
-      })
-  },[])
+      axios.get('http://localhost:8080/api/department').then((res) => {
+          setDepartment(res.data.content)
+        })
+        .catch((err) => {
+          console.error(err)
+        })
+    },[])
 
   useEffect(()=>{
     if (!selectedDept) {
@@ -26,22 +26,23 @@ const ReservationPage = () => {
     }
 
     axios.get(`http://localhost:8080/api/doctor?departmentId=${selectedDept}`)
-      .then((res) => setDoctor(res.data.content))
+      .then((res) => {
+        setDoctor(res.data.content)
+        console.log(res.data.content)
+      })
       .catch((err) => console.error(err));
   },[selectedDept])
 
   const submitHandler = () => {
     const reservationData = {
-      departmentId: selectedDept,
-      staffId: selectedDoc || null, 
-      date: selectedDate || null,
+      doctorId: selectedDoc || null, 
+      preferredDate: selectedDate+"T00:00:00" || null,
       symptom: symptom
     };
 
     axios.post('http://localhost:8080/api/reservation', reservationData)
       .then(res => {
-        alert('예약이 완료되었습니다.');
-
+        alert('예약이 완료되었습니다. 예약번호: '+res.data.reservationId);
         setSelectedDept("");
         setSelectedDoc("");
         setSelectedDate("");
@@ -55,6 +56,7 @@ const ReservationPage = () => {
 
   return (
     <div>
+      <div>
         <h1>예약</h1>
         <form>
           <label>
@@ -71,7 +73,7 @@ const ReservationPage = () => {
           </label><br />
           희망 의사 
           <select value={selectedDoc}
-              onChange={(e) => setSelectedDoc(e.target.value)}>
+              onChange={(e) => setSelectedDoc(Number(e.target.value))}>
               <option value="">희망 의사 없음</option>
               {doctor.map(doc => (
                 <option key={doc.staffId} value={doc.staffId}>
@@ -88,10 +90,11 @@ const ReservationPage = () => {
             />
           </label> <br />
           증상 <input type="text" 
-                      value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}/><br />
+                      value={symptom}
+                      onChange={(e) => setSymptom(e.target.value)}/><br />
           <button type="button" onClick={submitHandler}>예약</button>
         </form>
+        </div>
     </div>
   )
 }
