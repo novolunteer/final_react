@@ -2,6 +2,7 @@ import axios from "axios";
 
 const jwtAxios=axios.create();
 
+export const host='http://localhost:8080/api';
 const beforeRequest=(config)=>{
     const user=JSON.parse(sessionStorage.getItem("user"));
     if(!user){ //로그인 안 했을 때
@@ -22,8 +23,8 @@ const beforeRequest=(config)=>{
 }
 
 const refreshJWT=async(accessToken, refreshToken)=>{
-    const header={headers:{"Authorization":`Bearer ${accessToken}`}}
-    const res=await axios.get(`/api/user/refresh?refreshToken=${refreshToken}`,
+    const header={headers:{"Authorization":`Bearer ${accessToken}`}};
+    const res=await axios.get(`${host}/user/refresh?refreshToken=${refreshToken}`,
         header
     );
     console.log("refresh => ", res)
@@ -31,31 +32,38 @@ const refreshJWT=async(accessToken, refreshToken)=>{
 }
 
 const beforeResponse=async(res)=>{
-    const data=res.data;
-    if(data && data.error=="ERROR_ACCESS_TOKEN"){ //토큰이 유효하지 않을 때
-        //리프레쉬 토큰 보내서 새로운 액세스 토큰 얻기
-        const user=JSON.parse(sessionStorage.getItem("user"));
-        const result=await refreshJWT(user.accessToken, user.refreshToken);
-        user.accessToken=result.accessToken;
-        user.refreshToken=result.refreshToken;
-
-        //변경된 정보 세션 스토리지에 다시 저장
-        sessionStorage.setItem("user",JSON.stringify(user));
-
-        //원래 요청했던 url 정보 얻어오기(토큰 새로 받아왔으니까 다시 요청하려고)
-        const originalRequest=res.config;
-        originalRequest.headers.Authorization=`Bearer ${result.accessToken}`;
-
-        //재요청
-        return await jwtAxios(originalRequest);
-    }
+    return res;
 }
 
-const requestFail=()=>{
+const requestFail=(error)=>{
     return Promise.reject(error);
 }
 
-const responseFail=(error)=>{
+const responseFail=async(error)=>{
+    const errorRes=error.response;
+
+    if(errorRes && errorRes.status === 401){
+        const data=errorRes.data;
+
+        if(data && data.error=="ERROR_ACCESS_TOKEN"){ //토큰이 유효하지 않을 때
+            //리프레쉬 토큰 보내서 새로운 액세스 토큰 얻기
+            const user=JSON.parse(sessionStorage.getItem("user"));
+            const result=await refreshJWT(user.accessToken, user.refreshToken);
+            user.accessToken=result.accessToken;
+            user.refreshToken=result.refreshToken;
+
+            //변경된 정보 세션 스토리지에 다시 저장
+            sessionStorage.setItem("user",JSON.stringify(user));
+
+            //원래 요청했던 url 정보 얻어오기(토큰 새로 받아왔으니까 다시 요청하려고)
+            const originalRequest=error.config;
+            originalRequest.headers.Authorization=`Bearer ${result.accessToken}`;
+
+            //재요청
+            return await jwtAxios(originalRequest);
+        }
+    }
+
     return Promise.reject(error);
 }
 
