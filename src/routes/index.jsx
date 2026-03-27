@@ -15,6 +15,7 @@ import WardPage from "../pages/ward/WardPage";
 import StaffPage from "../pages/staff/StaffPage";
 import StatisticsPage from "../pages/statistics/StatisticsPage";
 import NotificationPage from "../pages/notification/NotificationPage";
+import LoginPage from "../pages/login/LoginPage";
 import ReservationConfirm from "../pages/reservation/ReservationConfirm";
 
 
@@ -40,6 +41,7 @@ const Router = () => {
           <Route path="/statistics" element={<StatisticsPage />} />
           <Route path="/communication" element={<CommunicationPage />} />
           <Route path="/notification" element={<NotificationPage />} />
+          <Route path="/login" element={<LoginPage/>}/>
         </Route>
       </Routes>
     </BrowserRouter>
