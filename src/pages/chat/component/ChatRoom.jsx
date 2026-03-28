@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { chatRoomDetail } from '../../../api/chatApi';
-import { Client } from '@stomp/stompjs';
 
-const ChatRoom = ({ roomId }) => {
+const ChatRoom = ({ roomId, clientRef, connected }) => {
   const [room, setRoom]=useState(null)
   const [messageSlice, setMessageSlice]=useState({
     messages:[],
@@ -11,10 +10,9 @@ const ChatRoom = ({ roomId }) => {
   });
   const [content, setContent]=useState("")
 
-  const clientRef=useRef(null);
+  const subscriptionRef=useRef(null);
 
   const userId=Number(sessionStorage.getItem("userId"));
-  const accessToken=sessionStorage.getItem("accessToken");
   
   useEffect(()=>{
     if(!roomId){
@@ -48,69 +46,48 @@ const ChatRoom = ({ roomId }) => {
   },[roomId]);
 
   useEffect(()=>{
-    if(!roomId || !accessToken) return;
+    const client=clientRef.current;
 
-    const client=new Client({
-        brokerURL: 'ws://localhost:8080/ws',
-        connectHeaders:{
-            Authorization:`Bearer ${accessToken}`
-        },
-        reconnectDelay: 0,
-        debug: (str) => {
-            console.log(str)
-        }
+    if(!roomId || !client || !connected) return;
+
+    if(subscriptionRef.current){
+        subscriptionRef.current.unsubscribe();
+        subscriptionRef.current=null;
+    }
+
+    subscriptionRef.current=client.subscribe(`/topic/chat/room/${roomId}`, (message) => {
+        const newMessage=JSON.parse(message.body);
+
+        setMessageSlice(prev => ({
+            ...prev,
+            messages:[newMessage, ...prev.messages]
+        }));
     });
 
-    client.onConnect = () => {
-        console.log("WEBSOCKET_CONNECTED");
-
-        client.subscribe(`/topic/chat/room/${roomId}`, (message) => {
-            const newMessage=JSON.parse(message.body);
-
-            setMessageSlice(prev => ({
-                ...prev, messages: [newMessage, ...prev.messages]
-            }));
-        });
-    };
-
-    client.onStompError = (error) => {
-        console.error("STOMP_ERROR ==> ", error);
-    };
-
-    client.onWebSocketError = (error) => {
-        console.error("WEBSOCKET_ERROR ==> ", error);
-    };
-
-    client.onWebSocketClose = (event) => {
-        console.error("WEBSOCKET_CLOSE ==> ", event);
-    };
-
-    client.activate();
-    clientRef.current=client;
-
     return ()=>{
-        if(clientRef.current){
-            clientRef.current.deactivate();
-            clientRef.current=null;
+        if(subscriptionRef.current){
+            subscriptionRef.current.unsubscribe();
+            subscriptionRef.current=null;
         }
     };
-  }, [roomId]);
+  }, [roomId, clientRef, connected]);
 
   const sendMessage=()=>{
     const text=content.trim();
+    const client=clientRef.current;
 
     if(!text){
         alert("메시지 내용을 입력하세요.");
         return;
     }
 
-    if(!clientRef.current || !clientRef.current.connected){
+    if(!client || !connected){
         alert("웹소켓 연결이 아직 완료되지 않았습니다.");
         return;
     }
 
     try{
-        clientRef.current.publish({
+        client.publish({
             destination: `/app/chat/send/user`,
             body:JSON.stringify({
                 roomId:roomId,
