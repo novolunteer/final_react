@@ -5,14 +5,14 @@ import { logout } from "../store/authSlice";
 import { useNavigate } from "react-router-dom";
 
 const Header = () => {
-  const user=useSelector(state => state.auth.user);
+  const userId=useSelector(state => state.auth.userId);
   const userName = "관리자"; // 나중에 로그인 정보로 교체
 
   const dispatch=useDispatch();
   const navigate=useNavigate();
 
   const handleLogInAndOut = () => {
-    if(!user){
+    if(!userId){
       navigate("/login", {replace:true})
     } else {
       try{
@@ -36,7 +36,7 @@ const Header = () => {
         <span className="header-user">{userName}님</span>
         <button className="logout-btn" onClick={handleLogInAndOut}>
           {
-            user ? '로그아웃' : '로그인'
+            userId ? '로그아웃' : '로그인'
           }
         </button>
       </div>

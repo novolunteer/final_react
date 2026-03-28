@@ -4,7 +4,7 @@ import { chatRoomList } from '../../../api/chatApi'
 
 const ChatRoomList = ({ selectedRoomId, onSelectRoom }) => {
   const [rooms, setRooms]=useState([])
-  const user=useSelector(state=>state.auth.user)
+  const userId=useSelector(state=>state.auth.userId)
 
   useEffect(()=>{
     chatRoomList().then((res)=>{
@@ -44,7 +44,7 @@ const ChatRoomList = ({ selectedRoomId, onSelectRoom }) => {
     <div>
         <h1>채팅 목록</h1>
         {
-            !user ? null :
+            !userId ? null :
             rooms.length === 0 ?
             (<p>참여 중인 채팅방이 없습니다</p>)
             :(

@@ -1,5 +1,4 @@
 import axios from "axios";
-import jwtAxios from "./jwtAxios";
 
 export const host='http://localhost:8080';
 export const loginPost=async(param)=>{

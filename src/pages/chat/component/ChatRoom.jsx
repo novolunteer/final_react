@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { chatRoomDetail, sendUserMessage } from '../../../api/chatApi';
 
 const ChatRoom = ({ roomId }) => {
@@ -10,7 +10,9 @@ const ChatRoom = ({ roomId }) => {
   });
   const [content, setContent]=useState("")
 
-  const user=JSON.parse(sessionStorage.getItem("user"));
+  const clientRef=useRef(null);
+
+  const userId=JSON.parse(sessionStorage.getItem("userId"));
   
   useEffect(()=>{
     if(!roomId){
@@ -80,7 +82,7 @@ const ChatRoom = ({ roomId }) => {
   return (
     <div>
         {
-            user && 
+            userId && 
             <div>
                 <div>
                     <p>{room.customRoomName ? room.customRoomName:room.roomName}</p>
@@ -90,7 +92,8 @@ const ChatRoom = ({ roomId }) => {
                         [...messageSlice.messages].reverse().map(m => {
                             return <div key={m.messageId}>
                                     <p>{m.senderName}</p>
-                                    <span className={m.mine ? 'message-is-mine':'message'}>
+                                    <span
+                                        className={m.senderId === userId ? 'message-is-mine':'message'}>
                                         <p>{m.content}</p>
                                     </span>
                                 </div>
