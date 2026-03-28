@@ -1,20 +1,28 @@
 // src/layout/Header.jsx
 import React from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../store/authSlice";
+import { useNavigate } from "react-router-dom";
 
 const Header = () => {
+  const user=useSelector(state => state.auth.user);
   const userName = "관리자"; // 나중에 로그인 정보로 교체
 
   const dispatch=useDispatch();
+  const navigate=useNavigate();
 
-  const handleLogout = () => {
-    try{
-      dispatch(logout())
-      alert("로그아웃 성공!")
-    }catch(error){
-      console.log(error);
-      alert("로그아웃 실패!");
+  const handleLogInAndOut = () => {
+    if(!user){
+      navigate("/login", {replace:true})
+    } else {
+      try{
+        dispatch(logout())
+        alert("로그아웃 성공!");
+        navigate("/", {replace:true});
+      }catch(error){
+        console.log(error);
+        alert("로그아웃 실패!");
+      }
     }
   };
 
@@ -26,8 +34,10 @@ const Header = () => {
 
       <div className="header-right">
         <span className="header-user">{userName}님</span>
-        <button className="logout-btn" onClick={handleLogout}>
-          로그아웃
+        <button className="logout-btn" onClick={handleLogInAndOut}>
+          {
+            user ? '로그아웃' : '로그인'
+          }
         </button>
       </div>
     </header>

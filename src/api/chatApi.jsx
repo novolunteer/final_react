@@ -12,3 +12,12 @@ export const chatRoomDetail=async({roomId, cursor})=>{
     });
     return res.data;
 }
+
+export const sendUserMessage=async(param)=>{
+    const res=await jwtAxios.post(`${host}/send/user`,{
+        roomId:param.roomId,
+        content:param.content
+    });
+
+    return res.data;
+}

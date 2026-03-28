@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import ChatRoomList from '../component/ChatRoomList'
 import ChatRoom from '../component/ChatRoom'
 import "./chatLayout.css"

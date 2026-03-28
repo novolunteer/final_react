@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { chatRoomList } from '../../../api/chatApi'
 
-const ChatRoomList = ({ selectedRoomId, onselectRoom }) => {
+const ChatRoomList = ({ selectedRoomId, onSelectRoom }) => {
   const [rooms, setRooms]=useState([])
   const user=useSelector(state=>state.auth.user)
 
@@ -51,7 +51,7 @@ const ChatRoomList = ({ selectedRoomId, onselectRoom }) => {
                 <div>
                 {
                     rooms.map(r => {
-                        return <div key={r.roomId} onClick={()=>onselectRoom(r.roomId)}
+                        return <div key={r.roomId} onClick={()=>onSelectRoom(r.roomId)}
                                     className={selectedRoomId === r.roomId 
                                             ? 'active-chat-room':'chat-room'}>
                             <div>

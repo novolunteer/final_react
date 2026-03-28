@@ -19,6 +19,7 @@ const LoginPage = () => {
         console.log("session ==> ", sessionStorage.getItem("user"));
         setEmail("")
         setPassword("")
+        navigate("/", {replace:true})
     }catch (error){
         alert("로그인 실패!");
         console.log(error);
