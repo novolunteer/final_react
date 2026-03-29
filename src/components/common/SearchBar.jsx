@@ -1,6 +1,6 @@
 import React from 'react'
 
-const SerchBar = ({
+const SearchBar = ({
     value,
     onChange,
     onSearch,
@@ -8,7 +8,7 @@ const SerchBar = ({
 }) => {
 
     const handleKeyDown= (e)=>{
-        if(e.key == "Enter" && onSearch){
+        if(e.key === "Enter" && onSearch){
             onSearch();
         }
     };
@@ -27,7 +27,7 @@ const SerchBar = ({
   )
 }
 
-export default SerchBar
+export default SearchBar
 
 const styles = {
   container: {

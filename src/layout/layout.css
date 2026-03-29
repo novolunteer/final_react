@@ -59,6 +59,46 @@ a {
   font-weight: bold;
 }
 
+
+.sidebar-group {
+  position: relative;
+}
+
+.sidebar-group-title {
+  cursor: pointer;
+}
+
+.sidebar-submenu {
+  display: none;
+  flex-direction: column;
+  margin-left: 12px;
+}
+
+
+.sidebar-group:hover .sidebar-submenu {
+  display: flex;
+}
+
+
+.sidebar-sublink {
+  padding: 8px 14px;
+  font-size: 13px;
+  color: #9ca3af; /* 기존 sidebar-link보다 살짝 연하게 */
+  border-radius: 6px;
+  transition: 0.2s;
+}
+
+.sidebar-sublink:hover {
+  background-color: #374151;
+  color: white;
+}
+
+.sidebar-sublink.active {
+  background-color: #2563eb;
+  color: white;
+  font-weight: bold;
+}
+
 .layout-main {
   flex: 1;
   display: flex;
