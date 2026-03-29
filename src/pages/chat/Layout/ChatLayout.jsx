@@ -3,13 +3,28 @@ import ChatRoomList from '../component/ChatRoomList'
 import ChatRoom from '../component/ChatRoom'
 import "./chatLayout.css"
 import { Client } from '@stomp/stompjs'
+import { chatRoomList } from '../../../api/chatApi'
 
 const ChatLayout = () => {
   const [selectedRoomId, setSelectedRoomId]=useState(null);
   const [connected, setConnected]=useState(false);
+  const [rooms, setRooms]=useState([]);
 
   const clientRef=useRef(null);
   const accessToken=sessionStorage.getItem("accessToken");
+
+  useEffect(()=>{
+    const getRooms=async()=>{
+        try{
+            const res=await chatRoomList();
+            setRooms(res);
+        }catch(error){
+            console.log(error);
+        }
+    };
+
+    getRooms();
+  },[]);
 
   useEffect(()=>{
       if(!accessToken) return;
@@ -28,6 +43,37 @@ const ChatLayout = () => {
       client.onConnect = () => {
         console.log("WEBSOCKET_CONNECTED");
         setConnected(true);
+
+        client.subscribe("/topic/chat/list",(message)=>{
+            const dto=JSON.parse(message.body);
+            console.log("LIST MESSAGE => ", dto);
+
+            setRooms(prevRooms => {
+                const exists = prevRooms.some(
+                    room => Number(room.roomId) === Number(dto.roomId)
+                );
+
+                if (!exists) {
+                    return prevRooms;
+                }
+
+                const updatedRooms=prevRooms.map(room => 
+                    Number(room.roomId) === Number(dto.roomId)
+                    ? {
+                        ...room,
+                        lastMessageText: dto.content,
+                        lastMessageAt: dto.createdAt
+                    }
+                    : room
+                );
+
+                updatedRooms.sort(
+                    (a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt)
+                );
+
+                return [...updatedRooms];
+            });
+        });
       };
   
       client.onStompError = (error) => {
@@ -57,7 +103,7 @@ const ChatLayout = () => {
   return (
     <div className='chatArea'>
         <div className='chatRoomListArea'>
-            <ChatRoomList selectedRoomId={selectedRoomId} 
+            <ChatRoomList rooms={rooms} selectedRoomId={selectedRoomId} 
                 onSelectRoom={setSelectedRoomId}/>
         </div>
         <div className='chatRoomArea'>

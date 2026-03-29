@@ -1,19 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { useSelector } from 'react-redux'
-import { chatRoomList } from '../../../api/chatApi'
 
-const ChatRoomList = ({ selectedRoomId, onSelectRoom }) => {
-  const [rooms, setRooms]=useState([])
+const ChatRoomList = ({ rooms, selectedRoomId, onSelectRoom }) => {
   const userId=useSelector(state=>state.auth.userId)
-
-  useEffect(()=>{
-    chatRoomList().then((res)=>{
-        setRooms(res)
-    })
-    .catch((error)=>{
-        console.log(error)
-    });
-  },[])
 
   const formatDate=(dateTime)=>{
     if(!dateTime) return '';
