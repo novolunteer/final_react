@@ -68,7 +68,12 @@ const ChatRoomList = ({ rooms, selectedRoomId, onSelectRoom }) => {
                                         :<p>아직 전송된 메시지가 없습니다</p>
                                     }
                                 </div>
-                                <div></div>
+                                <div>
+                                    {
+                                        r.unreadCount > 0 &&
+                                        <span style={{color:"red"}}>{r.unreadCount}</span>
+                                    }
+                                </div>
                             </div>    
                         </div>
                     })
