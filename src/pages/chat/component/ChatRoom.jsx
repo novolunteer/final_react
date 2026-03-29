@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { chatRoomDetail } from '../../../api/chatApi';
+import { chatRoomDetail, markAsRead } from '../../../api/chatApi';
 
-const ChatRoom = ({ roomId, clientRef, connected }) => {
+const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
   const [room, setRoom]=useState(null)
   const [messageSlice, setMessageSlice]=useState({
     messages:[],
@@ -35,6 +35,9 @@ const ChatRoom = ({ roomId, clientRef, connected }) => {
             setRoom(data.room)
             setMessageSlice(data.messages)
 
+            await markAsRead(roomId);
+            onReadRoom(roomId);
+
         }catch(error){
             console.log(error);
         }
@@ -55,13 +58,16 @@ const ChatRoom = ({ roomId, clientRef, connected }) => {
         subscriptionRef.current=null;
     }
 
-    subscriptionRef.current=client.subscribe(`/topic/chat/room/${roomId}`, (message) => {
+    subscriptionRef.current=client.subscribe(`/topic/chat/room/${roomId}`,async (message) => {
         const newMessage=JSON.parse(message.body);
 
         setMessageSlice(prev => ({
             ...prev,
             messages:[newMessage, ...prev.messages]
         }));
+
+        await markAsRead(roomId);
+        onReadRoom(roomId);
     });
 
     return ()=>{

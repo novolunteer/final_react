@@ -21,3 +21,8 @@ export const sendUserMessage=async(param)=>{
 
     return res.data;
 }
+
+export const markAsRead=async(roomId)=>{
+    const res=await jwtAxios.post(`${host}/read/${roomId}`);
+    return res.data;
+}

@@ -57,15 +57,20 @@ const ChatLayout = () => {
                     return prevRooms;
                 }
 
-                const updatedRooms=prevRooms.map(room => 
-                    Number(room.roomId) === Number(dto.roomId)
-                    ? {
-                        ...room,
-                        lastMessageText: dto.content,
-                        lastMessageAt: dto.createdAt
+                const updatedRooms=prevRooms.map(room => {
+                    if(Number(room.roomId) === Number(dto.roomId)){
+                        const isCurrentRoom=Number(selectedRoomId) === Number(dto.roomId);
+
+                        return {
+                            ...room,
+                            lastMessageText: dto.content,
+                            lastMessageAt: dto.createdAt,
+                            unreadCount: isCurrentRoom ? 0 : (room.unreadCount || 0) + 1
+                        };
                     }
-                    : room
-                );
+
+                    return room;
+                });
 
                 updatedRooms.sort(
                     (a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt)
@@ -98,7 +103,17 @@ const ChatLayout = () => {
               clientRef.current=null;
           }
       };
-    }, [accessToken]);
+    }, [accessToken, selectedRoomId]);
+
+    const handleReadRoom=(roomId)=>{
+        setRooms(prevRooms => 
+            prevRooms.map(room => 
+                Number(room.roomId) === Number(roomId)
+                ? {...room, unreadCount: 0}
+                : room
+            )
+        );
+    };
 
   return (
     <div className='chatArea'>
@@ -107,7 +122,7 @@ const ChatLayout = () => {
                 onSelectRoom={setSelectedRoomId}/>
         </div>
         <div className='chatRoomArea'>
-            <ChatRoom roomId={selectedRoomId}
+            <ChatRoom roomId={selectedRoomId} onReadRoom={handleReadRoom}
               clientRef={clientRef} connected={connected}/>
         </div>
     </div>
