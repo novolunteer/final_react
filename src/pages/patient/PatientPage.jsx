@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import SerchBar from '../../components/common/SerchBar'
+import SearchBar from '../../components/common/SearchBar'
 import CommonTable from '../../components/common/CommonTable'
 import RegisterButton from '../../components/common/RegisterButton'
 import CommonModal from '../../components/common/CommonModal'
@@ -14,7 +14,7 @@ const PatientPage = () => {
   return (
     <div>
         <div>환자관리 페이지</div>
-        <SerchBar/>
+        <SearchBar/>
         <RegisterButton onClick={handleOpen}/>
         <CommonTable />
         <CommonModal open={open} onClose={handleClose}>
