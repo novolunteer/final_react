@@ -6,21 +6,14 @@ const initState = {
   departmentId: "",
   managerId: "",
   position: "",
-  jobType: "",
   name: "",
   phone: "",
   address: "",
 };
 
-const jobTypeOptions = [
-  { value: "DOCTOR", label: "의사" },
-  { value: "NURSE", label: "간호사" },
-  { value: "RECEPTION", label: "원무직" },
-  { value: "ADMIN", label: "행정직" },
-];
 
 const positionOptionsMap = {
-  DOCTOR: [
+  1: [
     { value: "INTERN", label: "인턴" },
     { value: "RESIDENT", label: "레지던트" },
     { value: "FELLOW", label: "전임의" },
@@ -28,26 +21,20 @@ const positionOptionsMap = {
     { value: "PROFESSOR", label: "교수" },
     { value: "HEAD_DOCTOR", label: "과장" },
   ],
-  NURSE: [
+  2: [
     { value: "NURSE", label: "일반 간호사" },
     { value: "CHARGE_NURSE", label: "책임 간호사" },
     { value: "HEAD_NURSE", label: "수간호사" },
     { value: "DIRECTOR_NURSE", label: "간호부장" },
   ],
-  RECEPTION: [
+  3: [
     { value: "STAFF", label: "사원" },
     { value: "SENIOR", label: "주임" },
     { value: "ASSISTANT_MANAGER", label: "대리" },
     { value: "MANAGER", label: "팀장" },
     { value: "DIRECTOR", label: "부장" },
   ],
-  ADMIN: [
-    { value: "STAFF", label: "사원" },
-    { value: "SENIOR", label: "주임" },
-    { value: "ASSISTANT_MANAGER", label: "대리" },
-    { value: "MANAGER", label: "팀장" },
-    { value: "DIRECTOR", label: "부장" },
-  ],
+
 };
 
 const StaffForm = ({ onSubmit, onClose , initialData}) => {
@@ -61,7 +48,6 @@ const StaffForm = ({ onSubmit, onClose , initialData}) => {
         departmentId: initialData.departmentId || "",
         managerId: initialData.managerId || "",
         position: initialData.position || "",
-        jobType: initialData.jobType || "",
         name: initialData.name || "",
         phone: initialData.phone || "",
         address: initialData.address || "",
@@ -74,23 +60,25 @@ const StaffForm = ({ onSubmit, onClose , initialData}) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    if (name === "jobType") {
-      setForm({
-        ...form,
-        jobType: value,
-        position: "",
-      });
-      return;
-    }
-
+    if (name=="departmentId"){
     setForm({
       ...form,
-      [name]: value,
+      departmentId : value,
+      position : "",
+    });
+      return;
+    }
+    setForm({
+      ...form,
+      [name]:value,
     });
   };
-
+  
+  const positionOptions = positionOptionsMap[form.departmentId] || [];
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    
 
     const requestData = {
       staffId: form.staffId? Number(form.staffId) : null,
@@ -98,7 +86,6 @@ const StaffForm = ({ onSubmit, onClose , initialData}) => {
       departmentId: form.departmentId ? Number(form.departmentId) : null,
       managerId: form.managerId ? Number(form.managerId) : null,
       position: form.position,
-      jobType: form.jobType,
       name: form.name,
       phone: form.phone,
       address: form.address,
@@ -108,7 +95,6 @@ const StaffForm = ({ onSubmit, onClose , initialData}) => {
     setForm(initState);
   };
 
-  const positionOptions = positionOptionsMap[form.jobType] || [];
 
   return (
     <form onSubmit={handleSubmit}>
@@ -149,28 +135,12 @@ const StaffForm = ({ onSubmit, onClose , initialData}) => {
         </div>
 
         <div>
-          <label>직종</label>
-          <select name="jobType" value={form.jobType} onChange={handleChange}>
-            <option value="">직종 선택</option>
-            {jobTypeOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
           <label>직급</label>
           <select
             name="position"
             value={form.position}
             onChange={handleChange}
-            disabled={!form.jobType}
           >
-            <option value="">
-              {form.jobType ? "직급 선택" : "직종을 먼저 선택하세요"}
-            </option>
             {positionOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}

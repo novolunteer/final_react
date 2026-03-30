@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from "react";
-import StaffForm from "../../components/staff/StaffForm";
-import CommonModal from "../../components/common/CommonModal";
-import CommonTable from "../../components/common/CommonTable";
-import RegisterButton from "../../components/common/RegisterButton";
-import SearchBar from "../../components/common/SearchBar";
+import StaffForm from "../../../components/staff/StaffForm";
+import CommonModal from "../../../components/common/CommonModal";
+import CommonTable from "../../../components/common/CommonTable";
+import RegisterButton from "../../../components/common/RegisterButton";
+import SearchBar from "../../../components/common/SearchBar";
 import {
   getStaffList,
   registerStaff,
   updateStaff,
   deleteStaff,
-} from "../../api/staffApi";
+} from "../../../api/staffApi";
 
 const StaffPage = () => {
   const [staffList, setStaffList] = useState([]);
@@ -58,7 +58,6 @@ const StaffPage = () => {
         userId: item.userId,
         departmentId: item.departmentId,
         managerId: item.managerId,
-        jobType: item.jobType,
         position: item.position,
         name: item.name,
         phone: item.phone,
@@ -144,7 +143,6 @@ const StaffPage = () => {
     { key: "userId", title: "사용자ID" },
     { key: "departmentId", title: "부서ID" },
     { key: "managerId", title: "담당자ID" },
-    { key: "jobType", title: "직종" },
     { key: "position", title: "직급" },
     { key: "name", title: "이름" },
     { key: "phone", title: "전화번호" },
@@ -194,7 +192,7 @@ const StaffPage = () => {
               onClick={() => handleSelectCandidate(staff)}
               style={styles.candidateButton}
             >
-              {staff.name} / {staff.departmentId} / {staff.jobType} / {staff.phone}
+              {staff.name} / {staff.departmentId} / {staff.phone}
             </button>
           ))}
         </div>
