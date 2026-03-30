@@ -5,23 +5,33 @@ const MedicalRecordPage = () => {
       const [list, setList]=useState([])
       const [selectedPat,setSelectedPat]=useState("");
 
-  useEffect(()=>{
-      axios.get('http://localhost:8080/api/medicalrecord').then((res) => {
-          setList(res.data.content);
-        })
-        .catch((err) => {
-          console.error(err)
-        })
-    },[])
+    useEffect(()=>{
+        axios.get('http://localhost:8080/api/medicalrecord').then((res) => {
+            setList(res.data.content);
+          })
+          .catch((err) => {
+            console.error(err)
+          })
+      },[])
 
-     useEffect(()=>{
+    useEffect(()=>{
       axios.get(`http://localhost:8080/api/medicalrecord?patientId=${selectedPat}`).then((res) => {
-          setList(res.data.content);
-        })
-        .catch((err) => {
-          console.error(err)
-        })
-    },[selectedPat])
+            setList(res.data.content);
+          })
+          .catch((err) => {
+            console.error(err)
+          })
+      },[selectedPat])
+
+    useEffect(()=>{
+          axios.get('http://localhost:8080/api/medicalrecord').then((res) => {
+              setList(res.data.content);
+              console.log(res.data.content);
+          })
+          .catch((err) => {
+              console.error(err)
+          })
+      },[])
 
   return (
     <div style={{ display: "flex", gap: "20px" }}>
