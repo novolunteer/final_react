@@ -13,12 +13,13 @@ const LoginPage = () => {
 
   const handleLogin=async()=>{
     try{
-        const result=await loginPost({"email":email, "password":password});
+        const data=await loginPost({"email":email, "password":password});
         alert("로그인 성공!");
-        dispatch(loginSuccess(result));
-        console.log("session ==> ", sessionStorage.getItem("user"));
+        dispatch(loginSuccess(data));
+        console.log("session ==> ", sessionStorage.getItem("userId"));
         setEmail("")
         setPassword("")
+        navigate("/", {replace:true})
     }catch (error){
         alert("로그인 실패!");
         console.log(error);

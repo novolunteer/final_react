@@ -16,6 +16,7 @@ import StaffPage from "../pages/staff/StaffPage";
 import StatisticsPage from "../pages/statistics/StatisticsPage";
 import NotificationPage from "../pages/notification/NotificationPage";
 import LoginPage from "../pages/login/LoginPage";
+import ChatLayout from "../pages/chat/Layout/ChatLayout";
 import ReservationConfirm from "../pages/reservation/ReservationConfirm";
 
 
@@ -42,6 +43,7 @@ const Router = () => {
           <Route path="/communication" element={<CommunicationPage />} />
           <Route path="/notification" element={<NotificationPage />} />
           <Route path="/login" element={<LoginPage/>}/>
+          <Route path="/chat" element={<ChatLayout/>}/>
         </Route>
       </Routes>
     </BrowserRouter>
