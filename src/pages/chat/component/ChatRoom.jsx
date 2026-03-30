@@ -110,47 +110,68 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
   };
 
   if(!roomId){
-    return <div>채팅방을 선택하세요</div>
+    return <div className='chat-room-empty'>
+        <div className='chat-room-empty-box'>
+            채팅방을 선택하세요
+        </div>
+    </div>
   }
 
   if(!room){
-    return <div>채팅방 정보를 불러오는 중...</div>
+    return <div className='chat-room-empty'>
+        <div className='chat-room-empty-box'>
+            채팅방 정보를 불러오는 중...
+        </div>
+    </div>
   }
 
   return (
-    <div>
+    <div className='chat-room-panel'>
         {
             userId && 
-            <div>
-                <div>
-                    <p>{room.customRoomName ? room.customRoomName:room.roomName}</p>
+            <>
+                <div className='chat-room-header'>
+                    <p className='chat-room-header-title'>
+                        {room.customRoomName ? room.customRoomName:room.roomName}
+                    </p>
                 </div>
-                <div>
+                <div className='chat-message-area'>
                     {
                         [...messageSlice.messages].reverse().map(m => {
-                            return <div key={m.messageId}>
-                                    <p>{m.senderName}</p>
-                                    <span
-                                        className={m.senderId === userId ? 'message-is-mine':'message'}>
-                                        <p>{m.content}</p>
-                                    </span>
+                            const isMine=m.senderId === userId;
+
+                            return (
+                                <div key={m.messageId}
+                                        className={isMine 
+                                                    ? 'chat-message-row mine' 
+                                                    : 'chat-message-row'}
+                                    >
+                                    {!isMine && <p className="chat-sender-name">{m.senderName}</p>}
+                                    <div className={isMine ? 'chat-bubble mine' : 'chat-bubble'}>
+                                      <p>{m.content}</p>
+                                    </div>
                                 </div>
+                            )
                         })
                     }
                 </div>
-                <div>
-                    <form onSubmit={(e)=>{
+                <div className='chat-input-area'>
+                    <form className='chat-input-form'
+                        onSubmit={(e)=>{
                         e.preventDefault();
                         sendMessage();
                     }}>
-                        <input type='text' value={content}
+                        <input type='text' value={content} placeholder='메시지를 입력하세요.'
                             onChange={(e)=>{
                                 setContent(e.target.value)
-                            }}/>
-                        <button type='submit'>전송</button>
+                            }}
+                            className='chat-input'
+                        />
+                        <button type='submit'
+                                className='chat-send-btn'>전송</button>
                     </form>
                 </div>
-            </div>
+            </>
         }
     </div>
   )

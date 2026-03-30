@@ -26,3 +26,15 @@ export const markAsRead=async(roomId)=>{
     const res=await jwtAxios.post(`${host}/read/${roomId}`);
     return res.data;
 }
+
+export const createChatRoom=async (param) =>{
+    const res=await jwtAxios.post(`${host}/room`, param);
+    return res.data;
+}
+
+export const getStaffList=async (keyword) => {
+    const res=await jwtAxios.get(`${host}/staff/list`, {
+        params: keyword ? { keyword } : {}
+    });
+    return res.data;
+}

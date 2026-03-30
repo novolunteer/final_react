@@ -3,12 +3,13 @@ import ChatRoomList from '../component/ChatRoomList'
 import ChatRoom from '../component/ChatRoom'
 import "./chatLayout.css"
 import { Client } from '@stomp/stompjs'
-import { chatRoomList } from '../../../api/chatApi'
+import { chatRoomList, getStaffList } from '../../../api/chatApi'
 
 const ChatLayout = () => {
   const [selectedRoomId, setSelectedRoomId]=useState(null);
   const [connected, setConnected]=useState(false);
   const [rooms, setRooms]=useState([]);
+  const [staffList, setStaffList]=useState([]);
 
   const clientRef=useRef(null);
   const accessToken=sessionStorage.getItem("accessToken");
@@ -16,8 +17,11 @@ const ChatLayout = () => {
   useEffect(()=>{
     const getRooms=async()=>{
         try{
-            const res=await chatRoomList();
-            setRooms(res);
+            const roomRes=await chatRoomList();
+            setRooms(roomRes);
+
+            const staffRes=await getStaffList();
+            setStaffList(staffRes);
         }catch(error){
             console.log(error);
         }
@@ -119,7 +123,8 @@ const ChatLayout = () => {
     <div className='chatArea'>
         <div className='chatRoomListArea'>
             <ChatRoomList rooms={rooms} selectedRoomId={selectedRoomId} 
-                onSelectRoom={setSelectedRoomId}/>
+                onSelectRoom={setSelectedRoomId} staffList={staffList}
+                setStaffList={setStaffList}/>
         </div>
         <div className='chatRoomArea'>
             <ChatRoom roomId={selectedRoomId} onReadRoom={handleReadRoom}
