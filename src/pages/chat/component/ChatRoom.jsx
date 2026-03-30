@@ -137,6 +137,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
                 </div>
                 <div className='chat-message-area'>
                     {
+                        messageSlice.messages != null &&
                         [...messageSlice.messages].reverse().map(m => {
                             const isMine=m.senderId === userId;
 

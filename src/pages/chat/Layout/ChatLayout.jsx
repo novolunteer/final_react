@@ -4,6 +4,7 @@ import ChatRoom from '../component/ChatRoom'
 import "./chatLayout.css"
 import { Client } from '@stomp/stompjs'
 import { chatRoomList, getStaffList } from '../../../api/chatApi'
+import { useSelector } from 'react-redux'
 
 const ChatLayout = () => {
   const [selectedRoomId, setSelectedRoomId]=useState(null);
@@ -13,6 +14,7 @@ const ChatLayout = () => {
 
   const clientRef=useRef(null);
   const accessToken=sessionStorage.getItem("accessToken");
+  const userId=useSelector(state=>state.auth.userId);
 
   useEffect(()=>{
     const getRooms=async()=>{
@@ -48,7 +50,7 @@ const ChatLayout = () => {
         console.log("WEBSOCKET_CONNECTED");
         setConnected(true);
 
-        client.subscribe("/topic/chat/list",(message)=>{
+        client.subscribe(`/topic/chat/list/${userId}`,(message)=>{
             const dto=JSON.parse(message.body);
             console.log("LIST MESSAGE => ", dto);
 
@@ -83,6 +85,16 @@ const ChatLayout = () => {
                 return [...updatedRooms];
             });
         });
+
+        client.subscribe(`/topic/chat/room-created/${userId}`, (message) => {
+            const room=JSON.parse(message.body);
+
+            setRooms(prev => {
+                const exists=prev.some(r => Number(r.roomId) === Number(room.roomId));
+                if(exists) return prev;
+                return [room, ...prev];
+            });
+        });
       };
   
       client.onStompError = (error) => {
@@ -107,7 +119,7 @@ const ChatLayout = () => {
               clientRef.current=null;
           }
       };
-    }, [accessToken, selectedRoomId]);
+    }, [accessToken, selectedRoomId, userId]);
 
     const handleReadRoom=(roomId)=>{
         setRooms(prevRooms => 
@@ -124,7 +136,7 @@ const ChatLayout = () => {
         <div className='chatRoomListArea'>
             <ChatRoomList rooms={rooms} selectedRoomId={selectedRoomId} 
                 onSelectRoom={setSelectedRoomId} staffList={staffList}
-                setStaffList={setStaffList}/>
+                setStaffList={setStaffList} setRooms={setRooms}/>
         </div>
         <div className='chatRoomArea'>
             <ChatRoom roomId={selectedRoomId} onReadRoom={handleReadRoom}

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { getStaffList } from '../../../api/chatApi';
+import { createChatRoom, getStaffList } from '../../../api/chatApi';
 
-const ChatRoomList = ({ rooms, selectedRoomId, onSelectRoom, staffList, setStaffList }) => {
+const ChatRoomList = ({ rooms, selectedRoomId, onSelectRoom, staffList, setStaffList, setRooms }) => {
   const userId=useSelector(state=>state.auth.userId);
   const [openCreateModal, setOpenCreateModal]=useState(false);
   const [keyword, setKeyword]=useState("");
@@ -54,6 +54,36 @@ const ChatRoomList = ({ rooms, selectedRoomId, onSelectRoom, staffList, setStaff
     setKeyword("");
     setSelectedUsers([]);
     setRoomName("");
+  }
+
+  const handleCreateChatRoom=async() => {
+    try{
+        const participantUserIds=selectedUsers.map(user => user.userId);
+        const data={
+            roomType: selectedUsers.length >= 2 ? "GROUP" : "DIRECT",
+            roomName: roomName ? roomName : null,
+            customRoomName: roomName ? roomName : null,
+            participantUserIds: participantUserIds
+        };
+        const res=await createChatRoom(data);
+        const room=res;
+
+        setRooms(prev => {
+            const exists=prev.some(r => Number(r.roomId) === Number(room.roomId));
+
+            if(exists){
+                return prev;
+            }
+
+            return [room, ...prev];
+        });
+
+        onSelectRoom(room.roomId);
+        handleCloseModal();
+    }catch(error){
+        console.log(error);
+        alert("채팅방 생성에 실패했습니다.");
+    }
   }
 
   return (
@@ -246,6 +276,7 @@ const ChatRoomList = ({ rooms, selectedRoomId, onSelectRoom, staffList, setStaff
                                     selectedUsers.length === 0 ||
                                     (selectedUsers.length >=2 && !roomName.trim())
                                 }
+                                onClick={handleCreateChatRoom}
                             >
                                 {selectedUsers.length >= 2 ? "그룹 채팅 생성":"채팅 시작"}
                             </button>
