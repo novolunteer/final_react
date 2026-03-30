@@ -8,6 +8,7 @@ const ReservationPage = () => {
   const [selectedDept,setSelectedDept]=useState("");
   const [selectedDate,setSelectedDate]=useState("");
   const [symptom, setSymptom] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
 
   useEffect(()=>{
       axios.get('http://localhost:8080/api/department').then((res) => {
@@ -36,7 +37,10 @@ const ReservationPage = () => {
   const submitHandler = () => {
     const reservationData = {
       doctorId: selectedDoc || null, 
-      preferredDate: selectedDate+"T00:00:00" || null,
+      departmentId: selectedDept,
+      preferredDate: selectedDate
+              ? selectedDate + (selectedTime ? `T${selectedTime}:00` : "T00:00:00")
+              : null,
       symptom: symptom
     };
 
@@ -46,6 +50,7 @@ const ReservationPage = () => {
         setSelectedDept("");
         setSelectedDoc("");
         setSelectedDate("");
+        setSelectedTime("");
         setSymptom("");
       })
       .catch(err => {
@@ -89,6 +94,14 @@ const ReservationPage = () => {
               onChange={(e) => setSelectedDate(e.target.value)}
             />
           </label> <br />
+          <label>
+            희망 시간:
+            <input
+              type="time"
+              value={selectedTime}
+              onChange={(e) => setSelectedTime(e.target.value)}
+            />
+          </label><br />
           증상 <input type="text" 
                       value={symptom}
                       onChange={(e) => setSymptom(e.target.value)}/><br />

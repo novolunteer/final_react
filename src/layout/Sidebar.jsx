@@ -4,7 +4,9 @@ const Sidebar = () => {
   const menuItems = [
     { path: "/", label: "대시보드" },
     { path: "/patient", label: "환자 관리" },
-    { path: "/reservation", label: "예약 / 접수" },
+    { path: "/reservation", label: "예약" },
+    { path: "/reservationconfirm", label: "예약 확인" },
+    { path: "/reception", label: "접수" },
     { path: "/medical", label: "진료 관리" },
     { path: "/emergency", label: "응급실" },
     { path: "/admission", label: "입원관리" },
