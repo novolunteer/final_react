@@ -19,6 +19,7 @@ export const registerDepartment = async(dapartmentData)=>{
 
 export const updateDepartment = async(departmentData)=>{
     const res = await axios.put(`${host}/update`, departmentData);
+    return res.data;
 };
 
 export const deleteDepartment = async(departmentId)=>{

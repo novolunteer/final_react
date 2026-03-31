@@ -13,13 +13,12 @@ import DepartmentForm from '../../../components/department/DepartmentForm'
 
 
 const DepartmentPage = () => {
-    const [DepartmentList, setDepartmentList]=useState([]);
+    const [departmentList, setDepartmentList]=useState([]);
     const [originalDepartment, setOriginalDepartmentList] = useState([]);
     const [open, setOpen] = useState(false);
     const [selectedDepartment, setSelectedDepartment] = useState(null);
 
       const [searchKeyword, setSearchKeyword] = useState("");
-      const [searchModalOpen, setSearchModalOpen] = useState(false);
     
     const handleOpen = () => {
         setSelectedDepartment(null);
@@ -54,8 +53,8 @@ const DepartmentPage = () => {
             const data=await getDepartmentList();
 
             const mappedData = data.map((item) => ({
-                id: item.departmentId,
-                name : item.departmentName,
+                departmentId: item.departmentId,
+                departmentName: item.departmentName,
                 location : item.location,
                 status : item.status,
                 action: (
@@ -81,20 +80,20 @@ const DepartmentPage = () => {
     }, []);
 
 
-    const handleSubmit = async(departmentData)=>{
-        try{
-            if(selectedDepartment) {
-                await updateDepartment(departmentData);
-            }else {
-                await registerDepartment(departmentData);
-            }
+   const handleSubmit = async (departmentData) => {
+  try {
+if (selectedDepartment) {
+  await updateDepartment(departmentData);
+} else {
+  await registerDepartment(departmentData);
+}
 
-            await loadDepartmentList();
-            handleClose();
-        }catch(error){
-            console.error("부서 저장 실패", error);
-        }
-    };
+    await loadDepartmentList();
+    handleClose();
+  } catch (error) {
+    console.error("부서 저장 실패", error);
+  }
+};
 
     const handleSearch= () =>{
         const keyword = searchKeyword.trim();
@@ -104,7 +103,7 @@ const DepartmentPage = () => {
             return;
         }
 
-        const matched = originalDepartment.filter((item) => item.name == keyword);
+        const matched = originalDepartment.filter((item) => item.departmentName == keyword);
 
         if (matched.length == 0){
             alert("검색 결과가 없습니다");
@@ -124,8 +123,8 @@ const DepartmentPage = () => {
     }
 
     const columns =[
-        { key: "id", title:"번호"},
-        { key: "name", title:"부서명"},
+        { key: "departmentId", title:"번호"},
+        { key: "departmentName", title:"부서명"},
         { key: "location", title:"위치"},
         { key: "status", title:"상태"},
         { key: "action", title:"관리"},
@@ -148,12 +147,13 @@ const DepartmentPage = () => {
         </div>
 
         <CommonTable columns={columns} data={departmentList}/>
-        <CommonModal open={open} onClose={handleClose}
+        <CommonModal open={open} onClose={handleClose}>
             <DepartmentForm
             onSubmit={handleSubmit}
             onClose={handleClose}
             initialData={selectedDepartment}
-        />
+            />
+        </CommonModal>
 
     </div>
   )

@@ -7,44 +7,54 @@ const initState={
 };
 
 const DepartmentForm = ({onSubmit, onClose, initialData}) => {
-    const[form, setFrom] = useState(initState);
+    const[form, setForm] = useState(initState);
 
     useEffect(()=>{
         if(initialData) {
-            setFrom({
+            setForm({
                 departmentId:initialData.departmentId ||"",
                 departmentName:initialData.departmentName || "",
                 location: initialData.location || "",
                 status: initialData.status || "",
             });
         }else{
-            setFrom(initState);
+            setForm(initState);
         }
     },[initialData]);
 
+    const handleChange = (e) => {
+        const {name, value} = e.target;
+
+        setForm({
+            ...form,
+            [name]:value,
+        });
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+
+        const requestData = {
+            departmentId: form.departmentId? Number(form.departmentId) : null,
+            departmentName: form.departmentName,
+            location : form.location,
+            status: form.status 
+        }
+        onSubmit(requestData);
+        setForm(initState);
+    };
     
   return (
     <form onSubmit={handleSubmit}>
         <h3>직원등록</h3>
         <div style={styles.formGrid}>
             <div>
-                <label>부서번호</label>
-                <input
-                type="number"
-                name='departmentId'
-                placeholder='부서번호'
-                value={form.departmentId}
-                onChange={handleChange}
-                />
-            </div>
-
-            <div>
                 <label>부서명</label>
                 <input
                 type="text"
                 name='departmentName'
                 placeholder='부서명'
-                value={form.departnentName}
+                value={form.departmentName}
                 onChange={handleChange}
                 />
             </div>
@@ -63,9 +73,9 @@ const DepartmentForm = ({onSubmit, onClose, initialData}) => {
             <div>
                 <label>상태</label>
                 <input
-                type="number"
+                type="text"
                 name='status'
-                placeholder='상태'
+                placeholder='Y / N'
                 value={form.status}
                 onChange={handleChange}
                 />

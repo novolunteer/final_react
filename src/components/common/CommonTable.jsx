@@ -64,9 +64,12 @@ const styles = {
     borderCollapse: "collapse",
   },
   th: {
-    borderBottom: "1px solid #ddd",
+    border: "1px solid #ddd",
+    padding: "8px",
+    backgroundColor: "#f5f5f5",
   },
   td: {
-    borderBottom: "1px solid #eee",
+    border: "1px solid #eee",
+    padding: "8px",
   },
 }

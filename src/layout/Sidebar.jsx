@@ -23,7 +23,7 @@ const Sidebar = () => {
     {
       label: "운영관리",
       children: [
-        { path: "/schedule-policy", label: "스케줄 운영설정" },
+        { path: "/operation/schedule_policy", label: "스케줄 운영설정" },
       ],
     },
     {

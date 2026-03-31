@@ -19,6 +19,7 @@ import LoginPage from "../pages/login/LoginPage";
 import ChatLayout from "../pages/chat/Layout/ChatLayout";
 import ReservationConfirm from "../pages/reservation/ReservationConfirm";
 import DepartmentPage from "../pages/hr/department/DepartmentPage";
+import Schedule_policyPage from "../pages/operation/Schedule_PolicyPage";
 
 
 const Router = () => {
@@ -40,6 +41,7 @@ const Router = () => {
           <Route path="/billing" element={<BillingPage />} />
           <Route path="/staff" element={<StaffPage />} />
           <Route path="/department" element={<DepartmentPage/>}/>
+          <Route path="/operation/schedule_policy" element={<Schedule_policyPage/>}/>
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/statistics" element={<StatisticsPage />} />
           <Route path="/communication" element={<CommunicationPage />} />

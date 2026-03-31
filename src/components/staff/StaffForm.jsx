@@ -109,6 +109,7 @@ const StaffForm = ({ onSubmit, onClose , initialData}) => {
             placeholder="userId"
             value={form.userId}
             onChange={handleChange}
+            disabled={!!initialData}
           />
         </div>
 
@@ -120,6 +121,7 @@ const StaffForm = ({ onSubmit, onClose , initialData}) => {
             placeholder="departmentId"
             value={form.departmentId}
             onChange={handleChange}
+            disabled={!!initialData}
           />
         </div>
 
