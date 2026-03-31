@@ -8,10 +8,17 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
     hasNext:false,
     nextCursor:null
   });
-  const [content, setContent]=useState("")
+
+  const [loading, setLoading]=useState(false);
+  const [loadingOld, setLoadingOld]=useState(false);
+  const [content, setContent]=useState("");
+  const [hasNewMessage, setHasNewMessage]=useState(false);
+
 
   const subscriptionRef=useRef(null);
   const readSubscriptionRef=useRef(null);
+  const messageAreaRef=useRef(null);
+  const firstLoadRef=useRef(true);
 
   const userId=Number(sessionStorage.getItem("userId"));
 
@@ -51,28 +58,47 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
             nextCursor:null
         });
         setContent("");
-        return
+        setHasNewMessage(false);
+        firstLoadRef.current=true;
+        return;
     }
 
     const getChatRoomDetail=async()=>{
         try{
+            setLoading(true);
+
             const data=await chatRoomDetail({
                 roomId:roomId,
+                cursor:null
             });
 
-            setRoom(data.room)
-            setMessageSlice(data.messages)
+            setRoom(data.room);
+            setMessageSlice(data.messages);
             onReadRoom(roomId);
-
+            setHasNewMessage(false);
+            firstLoadRef.current=true;
         }catch(error){
             console.log(error);
+        }finally{
+            setLoading(false);
         }
-    }
+    };
 
     setContent("");
     getChatRoomDetail();
 
   },[roomId]);
+
+  useEffect(()=>{
+    if(!firstLoadRef.current) return;
+
+    const container=messageAreaRef.current;
+    if(!container) return;
+    if(!messageSlice.messages.length) return;
+
+    container.scrollTop=container.scrollHeight;
+    firstLoadRef.current=false;
+  },[messageSlice.messages]);
 
   useEffect(()=>{
     const client=clientRef.current;
@@ -92,14 +118,27 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
     //새 메시지 구독
     subscriptionRef.current=client.subscribe(`/topic/chat/room/${roomId}`,async (message) => {
         const newMessage=JSON.parse(message.body);
+        const nearBottom=isNearBottom();
+        const isMine=newMessage.senderId === userId;
 
         setMessageSlice(prev => ({
             ...prev,
-            messages:[newMessage, ...prev.messages]
+            messages:[...prev.messages, newMessage]
         }));
 
-        await markAsRead(roomId);
-        onReadRoom(roomId);
+        if(nearBottom || isMine){
+            await markAsRead(roomId);
+            onReadRoom(roomId);
+
+            setTimeout(() => {
+                const container = messageAreaRef.current;
+                if (container) {
+                    container.scrollTop = container.scrollHeight;
+                }
+            }, 0);
+        } else {
+            setHasNewMessage(true);
+        }
     });
 
     //읽음 이벤트 구독
@@ -154,6 +193,51 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
 
   };
 
+  const loadOlderMessages=async()=>{
+    if(!roomId || loadingOld || !messageSlice.hasNext) return;
+
+    const container=messageAreaRef.current;
+    if(!container) return;
+
+    const prevScrollHeight=container.scrollHeight;
+    const prevScrollTop=container.scrollTop;
+
+    try{
+        setLoadingOld(true);
+
+        const data=await chatRoomDetail({
+            roomId:roomId,
+            cursor:messageSlice.nextCursor
+        });
+        
+        const olderSlice=data.messages;
+
+        setMessageSlice(prev => ({
+            ...prev,
+            messages: [...olderSlice.messages, ...prev.messages],
+            hasNext: olderSlice.hasNext,
+            nextCursor: olderSlice.nextCursor
+        }));
+
+        setTimeout(()=>{
+            const newScrollHeight=container.scrollHeight;
+            container.scrollTop = newScrollHeight - prevScrollHeight + prevScrollTop;
+        }, 0);
+
+    }catch(error){
+        console.log(error);
+    }finally{
+        setLoadingOld(false);
+    }
+  }
+
+  const isNearBottom=()=>{
+    const container=messageAreaRef.current;
+    if(!container) return false;
+
+    return container.scrollHeight - container.scrollTop - container.clientHeight <= 80;
+  }
+
   if(!roomId){
     return <div className='chat-room-empty'>
         <div className='chat-room-empty-box'>
@@ -170,7 +254,25 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
     </div>
   }
 
-  const orderedMessages=[...messageSlice.messages].reverse();
+  const handleScroll=async()=>{
+    const container=messageAreaRef.current;
+    if(!container) return;
+
+    if(container.scrollTop <= 50){
+        await loadOlderMessages();
+    }
+
+    const nearBottom =
+        container.scrollHeight - container.scrollTop - container.clientHeight <= 80;
+
+    if(nearBottom && hasNewMessage){
+        setHasNewMessage(false);
+        await markAsRead(roomId);
+        onReadRoom(roomId);
+    }
+  };
+
+  const orderedMessages=messageSlice.messages;
   const lastMyUserMessageId=[...orderedMessages].reverse()
             .find(m => m.senderId === userId && m.messageType === 'USER')?.messageId ?? null;
   const shouldShowUnreadCount=(message, isMine) => {
@@ -195,7 +297,8 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
                         {room.customRoomName ? room.customRoomName:room.roomName}
                     </p>
                 </div>
-                <div className='chat-message-area'>
+                <div className='chat-message-area' ref={messageAreaRef}
+                    onScroll={handleScroll}>
                     {
                         orderedMessages != null &&
                         orderedMessages.map(m => {
@@ -224,6 +327,26 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
                         })
                     }
                 </div>
+                {
+                        hasNewMessage && (
+                            <button
+                                type='button'
+                                className='new-message-alert'
+                                onClick={async()=>{
+                                    const container=messageAreaRef.current;
+                                    if(container){
+                                        container.scrollTop=container.scrollHeight;
+                                    }
+
+                                    setHasNewMessage(false);
+                                    await markAsRead(roomId);
+                                    onReadRoom(roomId);
+                                }}    
+                            >
+                                새 메시지 ↓
+                            </button>
+                        )
+                }
                 <div className='chat-input-area'>
                     <form className='chat-input-form'
                         onSubmit={(e)=>{
