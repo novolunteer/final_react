@@ -226,6 +226,7 @@
 }
 
 .chat-room-header {
+  position: relative;
   padding: 18px 22px;
   border-bottom: 1px solid #e5e7eb;
   background-color: #ffffff;
@@ -237,10 +238,16 @@
 }
 
 .chat-room-header-title-wrap {
-  min-width: 0;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+
+  max-width: 60%; /* 너무 길어지면 잘리게 */
+  pointer-events: none;
 }
 
 .chat-room-header-title {
@@ -248,15 +255,19 @@
   font-size: 18px;
   font-weight: 700;
   color: #111827;
+
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  text-align: center;
 }
 
 .chat-room-header-modal {
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  z-index: 1;
 }
 
 .chat-room-participant-btn {
@@ -303,6 +314,35 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+.chat-system-message-row {
+  display: flex;
+  justify-content: center;
+  margin: 2px 0;
+}
+
+.chat-system-message {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 72%;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background-color: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: center;
+  word-break: keep-all;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.chat-system-message-row + .chat-message-row,
+.chat-message-row + .chat-system-message-row {
+  margin-top: -4px;
 }
 
 .chat-message-row {
@@ -897,5 +937,295 @@
 }
 
 .participantModalBody::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+/* 채팅방 헤더 왼쪽 버튼 영역 */
+.chat-room-header-leave {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.chat-room-leave-btn {
+  border: 1px solid #fecaca;
+  background-color: #fef2f2;
+  color: #dc2626;
+
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chat-room-leave-btn:hover {
+  background-color: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+.chat-room-leave-btn:active {
+  transform: scale(0.98);
+}
+
+.chat-room-leave-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
+/* 참가자 모달 푸터 */
+.participantModalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 20px;
+  border-top: 1px solid #e5e7eb;
+  background-color: #ffffff;
+}
+
+.chat-room-open-invite-btn {
+  border: none;
+  background-color: #2563eb;
+  color: #ffffff;
+
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chat-room-open-invite-btn:hover {
+  background-color: #1d4ed8;
+}
+
+.chat-room-open-invite-btn:active {
+  transform: scale(0.98);
+}
+
+.chat-room-open-invite-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+/* 초대 모달 */
+.inviteModalOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(17, 24, 39, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 24px;
+}
+
+.inviteModalContent {
+  width: 100%;
+  max-width: 460px;
+  max-height: 82vh;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.inviteModalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #ffffff;
+}
+
+.inviteModalHeader h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.inviteModalCloseBtn {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 8px;
+  background-color: transparent;
+  color: #6b7280;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.inviteModalCloseBtn:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+.inviteModalBody {
+  padding: 14px;
+  overflow-y: auto;
+  background-color: #f9fafb;
+}
+
+.inviteEmptyText {
+  margin: 0;
+  padding: 36px 16px;
+  text-align: center;
+  font-size: 14px;
+  color: #6b7280;
+  background-color: #ffffff;
+  border: 1px dashed #d1d5db;
+  border-radius: 10px;
+}
+
+.inviteStaffItem {
+  display: block;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.inviteStaffItem:last-child {
+  margin-bottom: 0;
+}
+
+.inviteStaffLeft {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  padding: 14px 16px;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+
+  transition: all 0.2s ease;
+}
+
+.inviteStaffItem:hover .inviteStaffLeft {
+  background-color: #f8fafc;
+  border-color: #dbe3ef;
+}
+
+.inviteStaffItem input[type="checkbox"] {
+  margin-top: 2px;
+  width: 16px;
+  height: 16px;
+  accent-color: #2563eb;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.inviteStaffInfo {
+  min-width: 0;
+  flex: 1;
+}
+
+.inviteStaffName {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inviteStaffMeta {
+  margin: 0;
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.inviteModalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 20px;
+  border-top: 1px solid #e5e7eb;
+  background-color: #ffffff;
+}
+
+.inviteBackBtn,
+.inviteSubmitBtn {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.inviteBackBtn {
+  border: 1px solid #d1d5db;
+  background-color: #ffffff;
+  color: #374151;
+}
+
+.inviteBackBtn:hover {
+  background-color: #f9fafb;
+}
+
+.inviteSubmitBtn {
+  border: none;
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+.inviteSubmitBtn:hover {
+  background-color: #1d4ed8;
+}
+
+.inviteSubmitBtn:active,
+.inviteBackBtn:active {
+  transform: scale(0.98);
+}
+
+.inviteBackBtn:focus,
+.inviteSubmitBtn:focus {
+  outline: none;
+}
+
+.inviteSubmitBtn:focus {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.inviteBackBtn:focus {
+  box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.12);
+}
+
+/* 초대 모달 스크롤 */
+.inviteModalBody::-webkit-scrollbar {
+  width: 8px;
+}
+
+.inviteModalBody::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 999px;
+}
+
+.inviteModalBody::-webkit-scrollbar-track {
   background-color: transparent;
 }

@@ -38,3 +38,19 @@ export const getStaffList=async (keyword) => {
     });
     return res.data;
 }
+
+export const getStaffListForInvite=async (roomId) => {
+    const res=await jwtAxios.get(`${host}/room/${roomId}/invite/staff`);
+    return res.data;
+}
+
+export const inviteStaff=async (roomId, staffIds) => {
+    const res=await jwtAxios.post(`${host}/room/${roomId}/invite`, staffIds);
+
+    return res.data;
+}
+
+export const leaveChatRoom=async (roomId) => {
+    const res=await jwtAxios.delete(`${host}/room/${roomId}/leave`);
+    return res.data;
+}

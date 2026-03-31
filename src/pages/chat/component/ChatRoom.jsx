@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { chatRoomDetail, markAsRead } from '../../../api/chatApi';
+import { chatRoomDetail, getStaffListForInvite, inviteStaff, leaveChatRoom, markAsRead } from '../../../api/chatApi';
 
-const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
+const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom }) => {
   const [room, setRoom]=useState(null)
   const [messageSlice, setMessageSlice]=useState({
     messages:[],
@@ -15,7 +15,9 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
   const [hasNewMessage, setHasNewMessage]=useState(false);
   const [participants, setParticipants]=useState([]);
   const [openParticipantModal, setOpenParticipantModal]=useState(false);
-
+  const [openInviteModal, setOpenInviteModal]=useState(false);
+  const [inviteStaffList, setInviteStaffList]=useState([]);
+  const [selectedStaffIds, setSelectedStaffIds]=useState([]);
 
   const subscriptionRef=useRef(null);
   const readSubscriptionRef=useRef(null);
@@ -23,6 +25,8 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
   const firstLoadRef=useRef(true);
 
   const userId=Number(sessionStorage.getItem("userId"));
+
+  const isGroup=room?.roomType === 'GROUP';
 
   const applyReadStatus=(readStatus)=>{
     setMessageSlice(prev => ({
@@ -50,6 +54,13 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
         })
     }));
   };
+
+  useEffect(() => {
+        setSelectedStaffIds([]);
+        setInviteStaffList([]);
+        setOpenParticipantModal(false);
+        setOpenInviteModal(false);
+  }, [roomId]);
   
   useEffect(()=>{
     if(!roomId){
@@ -242,6 +253,77 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
     return container.scrollHeight - container.scrollTop - container.clientHeight <= 80;
   }
 
+  const handleOpenInviteModal=async() => {
+    try{
+        const data=await getStaffListForInvite(roomId);
+
+        setInviteStaffList(data);
+        setOpenParticipantModal(false);
+        setOpenInviteModal(true);
+    } catch(error) {
+        console.log(error);
+        alert("초대 가능한 직원 목록 조회 실패!");
+    } 
+  }
+
+  const handleToggleInvite=(targetUserId) => {
+    setSelectedStaffIds(prev => 
+        prev.includes(targetUserId)
+        ? prev.filter(id => id !== targetUserId)
+        : [...prev, targetUserId]
+    );
+  };
+
+  const handleInviteStaff=async() => {
+    if(selectedStaffIds.length === 0){
+        alert("초대할 직원을 선택하세요.");
+        return;
+    }
+
+    try{
+        await inviteStaff(roomId, selectedStaffIds);
+        alert("직원 초대가 완료되었습니다.");
+
+        setSelectedStaffIds([]);
+        setOpenInviteModal(false);
+    }catch(error){
+        console.log(error);
+        alert("직원 초대 실패!");
+        return;
+    }
+
+    try{
+        const data=await chatRoomDetail({
+            roomId:roomId,
+            cursor:null
+        });
+
+        setRoom(data.room);
+        setParticipants(data.participants ?? []);
+        setMessageSlice(data.messages);
+    }catch(error){
+        console.log(error);
+        alert("채팅방 정보를 다시 불러오지 못했습니다.");
+    }
+  };
+
+  const handleLeaveRoom=async()=>{
+    const ok=window.confirm("채팅방에서 퇴장하시겠습니까?");
+    if(!ok) return;
+
+    try{
+        const data=await leaveChatRoom(roomId);
+        alert("채팅방에서 퇴장했습니다.");
+
+        if(onLeaveRoom){
+            onLeaveRoom();
+        }
+    }catch(error){
+        console.log(error);
+        alert("채팅방 퇴장 실패!");
+    }
+  }
+
   if(!roomId){
     return <div className='chat-room-empty'>
         <div className='chat-room-empty-box'>
@@ -319,10 +401,71 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
                         ))
                     }
                 </div>
+                <div className='participantModalFooter'>
+                    {
+                        isGroup && (
+                            <button onClick={handleOpenInviteModal}
+                                className='chat-room-open-invite-btn'>
+                                초대하기
+                            </button>
+                        )
+                    }
+                </div>
             </div>
         </div>
     );
   };
+
+  const InviteModal=({ inviteStaffList, selectedStaffIds, onToggleStaff,
+        onInvite, onClose, onBack
+   }) => {
+    return (
+        <div className='inviteModalOverlay' onClick={onClose}>
+            <div className='inviteModalContent' onClick={(e) => e.stopPropagation()}>
+                <div className='inviteModalHeader'>
+                    <h3>직원 초대</h3>
+                    <button className='inviteModalCloseBtn' onClick={onClose}>✕</button>
+                </div>
+
+                <div className='inviteModalBody'>
+                    {
+                        inviteStaffList.length === 0 ? (
+                            <p className='inviteEmptyText'>초대 가능한 직원이 없습니다.</p>
+                        ) : (
+                            inviteStaffList.map((staff) => (
+                                <label key={staff.userId} className='inviteStaffItem'>
+                                    <div className='inviteStaffLeft'>
+                                        <input type='checkbox'
+                                            checked={selectedStaffIds.includes(staff.userId)}
+                                            onChange={() => onToggleStaff(staff.userId)}
+                                        />
+                                        <div className='inviteStaffInfo'>
+                                            <p className='inviteStaffName'>
+                                                {staff.username}
+                                            </p>
+                                            <p className='inviteStaffMeta'>
+                                                {staff.department} {staff.role ? `/ ${staff.role}` : ''}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </label>
+                            ))
+                        )
+                    }
+                </div>
+
+                <div className='inviteModalFooter'>
+                    <button type='button' onClick={onBack} className='inviteBackBtn'>
+                        뒤로가기
+                    </button>
+                    <button type='button' onClick={onInvite} className='inviteSubmitBtn'>
+                        초대하기
+                    </button>
+                </div>
+            </div>
+        </div>
+    )
+  }
 
   return (
     <div className='chat-room-panel'>
@@ -330,6 +473,16 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
             userId && 
             <>
                 <div className='chat-room-header'>
+                    <div className='chat-room-header-leave'>
+                        {
+                            isGroup && (
+                                <button onClick={handleLeaveRoom}
+                                    className='chat-room-leave-btn'>
+                                    나가기
+                                </button>
+                            )
+                        }
+                    </div>
                     <div className='chat-room-header-title-wrap'>
                         <p className='chat-room-header-title'>
                             {room.customRoomName ? room.customRoomName:room.roomName}
@@ -347,6 +500,16 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
                     {
                         orderedMessages != null &&
                         orderedMessages.map(m => {
+                            if (m.messageType === 'SYSTEM') {
+                                return (
+                                    <div key={m.messageId} className='chat-system-message-row'>
+                                        <div className='chat-system-message'>
+                                            {m.content}
+                                        </div>
+                                    </div>
+                                );
+                            }
+
                             const isMine=m.senderId === userId;
 
                             return (
@@ -414,6 +577,25 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
             openParticipantModal && (
                 <ParticipantModal participants={participants} userId={userId}
                     onClose={()=>setOpenParticipantModal(false)}/>
+            )
+        }
+        {
+            openInviteModal && (
+                <InviteModal
+                    inviteStaffList={inviteStaffList}
+                    selectedStaffIds={selectedStaffIds}
+                    onToggleStaff={handleToggleInvite}
+                    onInvite={handleInviteStaff}
+                    onClose={() => {
+                        setSelectedStaffIds([]);
+                        setOpenInviteModal(false);
+                    }}
+                    onBack={() => {
+                        setSelectedStaffIds([]);
+                        setOpenInviteModal(false);
+                        setOpenParticipantModal(true);
+                    }}
+                />
             )
         }
     </div>

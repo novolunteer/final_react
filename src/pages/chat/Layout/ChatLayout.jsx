@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import ChatRoomList from '../component/ChatRoomList'
 import ChatRoom from '../component/ChatRoom'
 import "./chatLayout.css"
@@ -16,21 +16,27 @@ const ChatLayout = () => {
   const accessToken=sessionStorage.getItem("accessToken");
   const userId=useSelector(state=>state.auth.userId);
 
-  useEffect(()=>{
-    const getRooms=async()=>{
+  const getRooms=useCallback(
+    async()=>{
         try{
             const roomRes=await chatRoomList();
             setRooms(roomRes);
 
             const staffRes=await getStaffList();
             setStaffList(staffRes);
+
+            if(selectedRoomId && !roomRes.some(room => room.roomId === selectedRoomId)){
+                setSelectedRoomId(null);
+            }
+
         }catch(error){
             console.log(error);
         }
-    };
+  },[selectedRoomId]);  
 
+  useEffect(()=>{
     getRooms();
-  },[]);
+  },[getRooms]);
 
   useEffect(()=>{
       if(!accessToken) return;
@@ -119,7 +125,27 @@ const ChatLayout = () => {
               clientRef.current=null;
           }
       };
-    }, [accessToken, selectedRoomId, userId]);
+    }, [accessToken, userId]);
+
+    useEffect(()=>{
+        const client=clientRef.current;
+        if(!client || !connected) return;
+
+        const roomListSubscription=client.subscribe(
+            '/user/queue/chat/list',
+            async (message) => {
+                const payload=JSON.parse(message.body);
+
+                if(payload.type === 'ROOM_LIST_REFRESH'){
+                    await getRooms();
+                }
+            }
+        );
+
+        return ()=>{
+            roomListSubscription.unsubscribe();
+        };
+    },[connected, getRooms])
 
     const handleReadRoom=(roomId)=>{
         setRooms(prevRooms => 
@@ -131,6 +157,17 @@ const ChatLayout = () => {
         );
     };
 
+    const handleLeaveRoomSuccess=async() => {
+        setSelectedRoomId(null);
+        
+        try{
+            const res=await chatRoomList();
+            setRooms(res);
+        }catch(error){
+            console.log(error);
+        }
+    }
+
   return (
     <div className='chatArea'>
         <div className='chatRoomListArea'>
@@ -140,7 +177,8 @@ const ChatLayout = () => {
         </div>
         <div className='chatRoomArea'>
             <ChatRoom roomId={selectedRoomId} onReadRoom={handleReadRoom}
-              clientRef={clientRef} connected={connected}/>
+              clientRef={clientRef} connected={connected}
+              onLeaveRoom={handleLeaveRoomSuccess}/>
         </div>
     </div>
   )
