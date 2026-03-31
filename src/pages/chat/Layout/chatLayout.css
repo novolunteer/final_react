@@ -229,6 +229,18 @@
   padding: 18px 22px;
   border-bottom: 1px solid #e5e7eb;
   background-color: #ffffff;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.chat-room-header-title-wrap {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .chat-room-header-title {
@@ -236,6 +248,52 @@
   font-size: 18px;
   font-weight: 700;
   color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-room-header-modal {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.chat-room-participant-btn {
+  border: 1px solid #dbe3ef;
+  background-color: #f8fafc;
+  color: #374151;
+
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chat-room-participant-btn:hover {
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.chat-room-participant-btn:active {
+  transform: scale(0.98);
+}
+
+.chat-room-participant-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 .chat-message-area {
@@ -692,5 +750,152 @@
 
 .chat-create-modal-body::-webkit-scrollbar-track,
 .chat-user-list::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+/* 참가자 모달 */
+.participantModalOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(17, 24, 39, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 24px;
+}
+
+.participantModalContent {
+  width: 100%;
+  max-width: 420px;
+  max-height: 80vh;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.participantModalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #ffffff;
+}
+
+.participantModalHeader h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.participantModalCloseBtn {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 8px;
+  background-color: transparent;
+  color: #6b7280;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.participantModalCloseBtn:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+.participantModalBody {
+  padding: 14px;
+  overflow-y: auto;
+  background-color: #f9fafb;
+}
+
+.participantItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+
+  transition: all 0.2s ease;
+}
+
+.participantItem:last-child {
+  margin-bottom: 0;
+}
+
+.participantItem:hover {
+  background-color: #f8fafc;
+  border-color: #dbe3ef;
+}
+
+.participantInfo {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.participantNameRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.participantName {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.participantMeBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.participantMeta {
+  margin: 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.participantModalBody::-webkit-scrollbar {
+  width: 8px;
+}
+
+.participantModalBody::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 999px;
+}
+
+.participantModalBody::-webkit-scrollbar-track {
   background-color: transparent;
 }

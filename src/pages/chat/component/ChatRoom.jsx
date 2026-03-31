@@ -13,6 +13,8 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
   const [loadingOld, setLoadingOld]=useState(false);
   const [content, setContent]=useState("");
   const [hasNewMessage, setHasNewMessage]=useState(false);
+  const [participants, setParticipants]=useState([]);
+  const [openParticipantModal, setOpenParticipantModal]=useState(false);
 
 
   const subscriptionRef=useRef(null);
@@ -52,6 +54,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
   useEffect(()=>{
     if(!roomId){
         setRoom(null);
+        setParticipants([]);
         setMessageSlice({
             messages:[],
             hasNext:false,
@@ -73,6 +76,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
             });
 
             setRoom(data.room);
+            setParticipants(data.participants ?? []);
             setMessageSlice(data.messages);
             onReadRoom(roomId);
             setHasNewMessage(false);
@@ -287,15 +291,56 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
     return true;
   }
 
+  const ParticipantModal=({participants, userId, onClose}) => {
+    return (
+        <div className='participantModalOverlay' onClick={onClose}>
+            <div className='participantModalContent' onClick={(e)=>e.stopPropagation()}>
+                <div className='participantModalHeader'>
+                    <h3>대화 상대</h3>
+                    <button className='participantModalCloseBtn' 
+                        onClick={onClose}>✕</button>
+                </div>
+                <div className='participantModalBody'>
+                    {
+                        participants.map((participant) => (
+                            <div key={participant.participantId}
+                                className='participantItem'>
+                                <div className='participantInfo'>
+                                    <div className='participantNameRow'>
+                                        <p className='participantName'>
+                                            {participant.userName}
+                                        </p>
+                                        {participant.userId === userId && (
+                                            <span className='participantMeBadge'>나</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    }
+                </div>
+            </div>
+        </div>
+    );
+  };
+
   return (
     <div className='chat-room-panel'>
         {
             userId && 
             <>
                 <div className='chat-room-header'>
-                    <p className='chat-room-header-title'>
-                        {room.customRoomName ? room.customRoomName:room.roomName}
-                    </p>
+                    <div className='chat-room-header-title-wrap'>
+                        <p className='chat-room-header-title'>
+                            {room.customRoomName ? room.customRoomName:room.roomName}
+                        </p>
+                    </div>
+                    <div className='chat-room-header-modal'>
+                        <button className='chat-room-participant-btn'
+                            onClick={()=>setOpenParticipantModal(true)}>
+                            {participants.length}명
+                        </button>
+                    </div>
                 </div>
                 <div className='chat-message-area' ref={messageAreaRef}
                     onScroll={handleScroll}>
@@ -364,6 +409,12 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
                     </form>
                 </div>
             </>
+        }
+        {
+            openParticipantModal && (
+                <ParticipantModal participants={participants} userId={userId}
+                    onClose={()=>setOpenParticipantModal(false)}/>
+            )
         }
     </div>
   )
