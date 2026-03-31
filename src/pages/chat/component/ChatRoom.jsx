@@ -11,8 +11,36 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
   const [content, setContent]=useState("")
 
   const subscriptionRef=useRef(null);
+  const readSubscriptionRef=useRef(null);
 
   const userId=Number(sessionStorage.getItem("userId"));
+
+  const applyReadStatus=(readStatus)=>{
+    setMessageSlice(prev => ({
+        ...prev,
+        messages: prev.messages.map(msg => {
+            //시스템 메시지는 제외
+            if(msg.messageType !== 'USER'){
+                return msg;
+            }
+
+            //읽은 당사자가 보낸 메시지 제외
+            if(msg.senderId === readStatus.userId){
+                return msg;
+            }
+
+            //읽은 범위 안에 있는 메시지면 unreadCount - 1
+            if(msg.messageId <= readStatus.lastReadMessageId){
+                return {
+                    ...msg,
+                    unreadCount : Math.max((msg.unreadCount ?? 0) - 1, 0)
+                };
+            }
+
+            return msg;
+        })
+    }));
+  };
   
   useEffect(()=>{
     if(!roomId){
@@ -34,8 +62,6 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
 
             setRoom(data.room)
             setMessageSlice(data.messages)
-
-            await markAsRead(roomId);
             onReadRoom(roomId);
 
         }catch(error){
@@ -58,6 +84,12 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
         subscriptionRef.current=null;
     }
 
+    if(readSubscriptionRef.current){
+        readSubscriptionRef.current.unsubscribe();
+        readSubscriptionRef.current = null;
+    }
+
+    //새 메시지 구독
     subscriptionRef.current=client.subscribe(`/topic/chat/room/${roomId}`,async (message) => {
         const newMessage=JSON.parse(message.body);
 
@@ -70,10 +102,23 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
         onReadRoom(roomId);
     });
 
+    //읽음 이벤트 구독
+    readSubscriptionRef.current=client.subscribe(`/topic/chat/room/${roomId}/read`,
+        (message) => {
+            const readStatus=JSON.parse(message.body);
+            applyReadStatus(readStatus);
+        }
+    );
+
     return ()=>{
         if(subscriptionRef.current){
             subscriptionRef.current.unsubscribe();
             subscriptionRef.current=null;
+        }
+
+        if(readSubscriptionRef.current){
+            readSubscriptionRef.current.unsubscribe();
+            readSubscriptionRef.current = null;
         }
     };
   }, [roomId, clientRef, connected]);
@@ -125,6 +170,21 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
     </div>
   }
 
+  const orderedMessages=[...messageSlice.messages].reverse();
+  const lastMyUserMessageId=[...orderedMessages].reverse()
+            .find(m => m.senderId === userId && m.messageType === 'USER')?.messageId ?? null;
+  const shouldShowUnreadCount=(message, isMine) => {
+    if(!isMine) return false;
+    if(message.messageType !== 'USER') return false;
+    if(!message.unreadCount || message.unreadCount <= 0) return false;
+
+    if(room?.roomType === "DIRECT"){
+        return message.messageId === lastMyUserMessageId;
+    }
+
+    return true;
+  }
+
   return (
     <div className='chat-room-panel'>
         {
@@ -137,8 +197,8 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
                 </div>
                 <div className='chat-message-area'>
                     {
-                        messageSlice.messages != null &&
-                        [...messageSlice.messages].reverse().map(m => {
+                        orderedMessages != null &&
+                        orderedMessages.map(m => {
                             const isMine=m.senderId === userId;
 
                             return (
@@ -148,8 +208,16 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom }) => {
                                                     : 'chat-message-row'}
                                     >
                                     {!isMine && <p className="chat-sender-name">{m.senderName}</p>}
-                                    <div className={isMine ? 'chat-bubble mine' : 'chat-bubble'}>
-                                      <p>{m.content}</p>
+
+                                    <div className='chat-message-content'>
+                                        {shouldShowUnreadCount(m, isMine) && (
+                                            <span className='chat-unread-count'>
+                                                {m.unreadCount}    
+                                            </span>
+                                        )}
+                                        <div className={isMine ? 'chat-bubble mine' : 'chat-bubble'}>
+                                            <p>{m.content}</p>
+                                        </div>
                                     </div>
                                 </div>
                             )

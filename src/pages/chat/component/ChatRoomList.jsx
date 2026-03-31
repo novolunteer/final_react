@@ -177,7 +177,7 @@ const ChatRoomList = ({ rooms, selectedRoomId, onSelectRoom, staffList, setStaff
                             <div className='chat-search-section'>
                                 <label className='chat-section-label'>직원 검색</label>
                                 <input type='text' className='chat-user-search-input'
-                                    placeholder='이름을 검색하세요' value={keyword}
+                                    placeholder='이름, 부서, 직업으로 검색하세요' value={keyword}
                                     onChange={(e)=>setKeyword(e.target.value)}/>
                             </div>
                             <div className='chat-selected-section'>
