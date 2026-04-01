@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from 'react'
 
-const StaffScheduleForm = ({formData,
-    setFromData,
+const StaffScheduleForm = ({
+    formData,
+    setFormData,
     onSubmit,
+    onClose,
     departmentList,
     staffList,
     scheduleTypeList,
@@ -20,7 +22,7 @@ const StaffScheduleForm = ({formData,
 
     const handleChange=(e)=>{
         const {name,value} = e.target;
-        setFromData((prev)=>({
+        setFormData((prev)=>({
             ...prev,
             [name]:value,
         }));
