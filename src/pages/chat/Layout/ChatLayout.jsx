@@ -4,7 +4,6 @@ import ChatRoom from '../component/ChatRoom'
 import "./chatLayout.css"
 import { Client } from '@stomp/stompjs'
 import { chatRoomList, getStaffList } from '../../../api/chatApi'
-import { useSelector } from 'react-redux'
 
 const ChatLayout = () => {
   const [selectedRoomId, setSelectedRoomId]=useState(null);
@@ -14,7 +13,6 @@ const ChatLayout = () => {
 
   const clientRef=useRef(null);
   const accessToken=sessionStorage.getItem("accessToken");
-  const userId=useSelector(state=>state.auth.userId);
 
   const getRooms=useCallback(
     async()=>{
@@ -55,52 +53,6 @@ const ChatLayout = () => {
       client.onConnect = () => {
         console.log("WEBSOCKET_CONNECTED");
         setConnected(true);
-
-        client.subscribe(`/topic/chat/list/${userId}`,(message)=>{
-            const dto=JSON.parse(message.body);
-            console.log("LIST MESSAGE => ", dto);
-
-            setRooms(prevRooms => {
-                const exists = prevRooms.some(
-                    room => Number(room.roomId) === Number(dto.roomId)
-                );
-
-                if (!exists) {
-                    return prevRooms;
-                }
-
-                const updatedRooms=prevRooms.map(room => {
-                    if(Number(room.roomId) === Number(dto.roomId)){
-                        const isCurrentRoom=Number(selectedRoomId) === Number(dto.roomId);
-
-                        return {
-                            ...room,
-                            lastMessageText: dto.content,
-                            lastMessageAt: dto.createdAt,
-                            unreadCount: isCurrentRoom ? 0 : (room.unreadCount || 0) + 1
-                        };
-                    }
-
-                    return room;
-                });
-
-                updatedRooms.sort(
-                    (a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt)
-                );
-
-                return [...updatedRooms];
-            });
-        });
-
-        client.subscribe(`/topic/chat/room-created/${userId}`, (message) => {
-            const room=JSON.parse(message.body);
-
-            setRooms(prev => {
-                const exists=prev.some(r => Number(r.roomId) === Number(room.roomId));
-                if(exists) return prev;
-                return [room, ...prev];
-            });
-        });
       };
   
       client.onStompError = (error) => {
@@ -124,8 +76,10 @@ const ChatLayout = () => {
               clientRef.current.deactivate();
               clientRef.current=null;
           }
+
+          setConnected(false);
       };
-    }, [accessToken, userId]);
+    }, [accessToken]);
 
     useEffect(()=>{
         const client=clientRef.current;
@@ -159,13 +113,7 @@ const ChatLayout = () => {
 
     const handleLeaveRoomSuccess=async() => {
         setSelectedRoomId(null);
-        
-        try{
-            const res=await chatRoomList();
-            setRooms(res);
-        }catch(error){
-            console.log(error);
-        }
+        await getRooms();
     }
 
   return (
