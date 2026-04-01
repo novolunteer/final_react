@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react'
 import RegisterButton from '../../components/common/RegisterButton'
 import SearchBar from '../../components/common/SearchBar'
 import CommonTable from '../../components/common/CommonTable'
-import { getSchedulePolicyList, registerSchedulePolicy, updateSchedulePolicy } from '../../api/schedulePolicyApi'
+import { getSchedulePolicyList, registerSchedulePolicy, updateSchedulePolicy } from '../../api/hr/schedulePolicyApi'
 import CommonModal from '../../components/common/CommonModal'
-import SchedulePolicyForm from '../../components/operation/SchedulePolicyForm'
+import SchedulePolicyForm from '../../components/form/SchedulePolicyForm'
 
 
 

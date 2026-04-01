@@ -16,8 +16,7 @@ const Sidebar = () => {
       children: [
         { path: "/staff", label: "직원관리" },
         { path: "/department", label: "부서관리" },
-        { path: "/work-schedule", label: "근무스케줄 관리" },
-        { path: "/attendance", label: "근태관리" },
+        { path: "/staff_schedule", label: "근무스케줄 관리" },
       ],
     },
     {
@@ -34,7 +33,6 @@ const Sidebar = () => {
       ],
     },
 
-    { path: "/statistics", label: "통계" },
     { path: "/communication", label: "커뮤니케이션" },
     { path: "/notification", label: "알림" },
     { path: "/login", label: "로그인" },

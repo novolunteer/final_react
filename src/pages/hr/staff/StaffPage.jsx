@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import StaffForm from "../../../components/staff/StaffForm";
+import StaffForm from "../../../components/form/StaffForm";
 import CommonModal from "../../../components/common/CommonModal";
 import CommonTable from "../../../components/common/CommonTable";
 import RegisterButton from "../../../components/common/RegisterButton";
@@ -9,7 +9,7 @@ import {
   registerStaff,
   updateStaff,
   deleteStaff,
-} from "../../../api/staffApi";
+} from "../../../api/hr/staffApi";
 
 const StaffPage = () => {
   const [staffList, setStaffList] = useState([]);

@@ -8,8 +8,8 @@ import{
     registerDepartment,
     updateDepartment,
     deleteDepartment
-} from "../../../api/departmentApi";
-import DepartmentForm from '../../../components/department/DepartmentForm'
+} from "../../../api/hr/departmentApi";
+import DepartmentForm from '../../../components/Form/DepartmentForm'
 
 
 const DepartmentPage = () => {
