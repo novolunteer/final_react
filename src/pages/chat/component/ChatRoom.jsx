@@ -29,6 +29,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
   const firstLoadRef=useRef(true);
   const syncingReadRef=useRef(false);
   const pendingReadSyncRef=useRef(false);
+  const popoverRef=useRef(null);
 
   const userId=Number(sessionStorage.getItem("userId"));
 
@@ -113,6 +114,22 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
     getChatRoomDetail();
 
   },[roomId]);
+
+  useEffect(()=>{
+    if(openPopId === null) return;
+
+    const handleClickOutside=(e)=>{
+        if(popoverRef.current && !popoverRef.current.contains(e.target)){
+            setOpenPopId(null);
+        }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return ()=>{
+        document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openPopId]);
 
   useEffect(()=>{
     if(!firstLoadRef.current) return;
@@ -598,7 +615,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                             setEditContent(e.target.value)
                         }}></textarea>
                 </div>
-                <div className='editMessagModalFooter'>
+                <div className='editMessageModalFooter'>
                     <button className='edit-cancel-btn'
                         onClick={onClose}
                     >취소</button>
@@ -675,19 +692,28 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                                                     {m.unreadCount}    
                                                 </span>
                                             )}
-                                            <div className={isMine ? 'chat-bubble mine' : 'chat-bubble'}>
+                                            <div className={`${isMine ? 'chat-bubble mine' : 'chat-bubble'} ${m.isDeleted ? 'deleted' : ''}`}>
                                                 {
                                                     m.parentMessageId && (
-                                                        <div>
-                                                            <p>{m.parentMessageContent}</p>
+                                                        <div className='reply-preview'>
+                                                            <p className='reply-preview-sender'>
+                                                                {m.parentMessageUserName ?? '알 수 없음'}
+                                                            </p>
+                                                            <p className='reply-preview-text'>
+                                                                {m.isParentMessageDeleted ? '삭제된 메시지입니다.' 
+                                                                    : m.parentMessageContent}
+                                                            </p>
                                                         </div>
                                                     )
                                                 }
-                                                <p>{m.isDeleted? '삭제된 메시지입니다.' 
-                                                        : m.content}</p>
+                                                <p className='chat-message-text'>
+                                                    {m.isDeleted? '삭제된 메시지입니다.' 
+                                                        : m.content}
+                                                </p>
                                             </div>
                                             <button className='bubble-menu-btn'
-                                                onClick={()=>{
+                                                onClick={(e)=>{
+                                                    e.stopPropagation();
                                                     setOpenPopId(prev => prev === m.messageId
                                                             ? null : m.messageId
                                                     );
@@ -698,7 +724,10 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                                         </div>
                                         {
                                             openPopId === m.messageId && (
-                                                <div className='chat-bubble-pop'>
+                                                <div className='chat-bubble-pop'
+                                                    ref={popoverRef}
+                                                    onClick={(e)=> e.stopPropagation()}
+                                                >
                                                     {
                                                         canReply && (
                                                             <button type='button'
