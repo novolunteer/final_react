@@ -20,7 +20,7 @@ const ChatLayout = () => {
         try{
             const res=await chatRoomList();
 
-            const roomRes=res.map(room => 
+            const roomRes=res.result.map(room => 
                 Number(room.roomId) === Number(selectedRoomId)
                 ? {...room, unreadCount:0}
                 : room
@@ -29,7 +29,7 @@ const ChatLayout = () => {
             setRooms(roomRes);
 
             const staffRes=await getStaffList();
-            setStaffList(staffRes);
+            setStaffList(staffRes.result);
 
             if(selectedRoomId && !roomRes.some(room => room.roomId === selectedRoomId)){
                 setSelectedRoomId(null);

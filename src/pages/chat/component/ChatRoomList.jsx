@@ -15,7 +15,7 @@ const ChatRoomList = ({ rooms, selectedRoomId, onSelectRoom, staffList, setStaff
             const text=keyword.trim();
             const data=text ? await getStaffList(text) : await getStaffList();
 
-            setStaffList(data);
+            setStaffList(data.result);
         }catch(error){
             console.log(error);
         }
@@ -66,7 +66,7 @@ const ChatRoomList = ({ rooms, selectedRoomId, onSelectRoom, staffList, setStaff
             participantUserIds: participantUserIds
         };
         const res=await createChatRoom(data);
-        const room=res;
+        const room=res.result;
 
         setRooms(prev => {
             const exists=prev.some(r => Number(r.roomId) === Number(room.roomId));

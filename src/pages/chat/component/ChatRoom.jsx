@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { chatRoomDetail, getStaffListForInvite, inviteStaff, leaveChatRoom, markAsRead } from '../../../api/chatApi';
+import { chatRoomDetail, deleteMessage, editMessage, getStaffListForInvite, inviteStaff, leaveChatRoom, markAsRead } from '../../../api/chatApi';
 
 const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomRefresh }) => {
   const [room, setRoom]=useState(null)
@@ -18,6 +18,10 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
   const [openInviteModal, setOpenInviteModal]=useState(false);
   const [inviteStaffList, setInviteStaffList]=useState([]);
   const [selectedStaffIds, setSelectedStaffIds]=useState([]);
+  const [openPopId, setOpenPopId]=useState(null);
+  const [editContent, setEditContent]=useState("");
+  const [openEditModal, setOpenEditModal]=useState(false);
+  const [targetMessageId, setTargetMessageId]=useState(null);
 
   const subscriptionRef=useRef(null);
   const readSubscriptionRef=useRef(null);
@@ -92,9 +96,9 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                 cursor:null
             });
 
-            setRoom(data.room);
-            setParticipants(data.participants ?? []);
-            setMessageSlice(data.messages);
+            setRoom(data.result.room);
+            setParticipants(data.result.participants ?? []);
+            setMessageSlice(data.result.messages);
             onReadRoom(roomId);
             setHasNewMessage(false);
             firstLoadRef.current=true;
@@ -191,7 +195,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                     setMessageSlice(prev => ({
                         ...prev,
                         messages: prev.messages.map(prevMsg => {
-                            const freshMsg = (res.messages?.messages ?? [])
+                            const freshMsg = (res.result.messages?.messages ?? [])
                                 .find(msg => msg.messageId === prevMsg.messageId);
                             
                             return freshMsg
@@ -236,8 +240,8 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                 cursor: null
             });
 
-            setRoom(data.room);
-            setParticipants(data.participants ?? []);
+            setRoom(data.result.room);
+            setParticipants(data.result.participants ?? []);
         }catch (error) {
             console.log(error);
         }
@@ -294,7 +298,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
             cursor:messageSlice.nextCursor
         });
         
-        const olderSlice=data.messages;
+        const olderSlice=data.result.messages;
 
         setMessageSlice(prev => ({
             ...prev,
@@ -326,7 +330,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
     try{
         const data=await getStaffListForInvite(roomId);
 
-        setInviteStaffList(data);
+        setInviteStaffList(data.result);
         setOpenParticipantModal(false);
         setOpenInviteModal(true);
     } catch(error) {
@@ -367,8 +371,8 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
             cursor:null
         });
 
-        setRoom(data.room);
-        setParticipants(data.participants ?? []);
+        setRoom(data.result.room);
+        setParticipants(data.result.participants ?? []);
     }catch(error){
         console.log(error);
         alert("채팅방 정보를 다시 불러오지 못했습니다.");
@@ -535,6 +539,79 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
     )
   }
 
+  const updateMessageInState= (updateMessage) => {
+    setMessageSlice(prev => ({
+        ...prev,
+        messages:prev.messages.map(msg => 
+            msg.messageId === updateMessage.messageId
+            ? {...msg, ...updateMessage}
+            : msg
+        )
+    }));
+  };
+
+  const handleEditMessage=async(messageId) => {
+    try{
+        const res=await editMessage(messageId, editContent);
+        const editedMessage=res.result;
+
+        updateMessageInState(editedMessage);
+
+        setEditContent("");
+        setTargetMessageId(null);
+        setOpenEditModal(false);
+        setOpenPopId(null);
+    }catch(error){
+        console.log(error);
+    }
+  };
+
+  const handleDeleteMessage=async(messageId) => {
+    try{
+        const res=await deleteMessage(messageId);
+        const deletedMessage=res.result;
+
+        updateMessageInState(deletedMessage);
+    }catch(error){
+        console.log(error);
+    }
+  }
+
+  const editMessageModalClose=()=>{
+    setEditContent("");
+    setOpenEditModal(false);
+    setTargetMessageId(null);
+  }
+
+  const EditMessageModal=({ editContent, handleEditMessage, onClose }) => {
+    return (
+        <div className='editMessageModalOverlay' onClick={onClose}>
+            <div className='editMessageModalInner'
+                onClick={(e)=> e.stopPropagation()}>
+                <div className='editMessageModalHeader'>
+                    <p>메시지를 수정하세요.</p>
+                </div>
+                <div className='editMessageModalMain'>
+                    <textarea value={editContent}
+                        rows={3}
+                        onChange={(e)=>{
+                            setEditContent(e.target.value)
+                        }}></textarea>
+                </div>
+                <div className='editMessagModalFooter'>
+                    <button className='edit-cancel-btn'
+                        onClick={onClose}
+                    >취소</button>
+                    <button
+                        className='edit-confirm-btn'
+                        onClick={handleEditMessage}
+                    >확인</button>
+                </div>
+            </div>
+        </div>
+    )
+  }
+
   return (
     <div className='chat-room-panel'>
         {
@@ -578,7 +655,10 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                                 );
                             }
 
-                            const isMine=m.senderId === userId;
+                            const isMine=m.mine;
+                            const canEditOrDelete=m.mine && 
+                                !m.isDeleted && m.messageType !== 'SYSTEM';
+                            const canReply=!m.isDeleted;
 
                             return (
                                 <div key={m.messageId}
@@ -588,15 +668,75 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                                     >
                                     {!isMine && <p className="chat-sender-name">{m.senderName}</p>}
 
-                                    <div className='chat-message-content'>
-                                        {shouldShowUnreadCount(m, isMine) && (
-                                            <span className='chat-unread-count'>
-                                                {m.unreadCount}    
-                                            </span>
-                                        )}
-                                        <div className={isMine ? 'chat-bubble mine' : 'chat-bubble'}>
-                                            <p>{m.content}</p>
+                                    <div className='chat-message-wrap'>
+                                        <div className='chat-message-content'>
+                                            {shouldShowUnreadCount(m, isMine) && (
+                                                <span className='chat-unread-count'>
+                                                    {m.unreadCount}    
+                                                </span>
+                                            )}
+                                            <div className={isMine ? 'chat-bubble mine' : 'chat-bubble'}>
+                                                {
+                                                    m.parentMessageId && (
+                                                        <div>
+                                                            <p>{m.parentMessageContent}</p>
+                                                        </div>
+                                                    )
+                                                }
+                                                <p>{m.isDeleted? '삭제된 메시지입니다.' 
+                                                        : m.content}</p>
+                                            </div>
+                                            <button className='bubble-menu-btn'
+                                                onClick={()=>{
+                                                    setOpenPopId(prev => prev === m.messageId
+                                                            ? null : m.messageId
+                                                    );
+                                                }}
+                                            >
+                                                ⋮
+                                            </button>
                                         </div>
+                                        {
+                                            openPopId === m.messageId && (
+                                                <div className='chat-bubble-pop'>
+                                                    {
+                                                        canReply && (
+                                                            <button type='button'
+                                                                className='reply-btn'>
+                                                                답장
+                                                            </button>
+                                                        )
+                                                    }
+                                                    {
+                                                        canEditOrDelete && (
+                                                            <>
+                                                                <button
+                                                                    type='button'
+                                                                    className='delete-btn'
+                                                                    onClick={()=>{
+                                                                        setTargetMessageId(m.messageId);
+                                                                    }}
+                                                                >
+                                                                        삭제
+                                                                </button>
+                                                                <button
+                                                                    type='button'
+                                                                    className='edit-btn'
+                                                                    onClick={()=>{
+                                                                        setEditContent(m.content);
+                                                                        setTargetMessageId(m.messageId);
+                                                                        setOpenEditModal(true);
+                                                                        setOpenPopId(null);
+                                                                    }}
+                                                                >
+                                                                        수정
+                                                                </button>
+                                                            </>
+                                                        )
+                                                    }
+                                                </div>
+                                            )
+                                        }
                                     </div>
                                 </div>
                             )
@@ -663,6 +803,15 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                         setOpenInviteModal(false);
                         setOpenParticipantModal(true);
                     }}
+                />
+            )
+        }
+        {
+            openEditModal && (
+                <EditMessageModal
+                    editContent={editContent}
+                    handleEditMessage={()=>handleEditMessage(targetMessageId)}
+                    onClose={editMessageModalClose}
                 />
             )
         }
