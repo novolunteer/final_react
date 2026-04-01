@@ -10,14 +10,22 @@ const ChatLayout = () => {
   const [connected, setConnected]=useState(false);
   const [rooms, setRooms]=useState([]);
   const [staffList, setStaffList]=useState([]);
+  const [webSocketReady, setWebSocketReady]=useState(false);
+  const [roomRefresh, setRoomRefresh]=useState(0);
 
   const clientRef=useRef(null);
-  const accessToken=sessionStorage.getItem("accessToken");
 
   const getRooms=useCallback(
     async()=>{
         try{
-            const roomRes=await chatRoomList();
+            const res=await chatRoomList();
+
+            const roomRes=res.map(room => 
+                Number(room.roomId) === Number(selectedRoomId)
+                ? {...room, unreadCount:0}
+                : room
+            );
+
             setRooms(roomRes);
 
             const staffRes=await getStaffList();
@@ -27,6 +35,7 @@ const ChatLayout = () => {
                 setSelectedRoomId(null);
             }
 
+            setWebSocketReady(true);
         }catch(error){
             console.log(error);
         }
@@ -37,6 +46,9 @@ const ChatLayout = () => {
   },[getRooms]);
 
   useEffect(()=>{
+      if(!webSocketReady) return;  
+
+      const accessToken=sessionStorage.getItem("accessToken");
       if(!accessToken) return;
   
       const client=new Client({
@@ -79,7 +91,7 @@ const ChatLayout = () => {
 
           setConnected(false);
       };
-    }, [accessToken]);
+    }, [webSocketReady]);
 
     useEffect(()=>{
         const client=clientRef.current;
@@ -90,8 +102,12 @@ const ChatLayout = () => {
             async (message) => {
                 const payload=JSON.parse(message.body);
 
-                if(payload.type === 'ROOM_LIST_REFRESH'){
+                if (payload.type === 'ROOM_LIST_REFRESH') {
                     await getRooms();
+
+                    if (Number(payload.roomId) === Number(selectedRoomId)) {
+                        setRoomRefresh(prev => prev + 1);
+                    }
                 }
             }
         );
@@ -99,7 +115,7 @@ const ChatLayout = () => {
         return ()=>{
             roomListSubscription.unsubscribe();
         };
-    },[connected, getRooms])
+    },[connected, getRooms, selectedRoomId])
 
     const handleReadRoom=(roomId)=>{
         setRooms(prevRooms => 
@@ -126,7 +142,8 @@ const ChatLayout = () => {
         <div className='chatRoomArea'>
             <ChatRoom roomId={selectedRoomId} onReadRoom={handleReadRoom}
               clientRef={clientRef} connected={connected}
-              onLeaveRoom={handleLeaveRoomSuccess}/>
+              onLeaveRoom={handleLeaveRoomSuccess}
+              roomRefresh={roomRefresh}/>
         </div>
     </div>
   )

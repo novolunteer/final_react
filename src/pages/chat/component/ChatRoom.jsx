@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { chatRoomDetail, getStaffListForInvite, inviteStaff, leaveChatRoom, markAsRead } from '../../../api/chatApi';
 
-const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom }) => {
+const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomRefresh }) => {
   const [room, setRoom]=useState(null)
   const [messageSlice, setMessageSlice]=useState({
     messages:[],
@@ -23,6 +23,8 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom }) => 
   const readSubscriptionRef=useRef(null);
   const messageAreaRef=useRef(null);
   const firstLoadRef=useRef(true);
+  const syncingReadRef=useRef(false);
+  const pendingReadSyncRef=useRef(false);
 
   const userId=Number(sessionStorage.getItem("userId"));
 
@@ -60,6 +62,8 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom }) => 
         setInviteStaffList([]);
         setOpenParticipantModal(false);
         setOpenInviteModal(false);
+        syncingReadRef.current=false;
+        pendingReadSyncRef.current=false;
   }, [roomId]);
   
   useEffect(()=>{
@@ -74,6 +78,8 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom }) => 
         setContent("");
         setHasNewMessage(false);
         firstLoadRef.current=true;
+        syncingReadRef.current=false;
+        pendingReadSyncRef.current=false;
         return;
     }
 
@@ -156,11 +162,53 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom }) => 
         }
     });
 
-    //읽음 이벤트 구독
-    readSubscriptionRef.current=client.subscribe(`/topic/chat/room/${roomId}/read`,
-        (message) => {
+    readSubscriptionRef.current = client.subscribe(
+        `/topic/chat/room/${roomId}/read`,
+        async (message) => {
             const readStatus=JSON.parse(message.body);
-            applyReadStatus(readStatus);
+
+            if(!isGroup) {
+                applyReadStatus(readStatus);
+                return;
+            }
+
+            if(syncingReadRef.current) {
+                pendingReadSyncRef.current=true;
+                return;
+            }
+
+            syncingReadRef.current=true;
+
+            try{
+                while(true){
+                    pendingReadSyncRef.current=false;
+
+                    const res=await chatRoomDetail({
+                        roomId,
+                        cursor:null
+                    });
+
+                    setMessageSlice(prev => ({
+                        ...prev,
+                        messages: prev.messages.map(prevMsg => {
+                            const freshMsg = (res.messages?.messages ?? [])
+                                .find(msg => msg.messageId === prevMsg.messageId);
+                            
+                            return freshMsg
+                                ? {...prevMsg, unreadCount: freshMsg.unreadCount}
+                                : prevMsg;
+                        })
+                    }));
+
+                    if(!pendingReadSyncRef.current){
+                        break;
+                    }
+                }
+            }catch(error){
+                console.log(error);
+            }finally{
+                syncingReadRef.current=false;
+            }
         }
     );
 
@@ -175,7 +223,28 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom }) => 
             readSubscriptionRef.current = null;
         }
     };
-  }, [roomId, clientRef, connected]);
+  }, [roomId, clientRef, connected, isGroup]);
+
+  useEffect(()=>{
+    if(!roomId) return;
+    if(roomRefresh === 0) return;
+
+    const reload = async () => {
+        try{
+            const data=await chatRoomDetail({
+                roomId:roomId,
+                cursor: null
+            });
+
+            setRoom(data.room);
+            setParticipants(data.participants ?? []);
+        }catch (error) {
+            console.log(error);
+        }
+    };
+
+    reload();
+  },[roomRefresh, roomId]);
 
   const sendMessage=()=>{
     const text=content.trim();
@@ -300,7 +369,6 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom }) => 
 
         setRoom(data.room);
         setParticipants(data.participants ?? []);
-        setMessageSlice(data.messages);
     }catch(error){
         console.log(error);
         alert("채팅방 정보를 다시 불러오지 못했습니다.");
@@ -312,7 +380,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom }) => 
     if(!ok) return;
 
     try{
-        const data=await leaveChatRoom(roomId);
+        await leaveChatRoom(roomId);
         alert("채팅방에서 퇴장했습니다.");
 
         if(onLeaveRoom){
