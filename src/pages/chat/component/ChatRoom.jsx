@@ -1,7 +1,135 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { chatRoomDetail, deleteMessage, editMessage, getStaffListForInvite, inviteStaff, leaveChatRoom, markAsRead } from '../../../api/chatApi';
+import { formatDate } from '@fullcalendar/common';
 
-const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomRefresh }) => {
+const EditMessageModal=({ editContent, handleEditMessage, onClose , setEditContent}) => {
+    return (
+        <div className='editMessageModalOverlay' onClick={onClose}>
+            <div className='editMessageModalInner'
+                onClick={(e)=> e.stopPropagation()}>
+                <div className='editMessageModalHeader'>
+                    <p>메시지를 수정하세요.</p>
+                </div>
+                <div className='editMessageModalMain'>
+                    <textarea value={editContent}
+                        rows={3}
+                        onChange={(e)=>{
+                            setEditContent(e.target.value)
+                        }}></textarea>
+                </div>
+                <div className='editMessageModalFooter'>
+                    <button className='edit-cancel-btn'
+                        onClick={onClose} type='button'
+                    >취소</button>
+                    <button type='button'
+                        className='edit-confirm-btn'
+                        onClick={handleEditMessage}
+                    >확인</button>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+const ParticipantModal=({participants, userId, onClose, isGroup, handleOpenInviteModal}) => {
+    return (
+        <div className='participantModalOverlay' onClick={onClose}>
+            <div className='participantModalContent' onClick={(e)=>e.stopPropagation()}>
+                <div className='participantModalHeader'>
+                    <h3>대화 상대</h3>
+                    <button className='participantModalCloseBtn' 
+                        onClick={onClose} type='button'>✕</button>
+                </div>
+                <div className='participantModalBody'>
+                    {
+                        participants.map((participant) => (
+                            <div key={participant.participantId}
+                                className='participantItem'>
+                                <div className='participantInfo'>
+                                    <div className='participantNameRow'>
+                                        <p className='participantName'>
+                                            {participant.userName}
+                                        </p>
+                                        {participant.userId === userId && (
+                                            <span className='participantMeBadge'>나</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    }
+                </div>
+                <div className='participantModalFooter'>
+                    {
+                        isGroup && (
+                            <button onClick={handleOpenInviteModal} type='button'
+                                className='chat-room-open-invite-btn'>
+                                초대하기
+                            </button>
+                        )
+                    }
+                </div>
+            </div>
+        </div>
+    );
+  };
+
+  const InviteModal=({ inviteStaffList, selectedStaffIds, onToggleStaff,
+        onInvite, onClose, onBack
+   }) => {
+    return (
+        <div className='inviteModalOverlay' onClick={onClose}>
+            <div className='inviteModalContent' onClick={(e) => e.stopPropagation()}>
+                <div className='inviteModalHeader'>
+                    <h3>직원 초대</h3>
+                    <button className='inviteModalCloseBtn' onClick={onClose}
+                        type='button'
+                    >✕</button>
+                </div>
+
+                <div className='inviteModalBody'>
+                    {
+                        inviteStaffList.length === 0 ? (
+                            <p className='inviteEmptyText'>초대 가능한 직원이 없습니다.</p>
+                        ) : (
+                            inviteStaffList.map((staff) => (
+                                <label key={staff.userId} className='inviteStaffItem'>
+                                    <div className='inviteStaffLeft'>
+                                        <input type='checkbox'
+                                            checked={selectedStaffIds.includes(staff.userId)}
+                                            onChange={() => onToggleStaff(staff.userId)}
+                                        />
+                                        <div className='inviteStaffInfo'>
+                                            <p className='inviteStaffName'>
+                                                {staff.username}
+                                            </p>
+                                            <p className='inviteStaffMeta'>
+                                                {staff.department} {staff.role ? `/ ${staff.role}` : ''}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </label>
+                            ))
+                        )
+                    }
+                </div>
+
+                <div className='inviteModalFooter'>
+                    <button type='button' onClick={onBack} className='inviteBackBtn'>
+                        뒤로가기
+                    </button>
+                    <button type='button' onClick={onInvite} className='inviteSubmitBtn'>
+                        초대하기
+                    </button>
+                </div>
+            </div>
+        </div>
+    )
+  }
+
+const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomRefresh, 
+    getRooms
+ }) => {
   const [room, setRoom]=useState(null)
   const [messageSlice, setMessageSlice]=useState({
     messages:[],
@@ -462,100 +590,6 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
     return true;
   }
 
-  const ParticipantModal=({participants, userId, onClose}) => {
-    return (
-        <div className='participantModalOverlay' onClick={onClose}>
-            <div className='participantModalContent' onClick={(e)=>e.stopPropagation()}>
-                <div className='participantModalHeader'>
-                    <h3>대화 상대</h3>
-                    <button className='participantModalCloseBtn' 
-                        onClick={onClose}>✕</button>
-                </div>
-                <div className='participantModalBody'>
-                    {
-                        participants.map((participant) => (
-                            <div key={participant.participantId}
-                                className='participantItem'>
-                                <div className='participantInfo'>
-                                    <div className='participantNameRow'>
-                                        <p className='participantName'>
-                                            {participant.userName}
-                                        </p>
-                                        {participant.userId === userId && (
-                                            <span className='participantMeBadge'>나</span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        ))
-                    }
-                </div>
-                <div className='participantModalFooter'>
-                    {
-                        isGroup && (
-                            <button onClick={handleOpenInviteModal}
-                                className='chat-room-open-invite-btn'>
-                                초대하기
-                            </button>
-                        )
-                    }
-                </div>
-            </div>
-        </div>
-    );
-  };
-
-  const InviteModal=({ inviteStaffList, selectedStaffIds, onToggleStaff,
-        onInvite, onClose, onBack
-   }) => {
-    return (
-        <div className='inviteModalOverlay' onClick={onClose}>
-            <div className='inviteModalContent' onClick={(e) => e.stopPropagation()}>
-                <div className='inviteModalHeader'>
-                    <h3>직원 초대</h3>
-                    <button className='inviteModalCloseBtn' onClick={onClose}>✕</button>
-                </div>
-
-                <div className='inviteModalBody'>
-                    {
-                        inviteStaffList.length === 0 ? (
-                            <p className='inviteEmptyText'>초대 가능한 직원이 없습니다.</p>
-                        ) : (
-                            inviteStaffList.map((staff) => (
-                                <label key={staff.userId} className='inviteStaffItem'>
-                                    <div className='inviteStaffLeft'>
-                                        <input type='checkbox'
-                                            checked={selectedStaffIds.includes(staff.userId)}
-                                            onChange={() => onToggleStaff(staff.userId)}
-                                        />
-                                        <div className='inviteStaffInfo'>
-                                            <p className='inviteStaffName'>
-                                                {staff.username}
-                                            </p>
-                                            <p className='inviteStaffMeta'>
-                                                {staff.department} {staff.role ? `/ ${staff.role}` : ''}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </label>
-                            ))
-                        )
-                    }
-                </div>
-
-                <div className='inviteModalFooter'>
-                    <button type='button' onClick={onBack} className='inviteBackBtn'>
-                        뒤로가기
-                    </button>
-                    <button type='button' onClick={onInvite} className='inviteSubmitBtn'>
-                        초대하기
-                    </button>
-                </div>
-            </div>
-        </div>
-    )
-  }
-
   const updateMessageInState= (updateMessage) => {
     setMessageSlice(prev => ({
         ...prev,
@@ -573,6 +607,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
         const editedMessage=res.result;
 
         updateMessageInState(editedMessage);
+        await getRooms();
 
         setEditContent("");
         setTargetMessageId(null);
@@ -600,34 +635,30 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
     setTargetMessageId(null);
   }
 
-  const EditMessageModal=({ editContent, handleEditMessage, onClose }) => {
-    return (
-        <div className='editMessageModalOverlay' onClick={onClose}>
-            <div className='editMessageModalInner'
-                onClick={(e)=> e.stopPropagation()}>
-                <div className='editMessageModalHeader'>
-                    <p>메시지를 수정하세요.</p>
-                </div>
-                <div className='editMessageModalMain'>
-                    <textarea value={editContent}
-                        rows={3}
-                        onChange={(e)=>{
-                            setEditContent(e.target.value)
-                        }}></textarea>
-                </div>
-                <div className='editMessageModalFooter'>
-                    <button className='edit-cancel-btn'
-                        onClick={onClose}
-                    >취소</button>
-                    <button
-                        className='edit-confirm-btn'
-                        onClick={handleEditMessage}
-                    >확인</button>
-                </div>
-            </div>
-        </div>
-    )
+  const shouldShowTime=(current, next) => {
+    if(!next) return true;
+
+    //보낸 사람이 다르면 표시
+    if(current.senderId !== next.senderId) return true;
+
+    //시간 차이 계산
+    const diff=(new Date(next.createdAt)) - (new Date(current.createdAt)) / 1000 / 60;
+
+    if(diff >= 1) return true;
+
+    return false;
   }
+
+  const shouldShowDate=(current, previous)=>{
+    const day1=new Date(current);
+    const day2=new Date(previous);
+
+    return (
+        day1.getFullYear() !== day2.getFullYear() ||
+        day1.getMonth() !== day2.getMonth() ||
+        day1.getDate() !== day2.getDate()
+    );
+  };
 
   return (
     <div className='chat-room-panel'>
@@ -638,7 +669,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                     <div className='chat-room-header-leave'>
                         {
                             isGroup && (
-                                <button onClick={handleLeaveRoom}
+                                <button onClick={handleLeaveRoom} type='button'
                                     className='chat-room-leave-btn'>
                                     나가기
                                 </button>
@@ -651,7 +682,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                         </p>
                     </div>
                     <div className='chat-room-header-modal'>
-                        <button className='chat-room-participant-btn'
+                        <button className='chat-room-participant-btn' type='button'
                             onClick={()=>setOpenParticipantModal(true)}>
                             {participants.length}명
                         </button>
@@ -661,7 +692,13 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                     onScroll={handleScroll}>
                     {
                         orderedMessages != null &&
-                        orderedMessages.map(m => {
+                        orderedMessages.map((m, idx) => {
+                            const next=orderedMessages[idx + 1];
+                            const previous=orderedMessages[idx - 1];
+
+                            const showDate= !previous 
+                                || shouldShowDate(m.createdAt, previous.createdAt);
+
                             if (m.messageType === 'SYSTEM') {
                                 return (
                                     <div key={m.messageId} className='chat-system-message-row'>
@@ -674,8 +711,17 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
 
                             const isMine=m.mine;
                             const canEditOrDelete=m.mine && 
-                                !m.isDeleted && m.messageType !== 'SYSTEM';
-                            const canReply=!m.isDeleted;
+                                !m.deleted && m.messageType !== 'SYSTEM';
+                            const canReply=!m.deleted;
+
+                            let content;
+                            if(m.deleted){
+                                content='삭제된 메시지입니다.';
+                            } else if(m.edited && !m.deleted){
+                                content=m.content + ' (수정됨)';
+                            } else {
+                                content=m.content;
+                            }
 
                             return (
                                 <div key={m.messageId}
@@ -683,44 +729,89 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                                                     ? 'chat-message-row mine' 
                                                     : 'chat-message-row'}
                                     >
+                                    {
+                                        showDate && (
+                                            <div className='chat-date-divider'>
+                                                {formatDate(m.createdAt)}
+                                            </div>
+                                        )
+                                    }    
                                     {!isMine && <p className="chat-sender-name">{m.senderName}</p>}
 
                                     <div className='chat-message-wrap'>
                                         <div className='chat-message-content'>
-                                            {shouldShowUnreadCount(m, isMine) && (
-                                                <span className='chat-unread-count'>
-                                                    {m.unreadCount}    
-                                                </span>
-                                            )}
-                                            <div className={`${isMine ? 'chat-bubble mine' : 'chat-bubble'} ${m.isDeleted ? 'deleted' : ''}`}>
+                                            <div className='chat-message-side'>
+                                                {shouldShowUnreadCount(m, isMine) && (
+                                                    <div
+                                                        className='chat-unread-box'
+                                                    >
+                                                        <span className='chat-unread-count'>
+                                                            {m.unreadCount}
+                                                        </span>
+                                                    </div>
+                                                )}
                                                 {
-                                                    m.parentMessageId && (
-                                                        <div className='reply-preview'>
-                                                            <p className='reply-preview-sender'>
-                                                                {m.parentMessageUserName ?? '알 수 없음'}
-                                                            </p>
-                                                            <p className='reply-preview-text'>
-                                                                {m.isParentMessageDeleted ? '삭제된 메시지입니다.' 
-                                                                    : m.parentMessageContent}
-                                                            </p>
+                                                    shouldShowTime(m, next) && (
+                                                        <div
+                                                            className='chat-time-box'
+                                                        >
+                                                            <span className='chat-time'>
+                                                                {formatTime(m.createdAt)}
+                                                            </span>
                                                         </div>
                                                     )
                                                 }
-                                                <p className='chat-message-text'>
-                                                    {m.isDeleted? '삭제된 메시지입니다.' 
-                                                        : m.content}
-                                                </p>
                                             </div>
-                                            <button className='bubble-menu-btn'
-                                                onClick={(e)=>{
-                                                    e.stopPropagation();
-                                                    setOpenPopId(prev => prev === m.messageId
-                                                            ? null : m.messageId
-                                                    );
-                                                }}
-                                            >
-                                                ⋮
-                                            </button>
+
+                                            <div className='chat-bubble-box'>
+                                                <div 
+                                                    className={`${isMine 
+                                                        ? 'chat-bubble mine' 
+                                                        : 'chat-bubble'} 
+                                                            ${m.deleted 
+                                                            ? 'deleted' 
+                                                            : ''}`
+                                                    }
+                                                >
+                                                    {m.parentMessageId && (
+                                                        <div className='reply-preview'>
+                                                            <p 
+                                                                className=
+                                                                    'reply-preview-sender'
+                                                            >
+                                                                {
+                                                                    m.parentMessageUserName
+                                                                    ?? '알 수 없음'
+                                                                }
+                                                            </p>
+                                                            <p className='reply-preview-text'>
+                                                                {m.parentMessageIsDeleted
+                                                                    ? '삭제된 메시지입니다.'
+                                                                    : m.parentMessageContent
+                                                                }
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                    <p className='chat-message-text'>
+                                                        {content}
+                                                    </p>
+                                                </div>
+
+                                                <button
+                                                    className='bubble-menu-btn'
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setOpenPopId(prev => 
+                                                            prev === m.messageId 
+                                                            ? null 
+                                                            : m.messageId);
+                                                        }
+                                                    }
+                                                    type='button'
+                                                >
+                                                    ⋮
+                                                </button>
+                                            </div>
                                         </div>
                                         {
                                             openPopId === m.messageId && (
@@ -813,7 +904,8 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
         {
             openParticipantModal && (
                 <ParticipantModal participants={participants} userId={userId}
-                    onClose={()=>setOpenParticipantModal(false)}/>
+                    onClose={()=>setOpenParticipantModal(false)}
+                    isGroup={isGroup} handleOpenInviteModal={handleOpenInviteModal}/>
             )
         }
         {
@@ -841,6 +933,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                     editContent={editContent}
                     handleEditMessage={()=>handleEditMessage(targetMessageId)}
                     onClose={editMessageModalClose}
+                    setEditContent={setEditContent}
                 />
             )
         }

@@ -60,6 +60,8 @@ export const deleteMessage=async(messageId) => {
 }
 
 export const editMessage=async(messageId, content) => {
-    const res=await jwtAxios.put(`${host}/edit/message/${messageId}`, content);
+    const res=await jwtAxios.put(`${host}/edit/message/${messageId}`, {
+        content:content
+    });
     return res.data;
 }
