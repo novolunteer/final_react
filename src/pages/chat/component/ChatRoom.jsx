@@ -2,6 +2,12 @@ import React, { useEffect, useRef, useState } from 'react'
 import { chatRoomDetail, deleteMessage, editMessage, getStaffListForInvite, inviteStaff, leaveChatRoom, markAsRead } from '../../../api/chatApi';
 import dayjs from 'dayjs';
 
+const ReplyModal=({ handleReply, onClose, setReplyContent, parentContent }) => {
+    return (
+        <div></div>
+    )
+}
+
 const EditMessageModal=({ editContent, handleEditMessage, onClose , setEditContent}) => {
     return (
         <div className='editMessageModalOverlay' onClick={onClose}>
@@ -150,9 +156,13 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
   const [editContent, setEditContent]=useState("");
   const [openEditModal, setOpenEditModal]=useState(false);
   const [targetMessageId, setTargetMessageId]=useState(null);
+  const [openReplyModal, setOpenReplyModal]=useState(false);
+  const [replyContent, setReplyContent]=useState("");
+  const [parentContent, setParentContent]=useState("");
 
   const subscriptionRef=useRef(null);
   const readSubscriptionRef=useRef(null);
+  const updateSubscriptionRef=useRef(null);
   const messageAreaRef=useRef(null);
   const firstLoadRef=useRef(true);
   const syncingReadRef=useRef(false);
@@ -277,7 +287,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
 
     if(subscriptionRef.current){
         subscriptionRef.current.unsubscribe();
-        subscriptionRef.current=null;
+        subscriptionRef.current = null;
     }
 
     if(readSubscriptionRef.current){
@@ -285,15 +295,25 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
         readSubscriptionRef.current = null;
     }
 
+    if(updateSubscriptionRef.current){
+        updateSubscriptionRef.current.unsubscribe();
+        updateSubscriptionRef.current = null;
+    }
+
     //새 메시지 구독
     subscriptionRef.current=client.subscribe(`/topic/chat/room/${roomId}`,async (message) => {
         const newMessage=JSON.parse(message.body);
         const nearBottom=isNearBottom();
-        const isMine=newMessage.senderId === userId;
+        const isMine=Number(newMessage.senderId) === Number(userId);
+
+        const result={
+            ...newMessage,
+            mine: isMine
+        }
 
         setMessageSlice(prev => ({
             ...prev,
-            messages:[...prev.messages, newMessage]
+            messages:[...prev.messages, result]
         }));
 
         if(nearBottom || isMine){
@@ -311,6 +331,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
         }
     });
 
+    //읽음 이벤트 구독
     readSubscriptionRef.current = client.subscribe(
         `/topic/chat/room/${roomId}/read`,
         async (message) => {
@@ -361,6 +382,20 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
         }
     );
 
+    //메시지 수정/삭제 구독
+    updateSubscriptionRef.current=client.subscribe(
+        `/user/queue/chat/room/${roomId}/message/update`,
+        async (message) => {
+            const payload=JSON.parse(message.body);
+
+            if(payload.result.lastMessage){
+                await getRooms();
+            }
+
+            updateMessageInState(payload.result);
+        }
+    );
+
     return ()=>{
         if(subscriptionRef.current){
             subscriptionRef.current.unsubscribe();
@@ -370,6 +405,10 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
         if(readSubscriptionRef.current){
             readSubscriptionRef.current.unsubscribe();
             readSubscriptionRef.current = null;
+        }
+        if(updateSubscriptionRef.current){
+            updateSubscriptionRef.current.unsubscribe();
+            updateSubscriptionRef.current=null;
         }
     };
   }, [roomId, clientRef, connected, isGroup]);
@@ -637,6 +676,10 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
     }
   }
 
+  const handleReply=async(messageId) => {
+    
+  }
+
   const editMessageModalClose=()=>{
     setEditContent("");
     setOpenEditModal(false);
@@ -717,7 +760,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                                 );
                             }
 
-                            const isMine=m.mine;
+                            const isMine=Number(m.senderId) === Number(userId);
                             const canEditOrDelete=m.mine && 
                                 !m.deleted && m.messageType !== 'SYSTEM';
                             const canReply=!m.deleted;
