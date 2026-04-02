@@ -397,10 +397,9 @@
 }
 
 .chat-message-content {
-  display: flex;
+  display: inline-flex;
   align-items: flex-end;
   gap: 6px;
-  width: auto;
   max-width: 100%;
 }
 
@@ -446,27 +445,30 @@
 .chat-message-side {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
   justify-content: flex-end;
+  align-items: flex-end;
   gap: 2px;
-  flex-shrink: 0;
-  min-width: 32px;
+  flex: 0 0 auto;
+  width: fit-content;
+  min-width: 0;
   margin-bottom: 2px;
+}
+
+/* 안 읽은 수 */
+.chat-unread-box,
+.chat-time-box {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: fit-content;
+  min-height: 14px;
 }
 
 .chat-message-row:not(.mine) .chat-message-side {
   align-items: flex-start;
 }
 
-/* 안 읽은 수 */
-.chat-unread-box {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  min-height: 14px;
-}
-
-.chat-message-row:not(.mine) .chat-unread-box {
+.chat-message-row:not(.mine) .chat-time-box {
   justify-content: flex-start;
 }
 
@@ -478,18 +480,6 @@
   white-space: nowrap;
   color: #2563eb;
   font-weight: 600;
-}
-
-/* 메시지 시간 */
-.chat-time-box {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  min-height: 14px;
-}
-
-.chat-message-row:not(.mine) .chat-time-box {
-  justify-content: flex-start;
 }
 
 .chat-time {

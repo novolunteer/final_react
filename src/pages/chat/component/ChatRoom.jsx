@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { chatRoomDetail, deleteMessage, editMessage, getStaffListForInvite, inviteStaff, leaveChatRoom, markAsRead } from '../../../api/chatApi';
-import { formatDate } from '@fullcalendar/common';
+import dayjs from 'dayjs';
 
 const EditMessageModal=({ editContent, handleEditMessage, onClose , setEditContent}) => {
     return (
@@ -619,11 +619,19 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
   };
 
   const handleDeleteMessage=async(messageId) => {
+    const ok=window.confirm("메시지를 삭제하시겠습니까?");
+    if(!ok) return;
+
+    const param=Number(messageId);
+
     try{
-        const res=await deleteMessage(messageId);
+        const res=await deleteMessage(param);
         const deletedMessage=res.result;
 
         updateMessageInState(deletedMessage);
+        await getRooms();
+
+        setOpenPopId(null);
     }catch(error){
         console.log(error);
     }
@@ -642,7 +650,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
     if(current.senderId !== next.senderId) return true;
 
     //시간 차이 계산
-    const diff=(new Date(next.createdAt)) - (new Date(current.createdAt)) / 1000 / 60;
+    const diff=(new Date(next.createdAt) - new Date(current.createdAt)) / 1000 / 60;
 
     if(diff >= 1) return true;
 
@@ -732,7 +740,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                                     {
                                         showDate && (
                                             <div className='chat-date-divider'>
-                                                {formatDate(m.createdAt)}
+                                                {dayjs(m.createdAt).format('YYYY년 M월 D일')}
                                             </div>
                                         )
                                     }    
@@ -740,78 +748,130 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
 
                                     <div className='chat-message-wrap'>
                                         <div className='chat-message-content'>
-                                            <div className='chat-message-side'>
-                                                {shouldShowUnreadCount(m, isMine) && (
-                                                    <div
-                                                        className='chat-unread-box'
-                                                    >
-                                                        <span className='chat-unread-count'>
-                                                            {m.unreadCount}
-                                                        </span>
+                                            {
+                                                isMine ? (
+                                                    <>
+                                                        <div className='chat-message-side'>
+                                                            {shouldShowUnreadCount(m, isMine) && (
+                                                                <div
+                                                                    className='chat-unread-box'
+                                                                >
+                                                                    <span className='chat-unread-count'>
+                                                                        {m.unreadCount}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                            {
+                                                                shouldShowTime(m, next) && (
+                                                                    <div
+                                                                        className='chat-time-box'
+                                                                    >
+                                                                        <span className='chat-time'>
+                                                                            {dayjs(m.createdAt).format('HH시 mm분')}
+                                                                        </span>
+                                                                    </div>
+                                                                )
+                                                            }
+                                                        </div>
+
+                                                        <div className='chat-bubble-box'>
+                                                            <div className={`${isMine ? 'chat-bubble mine' : 'chat-bubble'} 
+                                                                    ${m.deleted ? 'deleted' : ''}`}>
+                                                                {m.parentMessageId && (
+                                                                    <div className='reply-preview'>
+                                                                        <p className='reply-preview-sender'>
+                                                                            {
+                                                                                m.parentMessageUserName
+                                                                                ?? '알 수 없음'
+                                                                            }
+                                                                        </p>
+                                                                        <p className='reply-preview-text'>
+                                                                            {m.parentMessageIsDeleted ? '삭제된 메시지입니다.'
+                                                                                : m.parentMessageContent}
+                                                                        </p>
+                                                                    </div>
+                                                                )}
+                                                                <p className='chat-message-text'>
+                                                                    {content}
+                                                                </p>
+                                                            </div>
+
+                                                            {
+                                                                canEditOrDelete && (
+                                                                    <button
+                                                                        className='bubble-menu-btn'
+                                                                        onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setOpenPopId(prev => 
+                                                                            prev === m.messageId 
+                                                                            ? null 
+                                                                            : m.messageId);}}
+                                                                        type='button'>
+                                                                            ⋮
+                                                                    </button>
+                                                                )
+                                                            }
+                                                        </div>
+                                                    </>
+                                                )
+                                                :
+                                                (
+                                                <>
+                                                    <div className='chat-bubble-box'>
+                                                    <div 
+                                                        className={`${isMine ? 'chat-bubble mine' : 'chat-bubble'} 
+                                                            ${m.deleted ? 'deleted' : ''}`}>
+                                                        {m.parentMessageId && (
+                                                            <div className='reply-preview'>
+                                                                <p className='reply-preview-sender'>
+                                                                    {
+                                                                        m.parentMessageUserName ?? '알 수 없음'
+                                                                    }
+                                                                </p>
+                                                                <p className='reply-preview-text'>
+                                                                    {m.parentMessageIsDeleted
+                                                                        ? '삭제된 메시지입니다.'
+                                                                        : m.parentMessageContent
+                                                                    }
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                        <p className='chat-message-text'>
+                                                            {content}
+                                                        </p>
                                                     </div>
-                                                )}
-                                                {
-                                                    shouldShowTime(m, next) && (
-                                                        <div
-                                                            className='chat-time-box'
-                                                        >
+
+                                                    {
+                                                        canEditOrDelete && (
+                                                            <button
+                                                                className='bubble-menu-btn'
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setOpenPopId(prev => 
+                                                                        prev === m.messageId 
+                                                                        ? null 
+                                                                        : m.messageId);}}
+                                                                type='button'>
+                                                                    ⋮
+                                                            </button>
+                                                        )
+                                                    }
+                                                </div>
+
+                                                    <div className='chat-message-side'>
+                                                    {
+                                                        shouldShowTime(m, next) && (
+                                                            <div className='chat-time-box'>
                                                             <span className='chat-time'>
-                                                                {formatTime(m.createdAt)}
+                                                                {dayjs(m.createdAt).format('HH시 mm분')}
                                                             </span>
                                                         </div>
                                                     )
-                                                }
-                                            </div>
-
-                                            <div className='chat-bubble-box'>
-                                                <div 
-                                                    className={`${isMine 
-                                                        ? 'chat-bubble mine' 
-                                                        : 'chat-bubble'} 
-                                                            ${m.deleted 
-                                                            ? 'deleted' 
-                                                            : ''}`
                                                     }
-                                                >
-                                                    {m.parentMessageId && (
-                                                        <div className='reply-preview'>
-                                                            <p 
-                                                                className=
-                                                                    'reply-preview-sender'
-                                                            >
-                                                                {
-                                                                    m.parentMessageUserName
-                                                                    ?? '알 수 없음'
-                                                                }
-                                                            </p>
-                                                            <p className='reply-preview-text'>
-                                                                {m.parentMessageIsDeleted
-                                                                    ? '삭제된 메시지입니다.'
-                                                                    : m.parentMessageContent
-                                                                }
-                                                            </p>
-                                                        </div>
-                                                    )}
-                                                    <p className='chat-message-text'>
-                                                        {content}
-                                                    </p>
                                                 </div>
-
-                                                <button
-                                                    className='bubble-menu-btn'
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setOpenPopId(prev => 
-                                                            prev === m.messageId 
-                                                            ? null 
-                                                            : m.messageId);
-                                                        }
-                                                    }
-                                                    type='button'
-                                                >
-                                                    ⋮
-                                                </button>
-                                            </div>
+                                                </>
+                                                )
+                                            }
                                         </div>
                                         {
                                             openPopId === m.messageId && (
@@ -834,7 +894,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                                                                     type='button'
                                                                     className='delete-btn'
                                                                     onClick={()=>{
-                                                                        setTargetMessageId(m.messageId);
+                                                                        handleDeleteMessage(m.messageId);
                                                                     }}
                                                                 >
                                                                         삭제
