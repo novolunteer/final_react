@@ -557,6 +557,19 @@
   border-left-color: #d1d5db;
 }
 
+.chat-bubble.mine.deleted .reply-preview {
+  background-color: #f3f4f6;
+  border-left-color: #d1d5db;
+}
+
+.chat-bubble.mine.deleted .reply-preview-sender {
+  color: #1f2937;
+}
+
+.chat-bubble.mine.deleted .reply-preview-text {
+  color: #4b5563;
+}
+
 .reply-preview-sender {
   margin: 0 0 4px;
   font-size: 11px;
@@ -1510,6 +1523,158 @@
   transform: scale(0.98);
 }
 
+/* 답장 모달 */
+.replyModalOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(17, 24, 39, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1350;
+  padding: 24px;
+}
+
+.replyModalInner {
+  width: 100%;
+  max-width: 460px;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.replyModal-parentMessageContent {
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #ffffff;
+}
+
+.replyModal-parentLabel {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.replyModal-parentMessageContent textarea {
+  width: 100%;
+  min-height: 82px;
+  resize: none;
+  border: 1px solid #dbe3ef;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #4b5563;
+  background-color: #f8fafc;
+  box-sizing: border-box;
+  font-family: inherit;
+  outline: none;
+}
+
+.replyModal-parentMessageContent textarea:read-only {
+  cursor: default;
+}
+
+.replyModal-form-area {
+  background-color: #f9fafb;
+}
+
+.replyModal-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.replyModal-input-area {
+  padding: 18px 20px;
+}
+
+.replyModal-input-area textarea {
+  width: 100%;
+  min-height: 110px;
+  resize: vertical;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #111827;
+  background-color: #ffffff;
+  box-sizing: border-box;
+  font-family: inherit;
+  outline: none;
+}
+
+.replyModal-input-area textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.replyModal-input-area textarea::placeholder {
+  color: #9ca3af;
+}
+
+.replyModal-button-area {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 0 20px 16px;
+  background-color: #f9fafb;
+}
+
+.reply-cancel-btn,
+.reply-submit-btn {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reply-cancel-btn {
+  border: 1px solid #d1d5db;
+  background-color: #ffffff;
+  color: #374151;
+}
+
+.reply-cancel-btn:hover {
+  background-color: #f9fafb;
+}
+
+.reply-submit-btn {
+  border: none;
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+.reply-submit-btn:hover {
+  background-color: #1d4ed8;
+}
+
+.reply-cancel-btn:active,
+.reply-submit-btn:active {
+  transform: scale(0.98);
+}
+
+.reply-cancel-btn:focus,
+.reply-submit-btn:focus {
+  outline: none;
+}
+
+.reply-submit-btn:focus {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.reply-cancel-btn:focus {
+  box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.12);
+}
+
 /* 모바일 */
 @media (max-width: 768px) {
   .chat-message-wrap {
@@ -1529,6 +1694,10 @@
   }
 
   .editMessageModalInner {
+    max-width: 100%;
+  }
+
+    .replyModalInner {
     max-width: 100%;
   }
 }

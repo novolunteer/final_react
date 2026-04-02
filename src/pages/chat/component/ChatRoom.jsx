@@ -2,9 +2,39 @@ import React, { useEffect, useRef, useState } from 'react'
 import { chatRoomDetail, deleteMessage, editMessage, getStaffListForInvite, inviteStaff, leaveChatRoom, markAsRead } from '../../../api/chatApi';
 import dayjs from 'dayjs';
 
-const ReplyModal=({ handleReply, onClose, setReplyContent, parentContent }) => {
+const ReplyModal=({ handleReply, onClose, setReplyContent, parentContent, replyContent }) => {
     return (
-        <div></div>
+        <div className='replyModalOverlay' onClick={onClose}>
+            <div className='replyModalInner' onClick={(e)=> e.stopPropagation()}>
+                <div className='replyModal-parentMessageContent'>
+                    <p className='replyModal-parentLabel'>답장할 메시지</p>
+                    <textarea value={parentContent} rows={3} readOnly>
+                    </textarea>
+                </div>
+                <div className='replyModal-form-area'>
+                    <form className='replyModal-form'
+                        onSubmit={(e)=>{
+                            e.preventDefault();
+                            handleReply();
+                        }}>
+                        <div className='replyModal-input-area'>
+                            <textarea rows={3} value={replyContent}
+                                onChange={(e)=>setReplyContent(e.target.value)}></textarea>
+                        </div>
+                        <div className='replyModal-button-area'>
+                            <button type='button' onClick={onClose}
+                                className='reply-cancel-btn'>
+                                취소
+                            </button>
+                            <button type='submit'
+                                className='reply-submit-btn'>
+                                전송
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     )
 }
 
@@ -465,6 +495,40 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
 
   };
 
+  const sendReplyMessage=() => {
+    const text=replyContent.trim();
+    const client=clientRef.current;
+
+    if(!text) {
+        alert("답장할 내용을 입력하세요.");
+        return;
+    }
+
+    if(!client || !connected){
+        alert("웹소켓 연결이 아직 완료되지 않았습니다.");
+        return;
+    }
+
+    try{
+        client.publish({
+            destination: `/app/chat/send/user`,
+            body:JSON.stringify({
+                roomId:roomId,
+                content:text,
+                parentMessageId:targetMessageId
+            })
+        });
+
+        setReplyContent("");
+        setParentContent("");
+        setOpenReplyModal(false);
+        setTargetMessageId(null);
+    }catch(error){
+        console.log(error);
+        alert("메시지 전송이 실패했습니다. 오류 로그를 확인하세요.");
+    }
+  }
+
   const loadOlderMessages=async()=>{
     if(!roomId || loadingOld || !messageSlice.hasNext) return;
 
@@ -632,11 +696,22 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
   const updateMessageInState= (updateMessage) => {
     setMessageSlice(prev => ({
         ...prev,
-        messages:prev.messages.map(msg => 
-            msg.messageId === updateMessage.messageId
-            ? {...msg, ...updateMessage}
-            : msg
-        )
+        messages:prev.messages.map(msg => {
+            if(msg.messageId === updateMessage.messageId){
+                return {...msg, ...updateMessage};
+            }
+
+            if(msg.parentMessageId === updateMessage.messageId){
+                return {
+                    ...msg,
+                    parentMessageContent: updateMessage.deleted 
+                        ? '삭제된 메시지입니다.' : updateMessage.content,
+                    parentMessageIsDeleted: !!updateMessage.deleted
+                };
+            }
+
+            return msg;
+        })
     }));
   };
 
@@ -676,8 +751,12 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
     }
   }
 
-  const handleReply=async(messageId) => {
-    
+  const replyModalClose=()=>{
+    setReplyContent("");
+    setOpenReplyModal(false);
+    setTargetMessageId(null);
+    setOpenPopId(null);
+    setParentContent("");
   }
 
   const editMessageModalClose=()=>{
@@ -763,7 +842,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                             const isMine=Number(m.senderId) === Number(userId);
                             const canEditOrDelete=m.mine && 
                                 !m.deleted && m.messageType !== 'SYSTEM';
-                            const canReply=!m.deleted;
+                            const canReply=!m.deleted && m.messageType === 'USER';
 
                             let content;
                             if(m.deleted){
@@ -885,7 +964,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                                                     </div>
 
                                                     {
-                                                        canEditOrDelete && (
+                                                        canReply && (
                                                             <button
                                                                 className='bubble-menu-btn'
                                                                 onClick={(e) => {
@@ -925,7 +1004,13 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                                                     {
                                                         canReply && (
                                                             <button type='button'
-                                                                className='reply-btn'>
+                                                                className='reply-btn'
+                                                                onClick={()=>{
+                                                                    setTargetMessageId(m.messageId);
+                                                                    setParentContent(m.content);
+                                                                    setOpenReplyModal(true);
+                                                                    setOpenPopId(null);
+                                                                }}>
                                                                 답장
                                                             </button>
                                                         )
@@ -1037,6 +1122,17 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                     handleEditMessage={()=>handleEditMessage(targetMessageId)}
                     onClose={editMessageModalClose}
                     setEditContent={setEditContent}
+                />
+            )
+        }
+        {
+            openReplyModal && (
+                <ReplyModal
+                    handleReply={sendReplyMessage}
+                    setReplyContent={setReplyContent}
+                    parentContent={parentContent}
+                    onClose={replyModalClose}
+                    replyContent={replyContent}
                 />
             )
         }
