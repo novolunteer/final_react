@@ -64,7 +64,7 @@ const StaffScheduleForm = ({
                 <select
                 name='departmentId'
                 placeholder='부서명를 선택하세요'
-                value={form.departmentId}
+                value={formData.departmentId || ""}
                 onChange={handleChange}
                 >
                     <option value="">부서선택</option>
@@ -90,7 +90,7 @@ const StaffScheduleForm = ({
                 <label>직원</label>
                 <select
                 name='staffId'
-                value={formData.staffId}
+                value={formData.staffId ||""}
                 onChange={handleChange}
                 >
                     <option value="">직원선택</option>
@@ -107,7 +107,7 @@ const StaffScheduleForm = ({
                 <input
                 type='date'
                 name='workDate'
-                value={formData.workDate}
+                value={formData.workDate ||""}
                 onChange={handleChange}
                 />
             </div>
@@ -116,7 +116,7 @@ const StaffScheduleForm = ({
                 <label>근무유형</label>
                 <select
                 name='scheduleTypeId'
-                value={formData.scheduleTypeId}
+                value={formData.scheduleTypeId || ""}
                 onChange={handleChange}
                 >
                     <option value="">근무유형 선택</option>
@@ -133,7 +133,7 @@ const StaffScheduleForm = ({
                 <label>상태</label>
                 <select
                 name='status'
-                value={formData.status}
+                value={formData.status ||""}
                 onChange={handleChange}
                 >
                     <option value="TEMP">임시</option>

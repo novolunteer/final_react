@@ -25,4 +25,16 @@ export const updateSchedule = async(scheduleId, scheduleData)=>{
 export const deleteSchedule = async(scheduleId)=>{
     const res = await axios.delete(`${host}/${scheduleId}`);
     return res.data;
-}
+};
+
+//개별확정
+export const confirmSchedule = async(scheduleId) =>{
+    const res = await axios.put(`${host}/${scheduleId}/confirm`);
+    return res.data;
+};
+
+//선택 일괄 확정
+export const bulkConfirmSchedule = async(scheduleIds) =>{
+    const res = await axios.put(`${host}/confirm/bulk`, scheduleIds);
+    return res.data;
+};

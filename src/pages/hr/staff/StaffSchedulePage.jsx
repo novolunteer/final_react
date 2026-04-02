@@ -4,26 +4,22 @@ import SearchBar from '../../../components/common/SearchBar';
 import CommonTable from '../../../components/common/CommonTable';
 import CommonModal from '../../../components/common/CommonModal';
 import StaffScheduleForm from '../../../components/form/StaffScheduleForm';
-import { deleteSchedule, getScheduleList, registerSchedule, updateSchedule } from '../../../api/hr/staffScheduleApi';
+import { bulkConfirmSchedule, confirmSchedule, deleteSchedule, getScheduleList, registerSchedule, updateSchedule } from '../../../api/hr/staffScheduleApi';
 import { getStaffList } from '../../../api/hr/staffApi';
+import { getDepartmentList } from "../../../api/hr/departmentApi";
+import { getSchedulePolicyList } from "../../../api/hr/schedulePolicyApi";
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from "@fullcalendar/daygrid";
 
 const initialForm={
     scheduleId:"",
     departmentId:"",
     staffId:"",
-    wordDate:"",
+    workDate:"",
     scheduleTypeId:"",
     status:"TEMP",
 };
 
-const columns = [
-    { key:"workDate", title:"날짜"},
-    { key:"staffName", title:"직원명"},
-    { key:"departmentName", title:"부서명"},
-    { key:"Typename", title:"근무유형"},
-    { key:"status", title:"상태"},
-    { key:"action", title:"관리"},
-];
 
 const StaffSchedulePage = () => {
 
@@ -36,6 +32,7 @@ const StaffSchedulePage = () => {
     const [open,setOpen]=useState(false);
     const [formData, setFormData]=useState(initialForm);
     const [isEdit, setIsEdit]=useState(false);
+    const [selectedIds, setSelectedIds]=useState([]);
 
     useEffect(()=>{
         fetchInitData();
@@ -48,7 +45,7 @@ const StaffSchedulePage = () => {
                 getScheduleList(),
                 getDepartmentList(),
                 getStaffList(),
-                getScheduleTypeList(),
+                getSchedulePolicyList(),
             ]);
 
             setScheduleList(scheduleData || []);
@@ -70,6 +67,8 @@ const StaffSchedulePage = () => {
         }
     };
 
+    
+
     const filteredScheduleList = useMemo(()=>{
         if(!searchKeyword.trim())
             return scheduleList;
@@ -78,6 +77,24 @@ const StaffSchedulePage = () => {
         (item.staffName || "").includes(searchKeyword.trim())
     );
     }, [scheduleList, searchKeyword]);
+
+    const columns = [
+    { key: "select", title:(
+        <input
+        type='checkbox'
+        checked={
+            filteredScheduleList.filter((item)=> item.status == "TEMP").length > 0 &&
+            filteredScheduleList.filter((item)=> item.status == "TEMP").every((item)=> selectedIds.includes(item.scheduleId))
+        }
+        onChange={(e) => handleCheckAll(e.target.checked)}/>
+    )},
+    { key:"workDate", title:"날짜"},
+    { key:"staffName", title:"직원명"},
+    { key:"departmentName", title:"부서명"},
+    { key:"typeName", title:"근무유형"},
+    { key:"status", title:"상태"},
+    { key:"action", title:"관리"},
+];
 
     const handleOpen = ()=>{
         setIsEdit(false);
@@ -99,6 +116,8 @@ const StaffSchedulePage = () => {
         setSearchKeyword("");
     };
 
+
+    
     const hasDuplicateSchedule = (target) => {
         return scheduleList.some(
             (item)=>
@@ -149,21 +168,87 @@ const StaffSchedulePage = () => {
             scheduleId:row.scheduleId,
             departmentId: row.departmentId || "",
             staffId: row.staffId || "",
-            workDate: row.wordDate || "",
+            workDate: row.workDate || "",
             scheduleTypeId: row.scheduleTypeId || "",
             status: row.status || "TEMP",
-            action:(
-                <div style={{ display: "flex", gap: "6px" }}>
-                    <button type="button" onClick={() => handleEdit(item)}>
-                    수정
-                    </button>
-                    <button type="button" onClick={() => handleDelete(item)}>
-                    삭제
-                    </button>
-                </div>
-            )
         });
         setOpen(true);
+    };
+
+    const handleConfirm = async(scheduleId)=>{
+        try{
+            await confirmSchedule(scheduleId);
+            alert("확정완료");
+            fetchScheduleData();
+        }catch (e) {
+            console.error(e);
+        }
+    };
+
+    const tableData = filteredScheduleList.map((item)=>({
+        ...item,
+        select:(
+            item.status == "TEMP" ? (
+                <input
+                type='checkbox'
+                checked={selectedIds.includes(item.scheduleId)}
+                onChange={()=> handleCheck(item.scheduleId)}/>
+            ) : null
+        ),
+        action:(
+            <div style={{display:"flex", gap:"6px"}}>
+                <button type='button' onClick={()=>handleEdit(item)}>수정</button>
+                <button type='button' onClick={()=>handleDelete(item)}>삭제</button>
+                {item.status =="TEMP" && (
+                    <button type='button' onClick={()=>handleConfirm(item.scheduleId)}>확정</button>
+                )}
+            </div>
+        ),
+    }));
+
+    const handleBulkConfirm = async()=>{
+        if (selectedIds.length==0){
+            alert("선택된 스케줄이 없습니다");
+            return;
+        }
+        const confirmBulk = window.confirm("선택한 스케줄을 확정하시겠습니까?");
+        if(!confirmBulk) return;
+
+        try{
+            await bulkConfirmSchedule(selectedIds);
+            alert("스케줄 확정 완료");
+            setSelectedIds([]);
+            fetchScheduleData();
+        }catch (error){
+            console.error("스케줄 확정 실패", error);
+            alert("스케줄 확정 중 오류가 발생했습니다");
+        };
+    };
+
+
+    const events= scheduleList.map((item) => ({
+        title: `${item.staffName || ""} ${item.typeName || ""}`,
+        date: item.workDate,
+    }));
+
+    const handleCheck = (scheduleId)=>{
+        setSelectedIds((prev)=>
+        prev.includes(scheduleId)
+        ? prev.filter((id)=> id != scheduleId)
+        : [...prev, scheduleId]
+        );
+    };
+
+    const handleCheckAll = (checked) =>{
+        if(checked){
+            const tempIds = filteredScheduleList
+            .filter((item)=> item.status == "TEMP")
+            .map((item)=> item.scheduleId);
+
+        setSelectedIds(tempIds);
+        }else {
+            setSelectedIds([]);
+        }
     };
 
 
@@ -175,6 +260,7 @@ const StaffSchedulePage = () => {
             <button onClick={handleOpen}>일괄등록</button>
             <button onClick={handleOpen}>자동등록</button>
             <button onClick={handleOpen}>자동화 조건 등록</button>
+            <button onClick={handleBulkConfirm}>선택확정</button>
         </div>
 
         <div style={styles.topBar}>
@@ -187,9 +273,21 @@ const StaffSchedulePage = () => {
             <button type='button' onClick={handleResetSearch}>
                 전체보기
             </button>
+        </div>
+        <div style={styles.content}>
 
-            <CommonTable columns={columns} data={scheduleList}/>
+            <div style={styles.calendar}>
+                <FullCalendar
+                plugins={[dayGridPlugin]}
+                initialView='dayGridMonth'
+                events={events}
+                />
+            </div>
 
+            <div style={styles.list}>
+                <CommonTable columns={columns} data={tableData}/>
+            </div>
+            
             <CommonModal open={open} onClose={handleClose}>
                 <StaffScheduleForm
                 formData={formData}
@@ -234,5 +332,20 @@ const styles = {
     background: "#fff",
     cursor: "pointer",
     textAlign: "left",
+  },
+    content: {
+    display: "flex",
+    gap: "20px",
+  },
+
+  calendar: {
+    flex: 1,
+    background: "#fff",
+    padding: "10px",
+    borderRadius: "8px",
+  },
+
+  list: {
+    flex: 1,
   },
 };
