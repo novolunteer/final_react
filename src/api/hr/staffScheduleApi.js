@@ -1,4 +1,5 @@
 import axios from "axios";
+import { data } from "react-router-dom";
 
 const host="http://localhost:8080/api/staff_schedule";
 
@@ -38,3 +39,10 @@ export const bulkConfirmSchedule = async(scheduleIds) =>{
     const res = await axios.put(`${host}/confirm/bulk`, scheduleIds);
     return res.data;
 };
+
+//스케줄 일괄등록
+export const bulkRegisterSchedule = async (data) => {
+    const res = await axios.post(`${host}/bulk_register`,data);
+    return res.data;
+};
+

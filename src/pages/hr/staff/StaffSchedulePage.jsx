@@ -4,7 +4,8 @@ import SearchBar from '../../../components/common/SearchBar';
 import CommonTable from '../../../components/common/CommonTable';
 import CommonModal from '../../../components/common/CommonModal';
 import StaffScheduleForm from '../../../components/form/StaffScheduleForm';
-import { bulkConfirmSchedule, confirmSchedule, deleteSchedule, getScheduleList, registerSchedule, updateSchedule } from '../../../api/hr/staffScheduleApi';
+import BulkScheduleForm from "../../../components/form/BulkScheduleForm";
+import { bulkConfirmSchedule, bulkRegisterSchedule, confirmSchedule, deleteSchedule, getScheduleList, registerSchedule, updateSchedule } from '../../../api/hr/staffScheduleApi';
 import { getStaffList } from '../../../api/hr/staffApi';
 import { getDepartmentList } from "../../../api/hr/departmentApi";
 import { getSchedulePolicyList } from "../../../api/hr/schedulePolicyApi";
@@ -20,6 +21,14 @@ const initialForm={
     status:"TEMP",
 };
 
+const initialBulkForm={
+    departmentId:"",
+    staffIds: [],
+    startDate:"",
+    endDate:"",
+    scheduleTypeId:"",
+    status:"TEMP"
+}
 
 const StaffSchedulePage = () => {
 
@@ -33,6 +42,10 @@ const StaffSchedulePage = () => {
     const [formData, setFormData]=useState(initialForm);
     const [isEdit, setIsEdit]=useState(false);
     const [selectedIds, setSelectedIds]=useState([]);
+
+    const [bulkOpen, setBulkOpen] = useState(false);
+    const [bulkFormData, setBulkFormData] = useState(initialBulkForm);
+    const [selectedDate, setSelectedDate] = useState("");
 
     useEffect(()=>{
         fetchInitData();
@@ -67,16 +80,21 @@ const StaffSchedulePage = () => {
         }
     };
 
-    
 
     const filteredScheduleList = useMemo(()=>{
-        if(!searchKeyword.trim())
-            return scheduleList;
+        let result = scheduleList;
 
-        return scheduleList.filter((item)=>
+        if(searchKeyword.trim()){
+        result = result.filter((item)=>
         (item.staffName || "").includes(searchKeyword.trim())
-    );
-    }, [scheduleList, searchKeyword]);
+        );
+    }
+
+    if(selectedDate){
+        result = result.filter((item)=> item.workDate == selectedDate);
+    }
+    return result;
+    }, [scheduleList, searchKeyword, selectedDate]);
 
     const columns = [
     { key: "select", title:(
@@ -251,13 +269,42 @@ const StaffSchedulePage = () => {
         }
     };
 
+    const handleBulkSubmit = async (formData)=>{
+        try{
+           const result= await bulkRegisterSchedule(formData);
 
+            if(result.skippedList && result.skippedList.length >0){
+                alert(
+                    `${result.message}\n\n`+result.skippedList.map(item => `${item.staffName} / ${item.workDate} / ${item.reason}`)
+                    .join("\n")
+                );
+            }else{
+                alert(result.message);
+            }
+                
+            fetchScheduleData();
+            setBulkOpen(false);
+        }catch (error){
+            console.error("스케줄 일괄등록 실패", error);
+            alert("스케줄 등록이 완료되지 않았습니다");
+        }
+    }
+         
+    const handleBulkOpen = () => {
+        setBulkFormData(initialBulkForm);
+        setBulkOpen(true);
+    };
+
+    const handleBulkClose = () => {
+        setBulkFormData(initialBulkForm);
+        setBulkOpen(false);
+    }
   return (
     <div style={styles.container}>
         <div style={styles.header}>
             <h2>직원 스케줄 관리</h2>
             <RegisterButton onClick={handleOpen}>개별등록</RegisterButton>
-            <button onClick={handleOpen}>일괄등록</button>
+            <button onClick={handleBulkOpen}>일괄등록</button>
             <button onClick={handleOpen}>자동등록</button>
             <button onClick={handleOpen}>자동화 조건 등록</button>
             <button onClick={handleBulkConfirm}>선택확정</button>
@@ -281,6 +328,9 @@ const StaffSchedulePage = () => {
                 plugins={[dayGridPlugin]}
                 initialView='dayGridMonth'
                 events={events}
+                dateClick={(info)=>{
+                    selectedDate(info.dateStr);
+                }}
                 />
             </div>
 
@@ -298,6 +348,18 @@ const StaffSchedulePage = () => {
                 staffList={staffList}
                 scheduleTypeList={scheduleTypeList}
                 isEdit={isEdit}
+                />
+            </CommonModal>
+
+            <CommonModal open={bulkOpen} onClose={handleBulkClose}>
+                <BulkScheduleForm
+                formData={bulkFormData}
+                setFormData={setBulkFormData}
+                onSubmit={handleBulkSubmit}
+                onClose={handleBulkClose}
+                departmentList={departmentList}
+                staffList={staffList}
+                scheduleTypeList={scheduleTypeList}
                 />
             </CommonModal>
         </div>
