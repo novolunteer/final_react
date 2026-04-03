@@ -13,7 +13,14 @@ export const chatRoomDetail=async({roomId, cursor})=>{
     return res.data;
 }
 
-export const sendUserMessage=async(param)=>{
+export const uploadAttachment=async(files) => {
+    const res=await jwtAxios.post(`${host}/upload/attachment`, {
+        params: files ? {files} : {}
+    });
+    return res.data;
+}
+
+export const sendMessage=async(param)=>{
     const res=await jwtAxios.post(`${host}/send/user`,{
         roomId:param.roomId,
         content:param.content
