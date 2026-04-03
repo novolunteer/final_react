@@ -11,6 +11,7 @@ import { getDepartmentList } from "../../../api/hr/departmentApi";
 import { getSchedulePolicyList } from "../../../api/hr/schedulePolicyApi";
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
 
 const initialForm={
     scheduleId:"",
@@ -30,6 +31,14 @@ const initialBulkForm={
     status:"TEMP"
 }
 
+const getTodayString=()=>{
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth()+1).padStart(2,"0");
+    const date = String(today.getDate()).padStart(2,"0");
+    return `${year}-${month}-${date}`;
+};
+
 const StaffSchedulePage = () => {
 
     const [scheduleList, setScheduleList]=useState([]);
@@ -45,7 +54,7 @@ const StaffSchedulePage = () => {
 
     const [bulkOpen, setBulkOpen] = useState(false);
     const [bulkFormData, setBulkFormData] = useState(initialBulkForm);
-    const [selectedDate, setSelectedDate] = useState("");
+    const [selectedDate, setSelectedDate] = useState(getTodayString());
 
     useEffect(()=>{
         fetchInitData();
@@ -126,9 +135,6 @@ const StaffSchedulePage = () => {
         setIsEdit(false);
     };
 
-    const handleSearch = () =>{
-
-    }
 
     const handleResetSearch = () => {
         setSearchKeyword("");
@@ -314,7 +320,7 @@ const StaffSchedulePage = () => {
             <SearchBar
             value={searchKeyword}
             onChange={(e)=> setSearchKeyword(e.target.value)}
-            onSearch={handleSearch}
+            showButton={false}
             placeholder="직원의 이름을 입력하세요"
             />
             <button type='button' onClick={handleResetSearch}>
@@ -325,11 +331,12 @@ const StaffSchedulePage = () => {
 
             <div style={styles.calendar}>
                 <FullCalendar
-                plugins={[dayGridPlugin]}
+                plugins={[dayGridPlugin, interactionPlugin]}
                 initialView='dayGridMonth'
                 events={events}
                 dateClick={(info)=>{
-                    selectedDate(info.dateStr);
+                    console.log("클릭됨:", info.dateStr);
+                    setSelectedDate(info.dateStr);
                 }}
                 />
             </div>
