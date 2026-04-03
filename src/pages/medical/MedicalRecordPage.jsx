@@ -47,7 +47,7 @@ const MedicalRecordPage = () => {
           </tr>
         </thead>
         <tbody>
-          {list.map((item) => (
+          {list?.map((item) => (
             <tr key={item.reservationId}>
               <td>{item.reservationId}</td>
               <td>{item.patientName}</td>
