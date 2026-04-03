@@ -5,9 +5,10 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import dayjs from 'dayjs';
 import './Reservation.css'
+import { useQuery } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 
 const ReservationConfirm = () => {
-  const [list, setList] = useState([]);
   const [department, setDepartment] = useState([]);
   const [doctor, setDoctor] = useState([]);
   const [selectedDoc, setSelectedDoc] = useState(null);
@@ -19,8 +20,21 @@ const ReservationConfirm = () => {
   const [currentMonth, setCurrentMonth] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const calendarRef = useRef(null);
+  const [name, setName] = useState("");
+  const [debouncedName, setDebouncedName] = useState("");
+  const [page, setPage] = useState(0);
+  const [size] = useState(3);
+  const queryClient = useQueryClient();
 
   /* ================= API ================= */
+  useEffect(() => {
+    setPage(0);
+  }, [debouncedName, selectedDept, status]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedName(name), 400);
+    return () => clearTimeout(t);
+  }, [name]);
 
   useEffect(() => {
     axios.get('http://localhost:8080/api/department')
@@ -46,19 +60,6 @@ const ReservationConfirm = () => {
       })
       .catch(console.error);
   }, [selectedDept]);
-
-  useEffect(() => {
-    let url = "http://localhost:8080/api/reservation";
-
-    if (status === "PENDING") url += "/pending";
-    if (status === "CONFIRMED") url += "/confirmed";
-
-    axios.get(url, {
-      params: selectedDept ? { department: selectedDept } : {}
-    })
-      .then(res => setList(res.data.content ?? []))
-      .catch(console.error);
-  }, [status, selectedDept]);
 
   useEffect(() => {
     if (!currentMonth) return;
@@ -99,6 +100,35 @@ const ReservationConfirm = () => {
   }, [selectedDoc, currentMonth, selectedDept]);
 
   /* ================= 핸들러 ================= */
+  const fetchReservationList = ({ status, dept, name, page }) => {
+    let url = "http://localhost:8080/api/reservation";
+
+    if (status === "PENDING") url += "/pending";
+    if (status === "CONFIRMED") url += "/confirmed";
+
+    return axios.get(url, {
+      params: {
+        department: dept || undefined,
+        name: name,
+        page: page,
+        size: size
+      }
+    }).then(res => res.data);
+  };
+
+  const { data } = useQuery({
+    queryKey: ['reservationList', status, selectedDept, debouncedName, page],
+    queryFn: () => fetchReservationList({
+      status,
+      dept: selectedDept,
+      name: debouncedName,
+      page
+    }),
+    placeholderData: (prev) => prev,
+  });
+
+  const list = data?.content ?? [];
+  const totalPages = data?.totalPages ?? 0;
 
   const handleDateClick = (info) => {
     setSelectedDate(info.dateStr);
@@ -251,7 +281,9 @@ const ReservationConfirm = () => {
           setSelectedRow(null);
 
           refreshSlots(); 
-          refreshList();
+          queryClient.invalidateQueries({
+            queryKey: ['reservationList']
+          });
           refreshCalendar();
         })
         .catch(console.error);
@@ -429,6 +461,8 @@ const ReservationConfirm = () => {
         {/* 예약 테이블 */}
         <div style={card}>
           <h3>예약 목록</h3>
+          이름 검색 <input type="text" value={name} onChange={(e) => setName(e.target.value)}/>
+        <br />
 
           {list.length === 0 ? (
             <p>데이터 없음</p>
@@ -471,6 +505,25 @@ const ReservationConfirm = () => {
               </tbody>
             </table>
           )}
+          <div style={{ marginTop: '10px' }}>
+              <button
+                disabled={page === 0}
+                onClick={() => setPage(p => p - 1)}
+              >
+                이전
+              </button>
+
+              <span style={{ margin: '0 10px' }}>
+                {page + 1} / {totalPages}
+              </span>
+
+              <button
+                disabled={page + 1 >= totalPages}
+                onClick={() => setPage(p => p + 1)}
+              >
+                다음
+              </button>
+            </div>
         </div>
 
         {/* 캘린더 */}
