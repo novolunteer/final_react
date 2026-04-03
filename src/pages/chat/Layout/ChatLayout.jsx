@@ -4,6 +4,7 @@ import ChatRoom from '../component/ChatRoom'
 import "./chatLayout.css"
 import { Client } from '@stomp/stompjs'
 import { chatRoomList, getStaffList } from '../../../api/chatApi'
+import { useNavigate } from 'react-router-dom'
 
 const ChatLayout = () => {
   const [selectedRoomId, setSelectedRoomId]=useState(null);
@@ -15,12 +16,19 @@ const ChatLayout = () => {
 
   const clientRef=useRef(null);
 
+  const navigate=useNavigate();
+
+  const accessToken=sessionStorage.getItem('accessToken');
+  if(!accessToken){
+    navigate("/login", {replace:true});
+  }
+
   const getRooms=useCallback(
     async()=>{
         try{
             const res=await chatRoomList();
 
-            const roomRes=res.map(room => 
+            const roomRes=res.result.map(room => 
                 Number(room.roomId) === Number(selectedRoomId)
                 ? {...room, unreadCount:0}
                 : room
@@ -29,7 +37,7 @@ const ChatLayout = () => {
             setRooms(roomRes);
 
             const staffRes=await getStaffList();
-            setStaffList(staffRes);
+            setStaffList(staffRes.result);
 
             if(selectedRoomId && !roomRes.some(room => room.roomId === selectedRoomId)){
                 setSelectedRoomId(null);
@@ -143,7 +151,7 @@ const ChatLayout = () => {
             <ChatRoom roomId={selectedRoomId} onReadRoom={handleReadRoom}
               clientRef={clientRef} connected={connected}
               onLeaveRoom={handleLeaveRoomSuccess}
-              roomRefresh={roomRefresh}/>
+              roomRefresh={roomRefresh} getRooms={getRooms}/>
         </div>
     </div>
   )

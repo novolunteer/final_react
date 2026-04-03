@@ -46,11 +46,22 @@ export const getStaffListForInvite=async (roomId) => {
 
 export const inviteStaff=async (roomId, staffIds) => {
     const res=await jwtAxios.post(`${host}/room/${roomId}/invite`, staffIds);
-
     return res.data;
 }
 
 export const leaveChatRoom=async (roomId) => {
     const res=await jwtAxios.delete(`${host}/room/${roomId}/leave`);
+    return res.data;
+}
+
+export const deleteMessage=async(messageId) => {
+    const res=await jwtAxios.delete(`${host}/delete/message/${messageId}`);
+    return res.data;
+}
+
+export const editMessage=async(messageId, content) => {
+    const res=await jwtAxios.put(`${host}/edit/message/${messageId}`, {
+        content:content
+    });
     return res.data;
 }
