@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 
 const ReceptionPage = () => {
     const [list, setList]=useState([])
+    const [status, setStatus]=useState("");
 
     useEffect(()=>{
         axios.get('http://localhost:8080/api/administration').then((res) => {
@@ -27,6 +28,14 @@ const ReceptionPage = () => {
   return (
     <div>
         <h1>접수</h1>
+      {/* 상태 버튼 */}
+      <div style={statusBar}>
+        <button onClick={() => setStatus("PENDING")} style={btn}>미접수</button>
+        <button onClick={() => setStatus("RECEIVED")} style={btn}>접수</button>
+        <button onClick={() => setStatus("CONSULTING")} style={btn}>진료중</button>
+        <button onClick={() => setStatus("COMPLETED")} style={btn}>완료</button>
+      </div>
+
         <table border="1">
         <thead>
           <tr>
@@ -54,5 +63,15 @@ const ReceptionPage = () => {
     </div>
   )
 }
+
+const btn = {
+  marginRight: '10px',
+  padding: '6px 12px',
+  cursor: 'pointer'
+};
+
+const statusBar = {
+  marginBottom: '15px'
+};
 
 export default ReceptionPage
