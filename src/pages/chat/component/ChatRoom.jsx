@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react'
 import { chatRoomDetail, deleteMessage, editMessage, getStaffListForInvite, inviteStaff, leaveChatRoom, markAsRead, uploadAttachment } from '../../../api/chatApi';
 import dayjs from 'dayjs';
 
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 const getAttachmentType=(file)=>{
     const contentType=file.contentType || "";
     const ext=(file.fileExtension || "").toLowerCase();
@@ -54,16 +56,20 @@ const AttachmentItem=({file}) => {
     return (
         <div className={`attachment-card ${fileType}`}>
             {fileType === "image" ? (
-                <img 
-                    src={file.fileUrl}
-                    alt={file.originalFileName}
-                    className='attachment-file-image'
-                />
+                <a
+                    href={`${API_BASE_URL}${file.fileUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer">
+                            <img 
+                                src={`${API_BASE_URL}${file.fileUrl}`}
+                                alt={file.originalFileName}
+                                className='attachment-file-image'/>
+                </a>
             ) : (
                 <div className='attachment-file-box'>
                     <div className='attachment-icon'>{getFileIcon()}</div>
                     <div className='attachment-file-info'>
-                        <a href={file.fileUrl}
+                        <a href={`${API_BASE_URL}${file.fileUrl}`}
                             target='_blank' rel='noreferrer'
                             className='attachment-name'>
                             {file.originalFileName}
@@ -74,18 +80,6 @@ const AttachmentItem=({file}) => {
                     </div>
                 </div>
             )}
-
-            {
-                fileType === "image" && (
-                    <a
-                        href={file.fileUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="attachment-name">
-                        {file.originalFileName}
-                    </a>
-                )
-            }
         </div>
     );
 };
@@ -850,6 +844,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
     setTargetMessageId(null);
     setOpenPopId(null);
     setParentMessage(null);
+    setSelectedFiles([]);
   }
 
   const editMessageModalClose=()=>{
@@ -949,9 +944,12 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                             }
 
                             const isMine=Number(m.senderId) === Number(userId);
-                            const canEditOrDelete=isMine && 
+                            const canDelete=isMine && 
                                 !m.deleted && m.messageType !== 'SYSTEM';
                             const canReply=!m.deleted && m.messageType === 'USER';
+                            const canEdit=isMine && !m.deleted && m.messageType !== 'SYSTEM'
+                                            && m.content !== null;
+                            const canOpenPop=canDelete || canEdit || canReply;
 
                             let messageText;
                             if(m.deleted){
@@ -1020,6 +1018,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                                                                         </div>
                                                                         <div className='reply-preview-file'>
                                                                             {
+                                                                                !parent.parentMessageIsDeleted &&
                                                                                 parent.parentMessageAttachments &&
                                                                                 parent.parentMessageAttachments.length > 0 && (
                                                                                     <div className='reply-preview-attachments'>
@@ -1063,7 +1062,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                                                             </div>
 
                                                             {
-                                                                canEditOrDelete && (
+                                                                canOpenPop && (
                                                                     <button
                                                                         className='bubble-menu-btn'
                                                                         onClick={(e) => {
@@ -1174,7 +1173,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                                             }
                                         </div>
                                         {
-                                            openPopId === m.messageId && (
+                                            Number(openPopId) === Number(m.messageId) && (
                                                 <div className='chat-bubble-pop'
                                                     ref={popoverRef}
                                                     onClick={(e)=> e.stopPropagation()}
@@ -1195,7 +1194,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                                                         )
                                                     }
                                                     {
-                                                        canEditOrDelete && (
+                                                        canDelete && (
                                                             <>
                                                                 <button
                                                                     type='button'
@@ -1206,6 +1205,12 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                                                                 >
                                                                         삭제
                                                                 </button>
+                                                            </>
+                                                        )
+                                                    }
+                                                    {
+                                                        canEdit && (
+                                                            <>
                                                                 <button
                                                                     type='button'
                                                                     className='edit-btn'
@@ -1297,6 +1302,14 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                                         setContent(e.target.value)
                                     }}
                                     className='chat-input'
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" && !e.shiftKey) {
+                                                e.preventDefault();
+                                                if (!content.trim()) return;
+                                            sendMessage();
+                                            }
+                                        }
+                                    }
                                 />
                                 <button type='submit'
                                     className='chat-send-btn'>전송</button>

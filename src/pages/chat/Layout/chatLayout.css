@@ -454,7 +454,6 @@
   margin-bottom: 2px;
 }
 
-/* 안 읽은 수 */
 .chat-unread-box,
 .chat-time-box {
   display: flex;
@@ -530,10 +529,122 @@
   color: #9ca3af;
 }
 
+.chat-message-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chat-message-text-wrap {
+  min-width: 0;
+}
+
 .chat-message-text {
   margin: 0;
   font-size: 14px;
   line-height: 1.45;
+}
+
+/* 첨부파일 */
+.chat-message-attachments,
+.reply-preview-attachments,
+.replyModal-parent-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.attachment-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 260px;
+}
+
+.attachment-file-image {
+  display: block;
+  width: 100%;
+  max-width: 220px;
+  max-height: 180px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #dbe3ef;
+  background-color: #ffffff;
+}
+
+.attachment-file-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #dbe3ef;
+  border-radius: 10px;
+  background-color: #ffffff;
+  min-width: 0;
+}
+
+.attachment-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background-color: #f3f4f6;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.attachment-file-info {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.attachment-name {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1d4ed8;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attachment-name:hover {
+  text-decoration: underline;
+}
+
+.attachment-file-label {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: #6b7280;
+  letter-spacing: 0.02em;
+}
+
+.chat-bubble.mine .attachment-file-box {
+  background-color: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.chat-bubble.mine .attachment-icon {
+  background-color: rgba(255, 255, 255, 0.16);
+}
+
+.chat-bubble.mine .attachment-name {
+  color: #ffffff;
+}
+
+.chat-bubble.mine .attachment-file-label {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.chat-bubble.mine .attachment-file-image {
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
 /* 답장 프리뷰 */
@@ -582,6 +693,17 @@
   color: #eff6ff;
 }
 
+.reply-preview-file {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.reply-preview-content {
+  min-width: 0;
+}
+
 .reply-preview-text {
   margin: 0;
   font-size: 12px;
@@ -594,6 +716,33 @@
 
 .chat-bubble.mine .reply-preview-text {
   color: rgba(255, 255, 255, 0.92);
+}
+
+.reply-preview .attachment-card {
+  max-width: 200px;
+}
+
+.reply-preview .attachment-file-image {
+  max-width: 160px;
+  max-height: 120px;
+}
+
+.reply-preview .attachment-file-box {
+  padding: 8px 10px;
+}
+
+.reply-preview .attachment-icon {
+  width: 30px;
+  height: 30px;
+  font-size: 16px;
+}
+
+.reply-preview .attachment-name {
+  font-size: 12px;
+}
+
+.reply-preview .attachment-file-label {
+  font-size: 10px;
 }
 
 /* 점 세 개 버튼 */
@@ -697,7 +846,7 @@
 .new-message-alert {
   position: absolute;
   left: 50%;
-  bottom: 96px;
+  bottom: 108px;
   transform: translateX(-50%);
   border: 1px solid #bfdbfe;
   background-color: #eff6ff;
@@ -737,33 +886,150 @@
 }
 
 /* 입력창 */
-.chat-input-area {
-  padding: 16px 20px;
+.chat-input-wrap {
   border-top: 1px solid #e5e7eb;
   background-color: #ffffff;
+  padding: 12px 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.chat-attachment-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 140px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.chat-attach-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background-color: #f8fafc;
+}
+
+.chat-attach-info {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.chat-attach-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-attach-size {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.chat-attach-remove-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background-color: transparent;
+  color: #6b7280;
+  font-size: 18px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.chat-attach-remove-btn:hover {
+  background-color: #e5e7eb;
+  color: #111827;
+}
+
+.chat-input-area {
+  background-color: #ffffff;
+}
+
+.chat-input-content-area {
+  width: 100%;
 }
 
 .chat-input-form {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 10px;
+}
+
+.chat-attach-btn {
+  width: 44px;
+  height: 44px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background-color: #f8fafc;
+  color: #4b5563;
+  font-size: 18px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.chat-attach-btn:hover {
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.chat-attach-btn:active {
+  transform: scale(0.97);
+}
+
+.chat-attach-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 .chat-input {
   flex: 1;
-  height: 44px;
+  min-height: 44px;
+  max-height: 120px;
+  resize: none;
   border: 1px solid #d1d5db;
   border-radius: 10px;
-  padding: 0 14px;
+  padding: 11px 14px;
   font-size: 14px;
+  line-height: 1.45;
   outline: none;
   background-color: #f9fafb;
+  color: #111827;
+  box-sizing: border-box;
+  font-family: inherit;
 }
 
 .chat-input:focus {
   border-color: #2563eb;
   background-color: #ffffff;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+}
+
+.chat-input::placeholder {
+  color: #9ca3af;
 }
 
 .chat-send-btn {
@@ -776,10 +1042,30 @@
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
 }
 
 .chat-send-btn:hover {
   background-color: #1d4ed8;
+}
+
+.chat-send-btn:active {
+  transform: scale(0.98);
+}
+
+.chat-send-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.chat-send-btn:disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
+}
+
+.chat-send-btn:disabled:hover {
+  background-color: #93c5fd;
 }
 
 /* 빈 화면 */
@@ -806,7 +1092,8 @@
 .chat-create-modal-body::-webkit-scrollbar,
 .chat-user-list::-webkit-scrollbar,
 .participantModalBody::-webkit-scrollbar,
-.inviteModalBody::-webkit-scrollbar {
+.inviteModalBody::-webkit-scrollbar,
+.chat-attachment-preview::-webkit-scrollbar {
   width: 8px;
 }
 
@@ -815,7 +1102,8 @@
 .chat-create-modal-body::-webkit-scrollbar-thumb,
 .chat-user-list::-webkit-scrollbar-thumb,
 .participantModalBody::-webkit-scrollbar-thumb,
-.inviteModalBody::-webkit-scrollbar-thumb {
+.inviteModalBody::-webkit-scrollbar-thumb,
+.chat-attachment-preview::-webkit-scrollbar-thumb {
   background-color: #d1d5db;
   border-radius: 999px;
 }
@@ -825,7 +1113,8 @@
 .chat-create-modal-body::-webkit-scrollbar-track,
 .chat-user-list::-webkit-scrollbar-track,
 .participantModalBody::-webkit-scrollbar-track,
-.inviteModalBody::-webkit-scrollbar-track {
+.inviteModalBody::-webkit-scrollbar-track,
+.chat-attachment-preview::-webkit-scrollbar-track {
   background-color: transparent;
 }
 
@@ -1553,6 +1842,11 @@
   background-color: #ffffff;
 }
 
+.replyModal-parentLabel-wrap {
+  display: flex;
+  align-items: center;
+}
+
 .replyModal-parentLabel {
   margin: 0 0 8px;
   font-size: 13px;
@@ -1560,7 +1854,16 @@
   color: #374151;
 }
 
-.replyModal-parentMessageContent textarea {
+.replyModal-parent-attachments .attachment-card {
+  max-width: 220px;
+}
+
+.replyModal-parent-attachments .attachment-file-image {
+  max-width: 180px;
+  max-height: 140px;
+}
+
+.replyModal-parentText textarea {
   width: 100%;
   min-height: 82px;
   resize: none;
@@ -1576,7 +1879,7 @@
   outline: none;
 }
 
-.replyModal-parentMessageContent textarea:read-only {
+.replyModal-parentText textarea:read-only {
   cursor: default;
 }
 
@@ -1697,7 +2000,42 @@
     max-width: 100%;
   }
 
-    .replyModalInner {
+  .replyModalInner {
     max-width: 100%;
+  }
+
+  .chat-input-wrap {
+    padding: 10px 12px 12px;
+  }
+
+  .chat-input-form {
+    gap: 8px;
+  }
+
+  .chat-attach-btn,
+  .chat-send-btn {
+    height: 42px;
+  }
+
+  .chat-attach-btn {
+    width: 42px;
+  }
+
+  .chat-input {
+    min-height: 42px;
+    font-size: 13px;
+  }
+
+  .attachment-card {
+    max-width: 220px;
+  }
+
+  .attachment-file-image {
+    max-width: 180px;
+    max-height: 150px;
+  }
+
+  .attachment-file-box {
+    padding: 9px 10px;
   }
 }
