@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 const initState={
     departmentId:"",
     departmentName:"",
+    departmentCategory:"",
     location:"",
     status:"",
 };
@@ -14,6 +15,7 @@ const DepartmentForm = ({onSubmit, onClose, initialData}) => {
             setForm({
                 departmentId:initialData.departmentId ||"",
                 departmentName:initialData.departmentName || "",
+                departmentCategory:initialData.departmentCategory || "",
                 location: initialData.location || "",
                 status: initialData.status || "",
             });
@@ -37,6 +39,7 @@ const DepartmentForm = ({onSubmit, onClose, initialData}) => {
         const requestData = {
             departmentId: form.departmentId? Number(form.departmentId) : null,
             departmentName: form.departmentName,
+            departmentCategory: form.departmentCategory,
             location : form.location,
             status: form.status 
         }
@@ -46,7 +49,7 @@ const DepartmentForm = ({onSubmit, onClose, initialData}) => {
     
   return (
     <form onSubmit={handleSubmit}>
-        <h3>직원등록</h3>
+        <h3>부서등록</h3>
         <div style={styles.formGrid}>
             <div>
                 <label>부서명</label>
@@ -57,6 +60,20 @@ const DepartmentForm = ({onSubmit, onClose, initialData}) => {
                 value={form.departmentName}
                 onChange={handleChange}
                 />
+            </div>
+
+            <div>
+                <label>카테고리</label>
+                    <select 
+                    name="departmentCategory"
+                    value={form.departmentCategory}
+                    onChange={handleChange}
+                    >
+                    <option value="">카테고리 선택</option>
+                    <option value="DOCTOR">의료부서</option>
+                    <option value="NURSE">간호부서</option>
+                    <option value="ADMIN">행정부서</option>
+                    </select>
             </div>
 
             <div>
@@ -105,3 +122,4 @@ const styles = {
     gap: "8px",
   },
 };
+

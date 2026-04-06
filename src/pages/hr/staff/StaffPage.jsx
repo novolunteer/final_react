@@ -10,6 +10,7 @@ import {
   updateStaff,
   deleteStaff,
 } from "../../../api/hr/staffApi";
+import { getDepartmentList } from "../../../api/hr/departmentApi";
 
 const StaffPage = () => {
   const [staffList, setStaffList] = useState([]);
@@ -20,6 +21,7 @@ const StaffPage = () => {
   const [searchKeyword, setSearchKeyword] = useState("");
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [searchCandidates, setSearchCandidates] = useState([]);
+  const [departmentList, setDepartmentList] = useState([]);
 
   const handleOpen = () => {
     setSelectedStaff(null);
@@ -57,6 +59,7 @@ const StaffPage = () => {
         staffId: item.staffId,
         userId: item.userId,
         departmentId: item.departmentId,
+        departmentName: item.departmentName,
         managerId: item.managerId,
         position: item.position,
         name: item.name,
@@ -138,11 +141,27 @@ const StaffPage = () => {
     setSearchModalOpen(false);
   };
 
+  const loadDepartmentList=async ()=>{
+    try{
+      const data = await getDepartmentList();
+      setDepartmentList(data);
+    }catch (error){
+      console.error("부서 목록 조회 실패", error);
+    }
+  };
+
+  useEffect(()=>{
+    loadStaffList();
+    loadDepartmentList();
+  }, []);
+
+
+  
   const columns = [
-    { key: "id", title: "번호" },
+    { key: "id", title: "직원번호" },
     { key: "userId", title: "사용자ID" },
-    { key: "departmentId", title: "부서ID" },
-    { key: "managerId", title: "담당자ID" },
+    { key: "departmentName", title: "부서명" },
+    { key: "managerId", title: "담당직원ID" },
     { key: "position", title: "직급" },
     { key: "name", title: "이름" },
     { key: "phone", title: "전화번호" },
@@ -176,6 +195,7 @@ const StaffPage = () => {
           onSubmit={handleSubmit}
           onClose={handleClose}
           initialData={selectedStaff}
+          departmentList={departmentList}
         />
       </CommonModal>
 
@@ -184,6 +204,7 @@ const StaffPage = () => {
         onClose={() => setSearchModalOpen(false)}
       >
         <h3>동명이인 선택</h3>
+        <p>직원번호 / 이름 / 부서명 / 전화번호 </p>
         <div style={{ display: "grid", gap: "8px", marginTop: "12px" }}>
           {searchCandidates.map((staff) => (
             <button
@@ -192,7 +213,7 @@ const StaffPage = () => {
               onClick={() => handleSelectCandidate(staff)}
               style={styles.candidateButton}
             >
-              {staff.name} / {staff.departmentId} / {staff.phone}
+             {staff.staffId} / {staff.name} / {staff.departmentName} / {staff.phone}
             </button>
           ))}
         </div>

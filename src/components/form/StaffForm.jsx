@@ -13,7 +13,7 @@ const initState = {
 
 
 const positionOptionsMap = {
-  1: [
+  "DOCTOR": [
     { value: "INTERN", label: "인턴" },
     { value: "RESIDENT", label: "레지던트" },
     { value: "FELLOW", label: "전임의" },
@@ -21,13 +21,13 @@ const positionOptionsMap = {
     { value: "PROFESSOR", label: "교수" },
     { value: "HEAD_DOCTOR", label: "과장" },
   ],
-  2: [
+  "NURSE": [
     { value: "NURSE", label: "일반 간호사" },
     { value: "CHARGE_NURSE", label: "책임 간호사" },
     { value: "HEAD_NURSE", label: "수간호사" },
     { value: "DIRECTOR_NURSE", label: "간호부장" },
   ],
-  3: [
+  "ADMIN": [
     { value: "STAFF", label: "사원" },
     { value: "SENIOR", label: "주임" },
     { value: "ASSISTANT_MANAGER", label: "대리" },
@@ -37,8 +37,17 @@ const positionOptionsMap = {
 
 };
 
-const StaffForm = ({ onSubmit, onClose , initialData}) => {
+const StaffForm = ({ onSubmit, 
+                     onClose ,
+                     initialData,
+                     departmentList=[],
+                     userList=[],
+                     staffList=[],
+
+  }) => {
   const [form, setForm] = useState(initState);
+  const [userkeyword, setUserKeyword]= useState("");
+  const [managerKeyword, setManagerKeyword] = useState("");
 
   useEffect(()=> {
     if(initialData) {
@@ -54,8 +63,22 @@ const StaffForm = ({ onSubmit, onClose , initialData}) => {
       });
     }else {
       setForm(initState);
+      setUserKeyword("");
+      setManagerKeyword("");
     }
   }, [initialData]);
+
+  const filteredUsers= userList.filter((user)=>
+    `${user.userId} ${user.name || ""} ${user.email || ""}`
+      .toLowerCase()
+      .includes(userkeyword.toLowerCase())
+      );
+
+  const filteredManagers= staffList.filter((staff)=>
+    `${staff.staffId} ${staff.name||""}`
+    .toLowerCase()
+    .includes(managerKeyword.toLowerCase())  
+  );
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -68,13 +91,19 @@ const StaffForm = ({ onSubmit, onClose , initialData}) => {
     });
       return;
     }
-    setForm({
-      ...form,
+    setForm((prev)=>({
+      ...prev,
       [name]:value,
-    });
+    }));
   };
+
+  const selectedDepartment=departmentList.find(
+    (dept)=>dept.departmentId == Number(form.departmentId)
+  );
+
+  const departmentCategory = selectedDepartment?.departmentCategory || "";
   
-  const positionOptions = positionOptionsMap[form.departmentId] || [];
+  const positionOptions = positionOptionsMap[departmentCategory] || [];
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -104,38 +133,55 @@ const StaffForm = ({ onSubmit, onClose , initialData}) => {
         <div>
           <label>사용자ID</label>
           <input
-            type="number"
+            type="text"
+            placeholder="이름 / 이메일 / ID 검색"
+            value={userkeyword}
+            onChange={(e)=>setUserKeyword(e.target.value)}
+            disabled={!!initialData}
+          />
+            <select
             name="userId"
-            placeholder="userId"
             value={form.userId}
             onChange={handleChange}
             disabled={!!initialData}
-          />
+            >
+            <option value="">사용자 선택</option>
+            {filteredUsers.map((user) => (
+              <option key={user.userId} value={user.userId}>
+                {user.userId} / {user.name} / {user.email}
+           </option>
+             ))}
+           </select>
         </div>
 
         <div>
-          <label>부서ID</label>
-          <input
-            type="number"
+          <label>부서명</label>
+          <select
             name="departmentId"
-            placeholder="departmentId"
             value={form.departmentId}
             onChange={handleChange}
             disabled={!!initialData}
-          />
+          >
+            <option value="">부서 선택</option>
+            {departmentList.map((dept) => (
+              <option key={dept.departmentId} value={dept.departmentId}>
+                {dept.departmentName}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>
-          <label>담당자ID</label>
+          <label>담당직원ID</label>
           <input
             type="number"
             name="managerId"
-            placeholder="managerId"
+            placeholder="담당직원ID"
             value={form.managerId}
             onChange={handleChange}
           />
         </div>
-
+        
         <div>
           <label>직급</label>
           <select
@@ -143,6 +189,8 @@ const StaffForm = ({ onSubmit, onClose , initialData}) => {
             value={form.position}
             onChange={handleChange}
           >
+
+            <option value="">직급선택</option>
             {positionOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
