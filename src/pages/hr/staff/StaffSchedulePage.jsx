@@ -12,6 +12,7 @@ import { getSchedulePolicyList } from "../../../api/hr/schedulePolicyApi";
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
+import WeekScheduleTable from '../../../components/schedule/WeekScheduleTable';
 
 const initialForm={
     scheduleId:"",
@@ -55,6 +56,7 @@ const StaffSchedulePage = () => {
     const [bulkOpen, setBulkOpen] = useState(false);
     const [bulkFormData, setBulkFormData] = useState(initialBulkForm);
     const [selectedDate, setSelectedDate] = useState(getTodayString());
+    const [viewMode, setViewMode] = useState("month");
 
     useEffect(()=>{
         fetchInitData();
@@ -324,11 +326,16 @@ const StaffSchedulePage = () => {
             placeholder="직원의 이름을 입력하세요"
             />
             <button type='button' onClick={handleResetSearch}>
-                전체보기
+                목록 전체보기
             </button>
+            <button onClick={()=> setViewMode("month")}>달력형
+            </button>
+            <button onClick={()=> setViewMode("week")}>주간형</button>
         </div>
+        
         <div style={styles.content}>
-
+            {viewMode == "month" ? (
+                <>
             <div style={styles.calendar}>
                 <FullCalendar
                 plugins={[dayGridPlugin, interactionPlugin]}
@@ -343,6 +350,16 @@ const StaffSchedulePage = () => {
 
             <div style={styles.list}>
                 <CommonTable columns={columns} data={tableData}/>
+            </div>
+            </>
+            ):(
+                <WeekScheduleTable
+                staffList={staffList}
+                scheduleList={scheduleList}
+                scheduleTypeList={scheduleTypeList}
+                selectedDate={selectedDate}
+                />
+            )}
             </div>
             
             <CommonModal open={open} onClose={handleClose}>
@@ -372,7 +389,7 @@ const StaffSchedulePage = () => {
         </div>
 
         
-    </div>
+    
   )
 }
 

@@ -1,0 +1,242 @@
+import React, { useEffect, useMemo, useState } from 'react'
+
+const WeekScheduleTable = ({
+    staffList =[], 
+    scheduleList=[],
+    scheduleTypeList=[],
+    selectedDate,
+    }) => {
+    const [currentWeek, setCurrentWeek] = useState(
+        selectedDate || getTodayString()
+    );
+
+    useEffect(()=>{
+        if(selectedDate){
+            setCurrentWeek(selectedDate);
+        }
+    }, [selectedDate]);
+
+    const weekDates = useMemo(()=>{
+        const today = new Date(currentWeek);
+        const day = today.getDay();
+
+        const start = new Date(today);
+        start.setDate(today.getDate()-day);
+
+        return Array.from({length:7}, (_, i) =>{
+            const d = new Date(start);
+            d.setDate(start.getDate() + i);
+
+            const yyyy=d.getFullYear();
+            const mm=String(d.getMonth()+1).padStart(2,"0");
+            const dd=String(d.getDate()).padStart(2,"0");
+
+            return {
+                label:`${mm}/${dd}`,
+                date:`${yyyy}-${mm}-${dd}`,
+                dayName:["일","월","화","수","목","금","토"][d.getDay()],
+            };
+        });
+    }, [currentWeek]);
+
+    const typeMap = useMemo(()=>{
+        const map ={};
+
+        scheduleTypeList.forEach((type)=>{
+            map[type.scheduleTypeId]=type;
+        });
+        return map;
+    }, [scheduleTypeList]);
+
+    const weekDateSet= useMemo(()=>{
+        return new Set(weekDates.map((d)=> d.date));
+    },[weekDates]);
+
+    const scheduleMap=useMemo(()=>{
+        const map = {};
+
+        scheduleList.forEach((schedule)=>{
+            const staffId = schedule.staffId;
+            const workDate = schedule.workDate;
+            
+            if(!weekDateSet.has(workDate)) return;
+
+            const typeInfo = typeMap[schedule.scheduleTypeId];
+            const typeName =
+            typeInfo?.typeName ||
+            typeInfo?.typeCode ||
+            "";
+        if (!map[staffId]){
+            map[staffId] = {};
+        }
+        map [staffId][workDate] = typeName;
+    });
+    return map;
+    }, [scheduleList, typeMap, weekDateSet]);
+
+    const moveWeek = (diff) =>{
+        const d=new Date(currentWeek);
+        d.setDate(d.getDate() + diff * 7);
+        setCurrentWeek(formatDate(d));
+    };
+
+    const getTypeStyle = (type) =>{
+        switch(type){
+            case "DAY":
+                return;
+            case "EVENING":
+                return;
+            case "NIGHT":
+                return;
+            case "OFF":
+                return;
+            default:
+                return;
+
+        }
+    };
+  return (
+    <div style={styles.wrapper}>
+        <div style={styles.topBar}>
+            <button type='button' onClick={()=> moveWeek(-1)}>이전 주</button>
+            <div style={styles.weekTitle}>
+                {weekDates[0]?.date} ~ {weekDates[6]?.date}
+            </div>
+            <button type='button' onClick={()=> moveWeek(1)}>다음 주</button>
+        </div>
+        <table style={styles.table}>
+            <thead>
+                <tr>
+                    <th style={{...styles.th, ...styles.staffHeader}}>직원명</th>
+                    {weekDates.map((day)=>(
+                        <th key={day.date} style={styles.th}>
+                            <div>{day.dayName}</div>
+                            <div style={styles.dateText}>{day.label}</div>
+                        </th>
+                    ))}
+                </tr>
+            </thead>
+            <tbody>
+                {staffList.map((staff)=>(
+                    <tr key={staff.staffId}>
+                        <td style={{...styles.td, ...styles.staffCell}}>{staff.name}
+                        </td>
+                        {weekDates.map((day)=>{
+                            const type = scheduleMap[staff.staffId]?.[day.date]||"";
+
+                            return (
+                                <td key={day.date} style={styles.td}>
+                                    {type ? (
+                                        <span
+                                        style={{
+                                            ...styles.badge,
+                                            ...getTypeStyle(type),
+                                        }}
+                                        >
+                                            {type}
+                                        </span>
+                                    ):(
+                                        <span style={styles.emptyText}>-</span>
+                                    )}
+                                </td>
+                            );
+                        })}
+                    </tr>
+                ))}
+
+                {staffList.length == 0 && (
+                    <tr>
+                        <td colSpan={8} style={styles.emptyRow}>
+                            직원 데이터가 없습니다
+                        </td>
+                    </tr>
+                )}
+            </tbody>
+        </table>
+    </div>
+  )
+}
+
+export default WeekScheduleTable
+
+function formatDate(date) {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function getTodayString() {
+  return formatDate(new Date());
+}
+
+const styles = {
+  wrapper: {
+    width: "100%",
+    overflowX: "auto",
+    backgroundColor: "#fff",
+    border: "1px solid #ddd",
+    borderRadius: "8px",
+    padding: "12px",
+  },
+  topBar: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "12px",
+  },
+  weekTitle: {
+    fontWeight: "bold",
+    fontSize: "16px",
+  },
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+    minWidth: "900px",
+  },
+  th: {
+    borderBottom: "1px solid #ddd",
+    borderRight: "1px solid #eee",
+    padding: "12px",
+    textAlign: "center",
+    backgroundColor: "#f8fafc",
+    fontWeight: "bold",
+    fontSize: "14px",
+  },
+  td: {
+    borderBottom: "1px solid #eee",
+    borderRight: "1px solid #f3f4f6",
+    padding: "12px",
+    textAlign: "center",
+    height: "56px",
+    fontSize: "14px",
+  },
+  staffHeader: {
+    minWidth: "140px",
+  },
+  staffCell: {
+    fontWeight: "bold",
+    backgroundColor: "#fafafa",
+  },
+  dateText: {
+    fontSize: "12px",
+    color: "#6b7280",
+    marginTop: "4px",
+  },
+  badge: {
+    display: "inline-block",
+    minWidth: "70px",
+    padding: "6px 10px",
+    borderRadius: "999px",
+    fontWeight: "bold",
+    fontSize: "12px",
+  },
+  emptyText: {
+    color: "#9ca3af",
+  },
+  emptyRow: {
+    padding: "20px",
+    textAlign: "center",
+    color: "#6b7280",
+  },
+};
