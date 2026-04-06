@@ -1,8 +1,9 @@
 import axios from "axios";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const jwtAxios=axios.create();
 
-export const host='http://localhost:8080/api';
+export const host=`${API_BASE_URL}/api`;
 const beforeRequest=(config)=>{
     const accessToken=sessionStorage.getItem("accessToken");
     if(!accessToken){ //로그인 안 했을 때

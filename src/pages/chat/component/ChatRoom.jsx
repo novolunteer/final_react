@@ -1,15 +1,116 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { chatRoomDetail, deleteMessage, editMessage, getStaffListForInvite, inviteStaff, leaveChatRoom, markAsRead } from '../../../api/chatApi';
+import { chatRoomDetail, deleteMessage, editMessage, getStaffListForInvite, inviteStaff, leaveChatRoom, markAsRead, uploadAttachment } from '../../../api/chatApi';
 import dayjs from 'dayjs';
+import { useNavigate } from 'react-router-dom';
 
-const ReplyModal=({ handleReply, onClose, setReplyContent, parentContent, replyContent }) => {
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+const getAttachmentType=(file)=>{
+    const contentType=file.contentType || "";
+    const ext=(file.fileExtension || "").toLowerCase();
+
+    if(contentType.startsWith("image/")) return "image";
+    if(contentType.startsWith("video/")) return "video";
+    if(contentType === "application/pdf") return "pdf";
+
+    if (
+        ext === "xls" ||
+        ext === "xlsx" ||
+        contentType.includes("spreadsheet") ||
+        contentType.includes("excel")
+    ) {
+        return "excel";
+    }
+
+    if (
+        ext === "doc" ||
+        ext === "docx" ||
+        contentType.includes("word")
+    ) {
+        return "word";
+    }
+
+    if (
+        ext === "ppt" ||
+        ext === "pptx" ||
+        contentType.includes("presentation") ||
+        contentType.includes("powerpoint")
+    ) {
+        return "ppt";
+    }
+
+    return "file";
+}
+
+const AttachmentItem=({file}) => {
+    const fileType=getAttachmentType(file);
+
+    const getFileIcon=()=>{
+        if (fileType === "pdf") return "📄";
+        if (fileType === "excel") return "📊";
+        if (fileType === "video") return "🎥";
+        if (fileType === "word") return "📝";
+        if (fileType === "ppt") return "📽️";
+        return "📎";
+    }
+
+    return (
+        <div className={`attachment-card ${fileType}`}>
+            {fileType === "image" ? (
+                <a
+                    href={`${API_BASE_URL}${file.fileUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer">
+                            <img 
+                                src={`${API_BASE_URL}${file.fileUrl}`}
+                                alt={file.originalFileName}
+                                className='attachment-file-image'/>
+                </a>
+            ) : (
+                <div className='attachment-file-box'>
+                    <div className='attachment-icon'>{getFileIcon()}</div>
+                    <div className='attachment-file-info'>
+                        <a href={`${API_BASE_URL}${file.fileUrl}`}
+                            target='_blank' rel='noreferrer'
+                            className='attachment-name'>
+                            {file.originalFileName}
+                        </a>
+                        <p className='attachment-file-label'>
+                            {fileType.toUpperCase()}
+                        </p>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const ReplyModal=({ handleReply, onClose, setReplyContent, parentMessage, replyContent }) => {
     return (
         <div className='replyModalOverlay' onClick={onClose}>
             <div className='replyModalInner' onClick={(e)=> e.stopPropagation()}>
                 <div className='replyModal-parentMessageContent'>
-                    <p className='replyModal-parentLabel'>답장할 메시지</p>
-                    <textarea value={parentContent} rows={3} readOnly>
-                    </textarea>
+                    <div className='replyModal-parentLabel-wrap'>
+                        <p className='replyModal-parentLabel'>답장할 메시지</p>
+                    </div>
+                    {
+                        parentMessage?.attachments &&
+                        parentMessage?.attachments?.length > 0 && (
+                            <div className='replyModal-parent-attachments'>
+                                {
+                                    parentMessage.attachments.map((file)=>(
+                                        <AttachmentItem key={file.attachmentId}
+                                            file={file}/>
+                                    ))
+                                }
+                            </div>    
+                        )
+                    }
+                    <div className='replyModal-parentText'>
+                        <textarea value={parentMessage?.content ?? ""} 
+                            rows={3} readOnly>
+                        </textarea>
+                    </div>
                 </div>
                 <div className='replyModal-form-area'>
                     <form className='replyModal-form'
@@ -164,7 +265,7 @@ const ParticipantModal=({participants, userId, onClose, isGroup, handleOpenInvit
   }
 
 const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomRefresh, 
-    getRooms
+    getRooms, setAttachmentArchive, setRoomName
  }) => {
   const [room, setRoom]=useState(null)
   const [messageSlice, setMessageSlice]=useState({
@@ -187,8 +288,8 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
   const [openEditModal, setOpenEditModal]=useState(false);
   const [targetMessageId, setTargetMessageId]=useState(null);
   const [openReplyModal, setOpenReplyModal]=useState(false);
-  const [replyContent, setReplyContent]=useState("");
-  const [parentContent, setParentContent]=useState("");
+  const [parentMessage, setParentMessage]=useState(null);
+  const [selectedFiles, setSelectedFiles]=useState([]);
 
   const subscriptionRef=useRef(null);
   const readSubscriptionRef=useRef(null);
@@ -198,6 +299,14 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
   const syncingReadRef=useRef(false);
   const pendingReadSyncRef=useRef(false);
   const popoverRef=useRef(null);
+  const fileInputRef=useRef(null);
+
+  const navigate=useNavigate();
+
+  const accessToken=sessionStorage.getItem('accessToken');
+  if(!accessToken){
+    navigate("/login", {replace:true});
+  }
 
   const userId=Number(sessionStorage.getItem("userId"));
 
@@ -237,6 +346,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
         setOpenInviteModal(false);
         syncingReadRef.current=false;
         pendingReadSyncRef.current=false;
+        setSelectedFiles([]);
   }, [roomId]);
   
   useEffect(()=>{
@@ -464,14 +574,14 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
     reload();
   },[roomRefresh, roomId]);
 
-  const sendMessage=()=>{
+  const sendMessage=async()=>{
     const text=content.trim();
     const client=clientRef.current;
 
-    if(!text){
-        alert("메시지 내용을 입력하세요.");
+    if (!text && selectedFiles.length === 0){
+        alert("메세지 내용을 입력하거나 파일을 첨부하세요.");
         return;
-    }
+    } 
 
     if(!client || !connected){
         alert("웹소켓 연결이 아직 완료되지 않았습니다.");
@@ -479,55 +589,34 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
     }
 
     try{
+        let uploadFiles=[];
+
+        if(selectedFiles.length > 0){
+            const res=await uploadAttachment(selectedFiles);
+            uploadFiles=res.result ?? [];
+        }
+
         client.publish({
             destination: `/app/chat/send/user`,
             body:JSON.stringify({
                 roomId:roomId,
-                content:text
+                content:text,
+                parentMessageId:targetMessageId ? targetMessageId : null,
+                attachments:uploadFiles
             })
         });
 
         setContent("")
+        setParentMessage(null);
+        setOpenReplyModal(false);
+        setTargetMessageId(null);
+        setSelectedFiles([]);
     }catch(error){
         console.log(error);
         alert("메시지 전송이 실패했습니다. 오류 로그를 확인하세요.");
     }
 
   };
-
-  const sendReplyMessage=() => {
-    const text=replyContent.trim();
-    const client=clientRef.current;
-
-    if(!text) {
-        alert("답장할 내용을 입력하세요.");
-        return;
-    }
-
-    if(!client || !connected){
-        alert("웹소켓 연결이 아직 완료되지 않았습니다.");
-        return;
-    }
-
-    try{
-        client.publish({
-            destination: `/app/chat/send/user`,
-            body:JSON.stringify({
-                roomId:roomId,
-                content:text,
-                parentMessageId:targetMessageId
-            })
-        });
-
-        setReplyContent("");
-        setParentContent("");
-        setOpenReplyModal(false);
-        setTargetMessageId(null);
-    }catch(error){
-        console.log(error);
-        alert("메시지 전송이 실패했습니다. 오류 로그를 확인하세요.");
-    }
-  }
 
   const loadOlderMessages=async()=>{
     if(!roomId || loadingOld || !messageSlice.hasNext) return;
@@ -697,16 +786,22 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
     setMessageSlice(prev => ({
         ...prev,
         messages:prev.messages.map(msg => {
+            const parent=msg.parentMessage;
+
             if(msg.messageId === updateMessage.messageId){
                 return {...msg, ...updateMessage};
             }
 
-            if(msg.parentMessageId === updateMessage.messageId){
+            if(parent && parent.parentMessageId === updateMessage.messageId){
                 return {
                     ...msg,
-                    parentMessageContent: updateMessage.deleted 
-                        ? '삭제된 메시지입니다.' : updateMessage.content,
-                    parentMessageIsDeleted: !!updateMessage.deleted
+                    parentMessage: {
+                        ...parent,
+                        parentMessageContent: updateMessage.deleted
+                            ? null
+                            : updateMessage.content,
+                        parentMessageIsDeleted: !!updateMessage.deleted
+                    }
                 };
             }
 
@@ -752,11 +847,12 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
   }
 
   const replyModalClose=()=>{
-    setReplyContent("");
+    setContent("");
     setOpenReplyModal(false);
     setTargetMessageId(null);
     setOpenPopId(null);
-    setParentContent("");
+    setParentMessage(null);
+    setSelectedFiles([]);
   }
 
   const editMessageModalClose=()=>{
@@ -790,6 +886,21 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
     );
   };
 
+  const handleClickAttach=()=>{
+    fileInputRef.current?.click();
+  };
+
+  const handleChangeFile=(e)=>{
+    const files=Array.from(e.target.files || []);
+    if(files.length === 0) return;
+    setSelectedFiles((prev)=>[...prev, ...files]);
+    e.target.value="";
+  }
+
+  const removeSelectedFile=(removeIndex)=>{
+    setSelectedFiles((prev) => prev.filter((_, index) => index !== removeIndex));
+  };
+
   return (
     <div className='chat-room-panel'>
         {
@@ -817,12 +928,22 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                             {participants.length}명
                         </button>
                     </div>
+                    <div className='chat-room-attachment-button-wrap'>
+                        <button type='button' className='show-attachment-archive-btn'
+                            onClick={()=>{
+                                setRoomName(room.customRoomName ? room.customRoomName:room.roomName)
+                                setAttachmentArchive(true)
+                            }}>
+                            보관함
+                        </button>
+                    </div>
                 </div>
                 <div className='chat-message-area' ref={messageAreaRef}
                     onScroll={handleScroll}>
                     {
                         orderedMessages != null &&
                         orderedMessages.map((m, idx) => {
+                            const parent=m.parentMessage;
                             const next=orderedMessages[idx + 1];
                             const previous=orderedMessages[idx - 1];
 
@@ -840,17 +961,20 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                             }
 
                             const isMine=Number(m.senderId) === Number(userId);
-                            const canEditOrDelete=m.mine && 
+                            const canDelete=isMine && 
                                 !m.deleted && m.messageType !== 'SYSTEM';
                             const canReply=!m.deleted && m.messageType === 'USER';
+                            const canEdit=isMine && !m.deleted && m.messageType !== 'SYSTEM'
+                                            && m.content !== null;
+                            const canOpenPop=canDelete || canEdit || canReply;
 
-                            let content;
+                            let messageText;
                             if(m.deleted){
-                                content='삭제된 메시지입니다.';
+                                messageText='삭제된 메시지입니다.';
                             } else if(m.edited && !m.deleted){
-                                content=m.content + ' (수정됨)';
+                                messageText=m.content + ' (수정됨)';
                             } else {
-                                content=m.content;
+                                messageText=m.content;
                             }
 
                             return (
@@ -899,27 +1023,63 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                                                         <div className='chat-bubble-box'>
                                                             <div className={`${isMine ? 'chat-bubble mine' : 'chat-bubble'} 
                                                                     ${m.deleted ? 'deleted' : ''}`}>
-                                                                {m.parentMessageId && (
+                                                                {parent && (
                                                                     <div className='reply-preview'>
-                                                                        <p className='reply-preview-sender'>
+                                                                        <div className='reply-preview-sender-wrap'>
+                                                                            <p className='reply-preview-sender'>
+                                                                                {
+                                                                                    parent.parentMessageUserName
+                                                                                    ?? '알 수 없음'
+                                                                                }
+                                                                            </p>
+                                                                        </div>
+                                                                        <div className='reply-preview-file'>
                                                                             {
-                                                                                m.parentMessageUserName
-                                                                                ?? '알 수 없음'
+                                                                                !parent.parentMessageIsDeleted &&
+                                                                                parent.parentMessageAttachments &&
+                                                                                parent.parentMessageAttachments.length > 0 && (
+                                                                                    <div className='reply-preview-attachments'>
+                                                                                        {
+                                                                                            parent.parentMessageAttachments.map((file)=>(
+                                                                                                <AttachmentItem key={file.attachmentId}
+                                                                                                    file={file}/>
+                                                                                            ))
+                                                                                        }
+                                                                                    </div>
+                                                                                ) 
                                                                             }
-                                                                        </p>
-                                                                        <p className='reply-preview-text'>
-                                                                            {m.parentMessageIsDeleted ? '삭제된 메시지입니다.'
-                                                                                : m.parentMessageContent}
-                                                                        </p>
+                                                                            <div className='reply-preview-content'>
+                                                                                <p className='reply-preview-text'>
+                                                                                    {parent.parentMessageIsDeleted ? '삭제된 메시지입니다.'
+                                                                                        : parent.parentMessageContent}
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
                                                                     </div>
                                                                 )}
-                                                                <p className='chat-message-text'>
-                                                                    {content}
-                                                                </p>
+                                                                <div className='chat-message-box'>
+                                                                    {
+                                                                        m.attachments && m.attachments.length > 0 && (
+                                                                            <div className='chat-message-attachments'>
+                                                                                {
+                                                                                    m.attachments.map((file)=>(
+                                                                                        <AttachmentItem key={file.attachmentId}
+                                                                                                    file={file}/>
+                                                                                    ))
+                                                                                }
+                                                                            </div>
+                                                                        )
+                                                                    }
+                                                                    <div className='chat-message-text-wrap'>
+                                                                        <p className='chat-message-text'>
+                                                                            {messageText}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
                                                             </div>
 
                                                             {
-                                                                canEditOrDelete && (
+                                                                canOpenPop && (
                                                                     <button
                                                                         className='bubble-menu-btn'
                                                                         onClick={(e) => {
@@ -943,24 +1103,58 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                                                     <div 
                                                         className={`${isMine ? 'chat-bubble mine' : 'chat-bubble'} 
                                                             ${m.deleted ? 'deleted' : ''}`}>
-                                                        {m.parentMessageId && (
+                                                        {parent && (
                                                             <div className='reply-preview'>
-                                                                <p className='reply-preview-sender'>
-                                                                    {
-                                                                        m.parentMessageUserName ?? '알 수 없음'
+                                                                <div className='reply-preview-sender-wrap'>
+                                                                    <p className='reply-preview-sender'>
+                                                                        {
+                                                                            parent.parentMessageUserName
+                                                                            ?? '알 수 없음'
+                                                                        }
+                                                                    </p>
+                                                                </div>
+                                                                <div className='reply-preview-file'>
+                                                                   {
+                                                                        parent.parentMessageAttachments &&
+                                                                        parent.parentMessageAttachments.length > 0 && (
+                                                                        <div className='reply-preview-attachments'>
+                                                                            {
+                                                                               parent.parentMessageAttachments.map((file)=>(
+                                                                                    <AttachmentItem key={file.attachmentId}
+                                                                                        file={file}/>
+                                                                                ))
+                                                                            }
+                                                                        </div>
+                                                                        ) 
                                                                     }
-                                                                </p>
-                                                                <p className='reply-preview-text'>
-                                                                    {m.parentMessageIsDeleted
-                                                                        ? '삭제된 메시지입니다.'
-                                                                        : m.parentMessageContent
-                                                                    }
-                                                                </p>
+                                                                    <div className='reply-preview-content'>
+                                                                        <p className='reply-preview-text'>
+                                                                            {parent.parentMessageIsDeleted ? '삭제된 메시지입니다.'
+                                                                                : parent.parentMessageContent}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         )}
-                                                        <p className='chat-message-text'>
-                                                            {content}
-                                                        </p>
+                                                         <div className='chat-message-box'>
+                                                            {
+                                                                m.attachments && m.attachments.length > 0 && (
+                                                                <div className='chat-message-attachments'>
+                                                                    {
+                                                                        m.attachments.map((file)=>(
+                                                                            <AttachmentItem key={file.attachmentId}
+                                                                                file={file}/>
+                                                                        ))
+                                                                    }
+                                                                </div>
+                                                                )
+                                                            }
+                                                            <div className='chat-message-text-wrap'>
+                                                                <p className='chat-message-text'>
+                                                                    {messageText}
+                                                                </p>
+                                                            </div>
+                                                        </div>
                                                     </div>
 
                                                     {
@@ -996,7 +1190,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                                             }
                                         </div>
                                         {
-                                            openPopId === m.messageId && (
+                                            Number(openPopId) === Number(m.messageId) && (
                                                 <div className='chat-bubble-pop'
                                                     ref={popoverRef}
                                                     onClick={(e)=> e.stopPropagation()}
@@ -1007,16 +1201,17 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                                                                 className='reply-btn'
                                                                 onClick={()=>{
                                                                     setTargetMessageId(m.messageId);
-                                                                    setParentContent(m.content);
+                                                                    setParentMessage(m);
                                                                     setOpenReplyModal(true);
                                                                     setOpenPopId(null);
+                                                                    setSelectedFiles([]);
                                                                 }}>
                                                                 답장
                                                             </button>
                                                         )
                                                     }
                                                     {
-                                                        canEditOrDelete && (
+                                                        canDelete && (
                                                             <>
                                                                 <button
                                                                     type='button'
@@ -1027,6 +1222,12 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                                                                 >
                                                                         삭제
                                                                 </button>
+                                                            </>
+                                                        )
+                                                    }
+                                                    {
+                                                        canEdit && (
+                                                            <>
                                                                 <button
                                                                     type='button'
                                                                     className='edit-btn'
@@ -1071,21 +1272,67 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                             </button>
                         )
                 }
-                <div className='chat-input-area'>
-                    <form className='chat-input-form'
-                        onSubmit={(e)=>{
-                        e.preventDefault();
-                        sendMessage();
-                    }}>
-                        <input type='text' value={content} placeholder='메시지를 입력하세요.'
-                            onChange={(e)=>{
-                                setContent(e.target.value)
-                            }}
-                            className='chat-input'
-                        />
-                        <button type='submit'
-                                className='chat-send-btn'>전송</button>
-                    </form>
+                <div className='chat-input-wrap'>
+                    {
+                        selectedFiles.length > 0 && (
+                            <div className='chat-attachment-preview'>
+                                {
+                                    selectedFiles.map((file, index) => (
+                                        <div key={`${file.name}-${index}`}
+                                            className='chat-attach-item'>
+                                            <div className='chat-attach-info'>
+                                                <span
+                                                    className='chat-attach-name'>
+                                                        {file.name}
+                                                </span>
+                                                <span className='chat-attach-size'>
+                                                    {(file.size / 1024 /1024).toFixed(2)} MB
+                                                </span>
+                                            </div>
+                                            <button
+                                                type='button'
+                                                className='chat-attach-remove-btn'
+                                                onClick={()=>removeSelectedFile(index)}>
+                                                ×
+                                            </button>
+                                        </div>
+                                    ))
+                                }
+                            </div>
+                        )
+                    }
+                    <div className='chat-input-area'>
+                        <div className='chat-input-content-area'>
+                            <form className='chat-input-form'
+                                onSubmit={(e)=>{
+                                e.preventDefault();
+                                sendMessage();
+                            }}>
+                                <button type='button' className='chat-attach-btn'
+                                    onClick={handleClickAttach}>📎</button>
+                                <input type='file' ref={fileInputRef}
+                                    accept='image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt'
+                                    style={{display:'none'}} multiple
+                                    onChange={handleChangeFile}/>
+                                <textarea value={content} placeholder='메시지를 입력하세요.'
+                                    onChange={(e)=>{
+                                        setContent(e.target.value)
+                                    }}
+                                    className='chat-input'
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" && !e.shiftKey) {
+                                                e.preventDefault();
+                                                if (!content.trim()) return;
+                                            sendMessage();
+                                            }
+                                        }
+                                    }
+                                />
+                                <button type='submit'
+                                    className='chat-send-btn'>전송</button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </>
         }
@@ -1128,11 +1375,11 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
         {
             openReplyModal && (
                 <ReplyModal
-                    handleReply={sendReplyMessage}
-                    setReplyContent={setReplyContent}
-                    parentContent={parentContent}
+                    handleReply={sendMessage}
+                    setReplyContent={setContent}
+                    parentMessage={parentMessage}
                     onClose={replyModalClose}
-                    replyContent={replyContent}
+                    replyContent={content}
                 />
             )
         }

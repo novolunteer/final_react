@@ -4,7 +4,7 @@ import ChatRoom from '../component/ChatRoom'
 import "./chatLayout.css"
 import { Client } from '@stomp/stompjs'
 import { chatRoomList, getStaffList } from '../../../api/chatApi'
-import { useNavigate } from 'react-router-dom'
+import AttachmentArchive from '../component/AttachmentArchive'
 
 const ChatLayout = () => {
   const [selectedRoomId, setSelectedRoomId]=useState(null);
@@ -13,15 +13,10 @@ const ChatLayout = () => {
   const [staffList, setStaffList]=useState([]);
   const [webSocketReady, setWebSocketReady]=useState(false);
   const [roomRefresh, setRoomRefresh]=useState(0);
+  const [showAttachmentArchive, setShowAttachmentArchive]=useState(false);
+  const [roomName, setRoomName]=useState("");
 
   const clientRef=useRef(null);
-
-  const navigate=useNavigate();
-
-  const accessToken=sessionStorage.getItem('accessToken');
-  if(!accessToken){
-    navigate("/login", {replace:true});
-  }
 
   const getRooms=useCallback(
     async()=>{
@@ -151,8 +146,18 @@ const ChatLayout = () => {
             <ChatRoom roomId={selectedRoomId} onReadRoom={handleReadRoom}
               clientRef={clientRef} connected={connected}
               onLeaveRoom={handleLeaveRoomSuccess}
-              roomRefresh={roomRefresh} getRooms={getRooms}/>
+              roomRefresh={roomRefresh} getRooms={getRooms}
+              setAttachmentArchive={setShowAttachmentArchive}
+              setRoomName={setRoomName}/>
         </div>
+        {
+            showAttachmentArchive && (
+                <div className='AttachmentArchiveArea'>
+                    <AttachmentArchive roomId={selectedRoomId}
+                        roomName={roomName} setAttachmentArchive={setShowAttachmentArchive}/>
+                </div>
+            )
+        }
     </div>
   )
 }

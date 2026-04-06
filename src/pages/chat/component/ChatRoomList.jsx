@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { createChatRoom, getStaffList } from '../../../api/chatApi';
+import { useNavigate } from 'react-router-dom';
 
 const ChatRoomList = ({ rooms, selectedRoomId, onSelectRoom, staffList, setStaffList, setRooms }) => {
   const userId=useSelector(state=>state.auth.userId);
@@ -8,6 +9,13 @@ const ChatRoomList = ({ rooms, selectedRoomId, onSelectRoom, staffList, setStaff
   const [keyword, setKeyword]=useState("");
   const [selectedUsers, setSelectedUsers]=useState([]);
   const [roomName, setRoomName]=useState("");
+
+  const navigate=useNavigate();
+
+  const accessToken=sessionStorage.getItem('accessToken');
+  if(!accessToken){
+    navigate("/login", {replace:true});
+  }
 
   useEffect(()=>{
     const timer=setTimeout(async () => {
@@ -109,6 +117,10 @@ const ChatRoomList = ({ rooms, selectedRoomId, onSelectRoom, staffList, setStaff
                     rooms.map(r => {
                         const roomName=r.customRoomName ? r.customRoomName:r.roomName;
 
+                        const showText=!r.lastMessageIsDeleted && r.lastMessageText !== null;
+                        const showFile=!r.lastMessageIsDeleted && r.lastMessageHasAttachment && r.lastMessageText === null;
+                        const hasNoMessage=r.lastMessageId === null;
+
                         return <div key={r.roomId}
                                     onClick={()=>onSelectRoom(r.roomId)}
                                     className={Number(selectedRoomId) === Number(r.roomId)
@@ -137,13 +149,32 @@ const ChatRoomList = ({ rooms, selectedRoomId, onSelectRoom, staffList, setStaff
                             <div className='chat-room-bottom'>
                                 <div className='chat-room-preview-wrap'>
                                     {
-                                        r.lastMessageText ?
-                                        <p className='chat-room-preview'>
-                                            {r.lastMessageText}
-                                        </p>
-                                        :<p className='chat-room-preview empty'>
-                                            아직 전송된 메시지가 없습니다
-                                        </p>
+                                        showText && (
+                                            <p className='chat-room-preview'>
+                                                {r.lastMessageText}
+                                            </p>
+                                        )
+                                    }
+                                    {
+                                        showFile && (
+                                            <p className='chat-room-preview'>
+                                                첨부파일
+                                            </p>
+                                        )
+                                    }
+                                    {
+                                        r.lastMessageIsDeleted && (
+                                            <p className='chat-room-preview'>
+                                                삭제된 메시지입니다.
+                                            </p>
+                                        )
+                                    }
+                                    {
+                                        hasNoMessage && (
+                                            <p className='chat-room-preview empty'>
+                                                아직 전송된 메시지가 없습니다
+                                            </p>
+                                        )
                                     }
                                 </div>
                                 <div className='chat-room-unread-wrap'>

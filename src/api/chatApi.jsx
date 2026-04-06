@@ -1,6 +1,7 @@
 import jwtAxios from "./jwtAxios";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export const host='http://localhost:8080/chat';
+export const host=`${API_BASE_URL}/chat`;
 export const chatRoomList=async()=>{
     const res=await jwtAxios.get(`${host}/room/list`);
     return res.data;
@@ -13,10 +14,30 @@ export const chatRoomDetail=async({roomId, cursor})=>{
     return res.data;
 }
 
-export const sendUserMessage=async(param)=>{
+export const openAttachmentArchive=async({roomId, cursor})=>{
+    const res=await jwtAxios.get(`${host}/room/${roomId}/attachment`,{
+        params: cursor ? {cursor} : {}
+    });
+    return res.data;
+}
+
+export const uploadAttachment=async(files) => {
+    const formData=new FormData();
+
+    Array.from(files).forEach((file)=>{
+        formData.append("files", file);
+    });
+
+    const res=await jwtAxios.post(`${host}/upload/attachment`, formData);
+    return res.data;
+}
+
+export const sendMessage=async(param)=>{
     const res=await jwtAxios.post(`${host}/send/user`,{
         roomId:param.roomId,
-        content:param.content
+        content:param.content,
+        parentMessageId: param.parentMessageId,
+        attachments: param.attachments
     });
 
     return res.data;
