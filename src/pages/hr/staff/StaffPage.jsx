@@ -84,8 +84,18 @@ const StaffPage = () => {
     }
   };
 
+  const loadDepartmentList = async () => {
+    try {
+      const data = await getDepartmentList();
+      setDepartmentList(data);
+    } catch (error) {
+      console.error("부서 목록 조회 실패", error);
+    }
+  };
+
   useEffect(() => {
     loadStaffList();
+    loadDepartmentList();
   }, []);
 
   const handleSubmit = async (staffData) => {
@@ -141,22 +151,6 @@ const StaffPage = () => {
     setSearchModalOpen(false);
   };
 
-  const loadDepartmentList=async ()=>{
-    try{
-      const data = await getDepartmentList();
-      setDepartmentList(data);
-    }catch (error){
-      console.error("부서 목록 조회 실패", error);
-    }
-  };
-
-  useEffect(()=>{
-    loadStaffList();
-    loadDepartmentList();
-  }, []);
-
-
-  
   const columns = [
     { key: "id", title: "직원번호" },
     { key: "userId", title: "사용자ID" },
@@ -196,6 +190,7 @@ const StaffPage = () => {
           onClose={handleClose}
           initialData={selectedStaff}
           departmentList={departmentList}
+          staffList={originalStaffList}
         />
       </CommonModal>
 
@@ -204,7 +199,7 @@ const StaffPage = () => {
         onClose={() => setSearchModalOpen(false)}
       >
         <h3>동명이인 선택</h3>
-        <p>직원번호 / 이름 / 부서명 / 전화번호 </p>
+        <p>직원번호 / 이름 / 부서명 / 전화번호</p>
         <div style={{ display: "grid", gap: "8px", marginTop: "12px" }}>
           {searchCandidates.map((staff) => (
             <button
@@ -213,7 +208,7 @@ const StaffPage = () => {
               onClick={() => handleSelectCandidate(staff)}
               style={styles.candidateButton}
             >
-             {staff.staffId} / {staff.name} / {staff.departmentName} / {staff.phone}
+              {staff.staffId} / {staff.name} / {staff.departmentName} / {staff.phone}
             </button>
           ))}
         </div>
