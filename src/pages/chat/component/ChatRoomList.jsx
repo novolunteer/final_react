@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { createChatRoom, getStaffList } from '../../../api/chatApi';
+import { useNavigate } from 'react-router-dom';
 
 const ChatRoomList = ({ rooms, selectedRoomId, onSelectRoom, staffList, setStaffList, setRooms }) => {
   const userId=useSelector(state=>state.auth.userId);
@@ -8,6 +9,13 @@ const ChatRoomList = ({ rooms, selectedRoomId, onSelectRoom, staffList, setStaff
   const [keyword, setKeyword]=useState("");
   const [selectedUsers, setSelectedUsers]=useState([]);
   const [roomName, setRoomName]=useState("");
+
+  const navigate=useNavigate();
+
+  const accessToken=sessionStorage.getItem('accessToken');
+  if(!accessToken){
+    navigate("/login", {replace:true});
+  }
 
   useEffect(()=>{
     const timer=setTimeout(async () => {
@@ -111,7 +119,7 @@ const ChatRoomList = ({ rooms, selectedRoomId, onSelectRoom, staffList, setStaff
 
                         const showText=!r.lastMessageIsDeleted && r.lastMessageText !== null;
                         const showFile=!r.lastMessageIsDeleted && r.lastMessageHasAttachment && r.lastMessageText === null;
-                        const hasNoMessage=r.lastMessaggeId === null;
+                        const hasNoMessage=r.lastMessageId === null;
 
                         return <div key={r.roomId}
                                     onClick={()=>onSelectRoom(r.roomId)}

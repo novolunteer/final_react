@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { chatRoomDetail, deleteMessage, editMessage, getStaffListForInvite, inviteStaff, leaveChatRoom, markAsRead, uploadAttachment } from '../../../api/chatApi';
 import dayjs from 'dayjs';
+import { useNavigate } from 'react-router-dom';
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -264,7 +265,7 @@ const ParticipantModal=({participants, userId, onClose, isGroup, handleOpenInvit
   }
 
 const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomRefresh, 
-    getRooms
+    getRooms, setAttachmentArchive, setRoomName
  }) => {
   const [room, setRoom]=useState(null)
   const [messageSlice, setMessageSlice]=useState({
@@ -299,6 +300,13 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
   const pendingReadSyncRef=useRef(false);
   const popoverRef=useRef(null);
   const fileInputRef=useRef(null);
+
+  const navigate=useNavigate();
+
+  const accessToken=sessionStorage.getItem('accessToken');
+  if(!accessToken){
+    navigate("/login", {replace:true});
+  }
 
   const userId=Number(sessionStorage.getItem("userId"));
 
@@ -918,6 +926,15 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
                         <button className='chat-room-participant-btn' type='button'
                             onClick={()=>setOpenParticipantModal(true)}>
                             {participants.length}명
+                        </button>
+                    </div>
+                    <div className='chat-room-attachment-button-wrap'>
+                        <button type='button' className='show-attachment-archive-btn'
+                            onClick={()=>{
+                                setRoomName(room.customRoomName ? room.customRoomName:room.roomName)
+                                setAttachmentArchive(true)
+                            }}>
+                            보관함
                         </button>
                     </div>
                 </div>

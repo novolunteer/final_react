@@ -14,6 +14,13 @@ export const chatRoomDetail=async({roomId, cursor})=>{
     return res.data;
 }
 
+export const openAttachmentArchive=async({roomId, cursor})=>{
+    const res=await jwtAxios.get(`${host}/room/${roomId}/attachment`,{
+        params: cursor ? {cursor} : {}
+    });
+    return res.data;
+}
+
 export const uploadAttachment=async(files) => {
     const formData=new FormData();
 
