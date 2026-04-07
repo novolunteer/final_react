@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import RegisterButton from '../../../components/common/RegisterButton'
 import SearchBar from '../../../components/common/SearchBar';
 import CommonTable from '../../../components/common/CommonTable';
@@ -13,6 +13,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import WeekScheduleTable from '../../../components/schedule/WeekScheduleTable';
+import "./StaffSchedulePage.css";
 
 const initialForm={
     scheduleId:"",
@@ -58,6 +59,8 @@ const StaffSchedulePage = () => {
     const [selectedDate, setSelectedDate] = useState(getTodayString());
     const [viewMode, setViewMode] = useState("month");
 
+    const [selectedDepartmentId, setSelectedDepartmentId]= useState("");
+
     useEffect(()=>{
         fetchInitData();
     },[]);
@@ -99,13 +102,19 @@ const StaffSchedulePage = () => {
         result = result.filter((item)=>
         (item.staffName || "").includes(searchKeyword.trim())
         );
-    }
+        }
 
-    if(selectedDate){
-        result = result.filter((item)=> item.workDate == selectedDate);
-    }
-    return result;
-    }, [scheduleList, searchKeyword, selectedDate]);
+        if(selectedDepartmentId){
+            result=result.filter(
+                (item) => String(item.departmentId) === String(selectedDepartmentId)
+            );
+        }
+
+        if(selectedDate){
+            result = result.filter((item)=> item.workDate == selectedDate);
+        }
+        return result;
+        }, [scheduleList, searchKeyword, selectedDate, selectedDepartmentId]);
 
     const columns = [
     { key: "select", title:(
@@ -138,11 +147,14 @@ const StaffSchedulePage = () => {
     };
 
 
-    const handleResetSearch = () => {
+    const handleResetAll = () => {
+        const today = getTodayString();
         setSearchKeyword("");
+        setSelectedDate(today);
+        setSelectedDepartmentId("");
     };
 
-
+    const calendarRef = useRef(null);
     
     const hasDuplicateSchedule = (target) => {
         return scheduleList.some(
@@ -202,36 +214,67 @@ const StaffSchedulePage = () => {
     };
 
     const handleConfirm = async(scheduleId)=>{
+        
+            const confirm=window.confirm("해당 스케줄을 확정하시겠습니까?");
+            if(!confirm) return;
+
         try{
             await confirmSchedule(scheduleId);
-            alert("확정완료");
+            alert("스케줄 확정완료");
             fetchScheduleData();
         }catch (e) {
             console.error(e);
         }
     };
 
-    const tableData = filteredScheduleList.map((item)=>({
-        ...item,
-        select:(
-            item.status == "TEMP" ? (
+    const groupedScheduleList = filteredScheduleList.reduce((acc, item)=>{
+        const departmentName = item.departmentName || "미지정 부서";
+
+        if (!acc[departmentName]){
+            acc[departmentName] = [];
+        }
+        acc[departmentName].push(item);
+        return acc;
+    }, {});
+
+    const deptTableData = (list) => {
+        return list.map((item)=>({
+            ...item,
+            select:
+            item.status ==="TEMP"?(
                 <input
                 type='checkbox'
                 checked={selectedIds.includes(item.scheduleId)}
-                onChange={()=> handleCheck(item.scheduleId)}/>
-            ) : null
-        ),
-        action:(
-            <div style={{display:"flex", gap:"6px"}}>
-                <button type='button' onClick={()=>handleEdit(item)}>수정</button>
-                <button type='button' onClick={()=>handleDelete(item)}>삭제</button>
+                onChange={()=>handleCheck(item.scheduleId)}
+                />
+            ) : null,
+            action :(
+                <div style={{display:"flex", gap:"6px"}}>
+                <button type='button' disabled={item.status == "CONFIRMED"} onClick={()=>handleEdit(item)}>수정</button>
+                <button type='button' disabled={item.status == "CONFIRMED"} onClick={()=>handleDelete(item)}>삭제</button>
                 {item.status =="TEMP" && (
                     <button type='button' onClick={()=>handleConfirm(item.scheduleId)}>확정</button>
                 )}
             </div>
-        ),
-    }));
+            ),
+        }));
+    };
 
+    const weekGroupedByDepartment=useMemo(()=>{
+        let result=scheduleList;
+
+        if(selectedDepartmentId){
+            result=result.filter(
+                (item) => String(item.departmentId) == String(selectedDepartmentId)
+            );
+        }
+        return result.reduce((acc, item)=>{
+            const departmentName = item.departmentName || "미지정 부서";
+            if(!acc[departmentName]) acc[departmentName] = [];
+            acc[departmentName].push(item);
+            return acc;
+        }, {});
+    }, [scheduleList, selectedDepartmentId]);
     const handleBulkConfirm = async()=>{
         if (selectedIds.length==0){
             alert("선택된 스케줄이 없습니다");
@@ -252,9 +295,24 @@ const StaffSchedulePage = () => {
     };
 
 
-    const events= scheduleList.map((item) => ({
-        title: `${item.staffName || ""} ${item.typeName || ""}`,
-        date: item.workDate,
+    const events = Object.values(
+    scheduleList.reduce((acc, item) => {
+        const date = item.workDate;
+
+        if (!acc[date]) {
+        acc[date] = {
+            date,
+            count: 0,
+        };
+        }
+
+        acc[date].count += 1;
+
+        return acc;
+    }, {})
+    ).map((item) => ({
+    title: `총 ${item.count}명 근무`,
+    date: item.date,
     }));
 
     const handleCheck = (scheduleId)=>{
@@ -307,6 +365,16 @@ const StaffSchedulePage = () => {
         setBulkFormData(initialBulkForm);
         setBulkOpen(false);
     }
+
+    const handleToday=()=>{
+        const today = getTodayString();
+
+        setSelectedDate(today);
+        
+       calendarRef.current?.getApi().gotoDate(today);
+    }; 
+
+
   return (
     <div style={styles.container}>
         <div style={styles.header}>
@@ -315,7 +383,8 @@ const StaffSchedulePage = () => {
             <button onClick={handleBulkOpen}>일괄등록</button>
             <button onClick={handleOpen}>자동등록</button>
             <button onClick={handleOpen}>자동화 조건 등록</button>
-            <button onClick={handleBulkConfirm}>선택확정</button>
+            <button onClick={handleBulkConfirm}
+            disabled={viewMode=="week" || selectedIds.length == 0}>선택확정</button>
         </div>
 
         <div style={styles.topBar}>
@@ -325,8 +394,19 @@ const StaffSchedulePage = () => {
             showButton={false}
             placeholder="직원의 이름을 입력하세요"
             />
-            <button type='button' onClick={handleResetSearch}>
-                목록 전체보기
+            <select
+            value={selectedDepartmentId}
+            onChange={(e)=>setSelectedDepartmentId(e.target.value)}
+            >
+                <option value="">전체부서</option>
+                {departmentList.map((dept)=>(
+                    <option key={dept.departmentId} value={dept.departmentId}>
+                        {dept.departmentName}
+                    </option>
+                ))}
+            </select>
+            <button type='button' onClick={handleResetAll}>
+                전체 초기화
             </button>
             <button onClick={()=> setViewMode("month")}>달력형
             </button>
@@ -338,24 +418,46 @@ const StaffSchedulePage = () => {
                 <>
             <div style={styles.calendar}>
                 <FullCalendar
+                ref={calendarRef}
                 plugins={[dayGridPlugin, interactionPlugin]}
-                initialView='dayGridMonth'
+                initialView="dayGridMonth"
                 events={events}
-                dateClick={(info)=>{
-                    console.log("클릭됨:", info.dateStr);
+                headerToolbar={{
+                    right: "prev,next myToday",
+                    center: "title",
+                    left: "",
+                }}
+                customButtons={{
+                    myToday: {
+                    text: "오늘",
+                    click: handleToday,
+                    },
+                }}
+                dateClick={(info) => {
                     setSelectedDate(info.dateStr);
                 }}
+                height="auto"
+                dayMaxEvents={true}
+                dayMaxEventRows={3}
+                fixedWeekCount={false}
                 />
             </div>
 
             <div style={styles.list}>
-                <CommonTable columns={columns} data={tableData}/>
+                <h2>{selectedDate || getTodayString()} 스케줄</h2>
+                {Object.entries(groupedScheduleList).map(([departmentName, items]) => (
+                <div key={departmentName}>
+                    <h3>{departmentName}</h3>
+                    <CommonTable columns={columns} data={deptTableData(items)} />
+                </div>
+                ))}
             </div>
             </>
             ):(
                 <WeekScheduleTable
                 staffList={staffList}
                 scheduleList={scheduleList}
+                // groupedSchedule={weekGroupedByDepartment}
                 scheduleTypeList={scheduleTypeList}
                 selectedDate={selectedDate}
                 />

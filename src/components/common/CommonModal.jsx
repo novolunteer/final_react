@@ -1,12 +1,11 @@
 import React from 'react'
 
-const CommonModal = ({open, onClose, children}) => {
+const CommonModal = ({open, onClose, children, showCloseButton = true}) => {
     if(!open) return null;
 
   return (
     <div style={styles.overlay}>
         <div style={styles.modal}>
-            <button onClick={onClose} style={styles.close}>X</button>
             {children} 
             
         </div>

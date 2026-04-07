@@ -5,6 +5,7 @@ const WeekScheduleTable = ({
     scheduleList=[],
     scheduleTypeList=[],
     selectedDate,
+    groupedSchedule,
     }) => {
     const [currentWeek, setCurrentWeek] = useState(
         selectedDate || getTodayString()
@@ -193,6 +194,7 @@ const styles = {
     width: "100%",
     borderCollapse: "collapse",
     minWidth: "900px",
+    tableLayout: "fixed",
   },
   th: {
     borderBottom: "1px solid #ddd",
@@ -213,10 +215,15 @@ const styles = {
   },
   staffHeader: {
     minWidth: "140px",
+    maxWidth: "140px",
+    width: "140px",
   },
   staffCell: {
     fontWeight: "bold",
     backgroundColor: "#fafafa",
+    minWidth: "140px",
+    maxWidth: "140px",
+    width: "140px"
   },
   dateText: {
     fontSize: "12px",

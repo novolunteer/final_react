@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import CommonModal from "../common/CommonModal";
 
 const initState = {
   staffId: "",
@@ -98,20 +99,31 @@ const StaffForm = ({
   };
 
   const handleManagerSearch = () => {
-    const keyword = managerKeyword.trim().toLowerCase();
+    const keyword = managerKeyword.trim().replace(/\s/g, "").toLowerCase();
 
-    if (!keyword) {
-      setManagerSearchResult(staffList);
-      return;
-    }
+    const result = staffList.filter((staff) => {
+      const target = `${staff.staffId || ""} ${staff.name || ""} ${staff.position || ""}`
+        .replace(/\s/g, "")
+        .toLowerCase();
 
-    const result = staffList.filter((staff) =>
-      `${staff.staffId} ${staff.name || ""} ${staff.position || ""}`
-        .toLowerCase()
-        .includes(keyword)
-    );
+      if (!keyword) return true;
+
+      return target.includes(keyword);
+    });
 
     setManagerSearchResult(result);
+  };
+
+  const handleOpenManagerModal = () => {
+    setManagerModalOpen(true);
+    setManagerKeyword("");
+    setManagerSearchResult(staffList);
+  };
+
+  const handleCloseManagerModal = () => {
+    setManagerModalOpen(false);
+    setManagerKeyword("");
+    setManagerSearchResult([]);
   };
 
   const handleManagerSelect = (staff) => {
@@ -121,9 +133,7 @@ const StaffForm = ({
     }));
 
     setSelectedManagerLabel(`${staff.staffId} / ${staff.name || ""}`);
-    setManagerModalOpen(false);
-    setManagerKeyword("");
-    setManagerSearchResult([]);
+    handleCloseManagerModal();
   };
 
   const selectedDepartment = departmentList.find(
@@ -168,7 +178,7 @@ const StaffForm = ({
               name="userId"
               value={form.userId}
               onChange={handleChange}
-              placeholder="임시 사용자ID 입력"
+              placeholder="사용자ID 입력"
               disabled={!!initialData}
             />
           </div>
@@ -199,14 +209,7 @@ const StaffForm = ({
                 placeholder="선택된 담당직원이 표시됩니다"
                 readOnly
               />
-              <button
-                type="button"
-                onClick={() => {
-                  setManagerModalOpen(true);
-                  setManagerKeyword("");
-                  setManagerSearchResult(staffList);
-                }}
-              >
+              <button type="button" onClick={handleOpenManagerModal}>
                 검색
               </button>
             </div>
@@ -270,64 +273,51 @@ const StaffForm = ({
         </div>
       </form>
 
-      {managerModalOpen && (
-        <div style={modalStyles.overlay}>
-          <div style={modalStyles.modal}>
-            <div style={modalStyles.header}>
-              <h3>담당직원 검색</h3>
-              <button
-                type="button"
-                onClick={() => {
-                  setManagerModalOpen(false);
-                  setManagerKeyword("");
-                  setManagerSearchResult([]);
-                }}
-              >
-                X
-              </button>
-            </div>
+      <CommonModal open={managerModalOpen}>
+        <h3>담당직원 검색</h3>
 
-            <div style={styles.searchRow}>
-              <input
-                type="text"
-                value={managerKeyword}
-                onChange={(e) => setManagerKeyword(e.target.value)}
-                placeholder="이름 / ID / 직급 검색"
-                style={modalStyles.searchInput}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleManagerSearch();
-                  }
-                }}
-              />
-              <button type="button" onClick={handleManagerSearch}>
-                검색
-              </button>
-            </div>
-
-            <div style={modalStyles.listBox}>
-              {managerSearchResult.length === 0 ? (
-                <div style={modalStyles.emptyText}>검색 결과가 없습니다.</div>
-              ) : (
-                managerSearchResult.map((staff) => (
-                  <div
-                    key={staff.staffId}
-                    style={modalStyles.listItem}
-                    onClick={() => handleManagerSelect(staff)}
-                  >
-                    <div>
-                      <strong>{staff.name || "-"}</strong>
-                    </div>
-                    <div>ID: {staff.staffId}</div>
-                    <div>{staff.position || "-"}</div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+        <div style={styles.searchRow}>
+          <input
+            type="text"
+            value={managerKeyword}
+            onChange={(e) => setManagerKeyword(e.target.value)}
+            placeholder="이름 / ID / 직급 검색"
+            style={styles.searchInput}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleManagerSearch();
+              }
+            }}
+          />
+          <button type="button" onClick={handleManagerSearch}>
+            검색
+          </button>
+          <button type="button" onClick={handleCloseManagerModal}>
+            취소
+          </button>
         </div>
-      )}
+
+        <div style={styles.listBox}>
+          {managerSearchResult.length === 0 ? (
+            <div style={styles.emptyText}>검색 결과가 없습니다.</div>
+          ) : (
+            managerSearchResult.map((staff) => (
+              <div
+                key={staff.staffId}
+                style={styles.listItem}
+                onClick={() => handleManagerSelect(staff)}
+              >
+                <div>
+                  <strong>{staff.name || "-"}</strong>
+                </div>
+                <div>ID: {staff.staffId}</div>
+                <div>{staff.position || "-"}</div>
+              </div>
+            ))
+          )}
+        </div>
+      </CommonModal>
     </>
   );
 };
@@ -348,37 +338,6 @@ const styles = {
     display: "flex",
     gap: "8px",
   },
-};
-
-const modalStyles = {
-  overlay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    backgroundColor: "rgba(0,0,0,0.4)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 9999,
-  },
-  modal: {
-    width: "500px",
-    maxWidth: "90%",
-    backgroundColor: "#fff",
-    borderRadius: "8px",
-    padding: "20px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-    maxHeight: "80vh",
-  },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
   searchInput: {
     width: "100%",
     padding: "8px",
@@ -389,6 +348,7 @@ const modalStyles = {
     borderRadius: "6px",
     overflowY: "auto",
     maxHeight: "320px",
+    marginTop: "12px",
   },
   listItem: {
     padding: "12px",

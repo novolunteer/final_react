@@ -97,14 +97,18 @@ if (selectedDepartment) {
 };
 
     const handleSearch= () =>{
-        const keyword = searchKeyword.trim();
+        const keyword = searchKeyword.replace(/\s/g, "").toLowerCase();
 
         if(!keyword) {
             setDepartmentList(originalDepartment);
             return;
         }
 
-        const matched = originalDepartment.filter((item) => item.departmentName == keyword);
+        const matched = originalDepartment.filter((item) =>
+            (item.departmentName ||"")
+            .replace(/\s/g, "")
+            .toLowerCase()
+            .includes(keyword));
 
         if (matched.length == 0){
             alert("검색 결과가 없습니다");

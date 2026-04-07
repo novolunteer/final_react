@@ -114,14 +114,15 @@ const StaffPage = () => {
   };
 
   const handleSearch = () => {
-    const keyword = searchKeyword.trim();
+    const keyword = searchKeyword.trim().toLowerCase();
 
     if (!keyword) {
       setStaffList(originalStaffList);
       return;
     }
 
-    const matched = originalStaffList.filter((item) => item.name === keyword);
+    const matched = originalStaffList.filter(
+      (item) => (item.name || "").toLowerCase() === keyword);
 
     if (matched.length === 0) {
       alert("검색 결과가 없습니다.");

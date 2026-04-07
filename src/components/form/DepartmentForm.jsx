@@ -89,13 +89,14 @@ const DepartmentForm = ({onSubmit, onClose, initialData}) => {
 
             <div>
                 <label>상태</label>
-                <input
-                type="text"
+                <select
                 name='status'
-                placeholder='Y / N'
                 value={form.status}
                 onChange={handleChange}
-                />
+                >
+                <option value="Y">사용</option>
+                <option value="N">비활성</option>
+                </select>
             </div>
         </div>
 
