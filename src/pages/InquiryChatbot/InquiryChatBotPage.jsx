@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import "./InquiryChatbot.css"
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+export const API_BASE_URL = import.meta.env.VITE_CHATBOT_API_BASE_URL;
 
 const InquiryChatBotPage = () => {
   const [question, setQuestion]=useState("");
