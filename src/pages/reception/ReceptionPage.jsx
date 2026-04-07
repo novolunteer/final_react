@@ -2,6 +2,7 @@ import axios from 'axios';
 import React, { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query';
 import { useQueryClient } from '@tanstack/react-query';
+import jwtAxios from '../../api/jwtAxios';
 
 const ReceptionPage = () => {
     const [status, setStatus]=useState("");
@@ -22,8 +23,8 @@ const ReceptionPage = () => {
       return () => clearTimeout(timer);
     }, [name]);
 
-    const confirmedHandler=(receptionId)=>{
-        axios.get(`http://localhost:8080/api/administration/recieved?receptionId=${receptionId}`).then((res) => {
+    const confirmedHandler=async(receptionId)=>{
+        await jwtAxios.get(`http://localhost:8080/api/administration/recieved?receptionId=${receptionId}`).then((res) => {
             alert("접수 완료")
             queryClient.invalidateQueries({ queryKey: ['receptionList'] });
         })
@@ -36,17 +37,16 @@ const ReceptionPage = () => {
 
     }
 
-    const fetchReceptionList = ({ status, name, page }) => {
-      return axios.get('http://localhost:8080/api/reception', {
+    const fetchReceptionList = async ({ status, name, page }) => {
+      const res = await jwtAxios.get('http://localhost:8080/api/reception', {
         params: {
           status: status || undefined,
           name: name,
           page: page,
           size: 3
         }
-      }).then(res => {
-        return res.data;
       });
+      return res.data;
     };
 
     const { data , isLoading } = useQuery({
