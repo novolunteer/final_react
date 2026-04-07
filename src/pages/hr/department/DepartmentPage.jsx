@@ -60,10 +60,10 @@ const DepartmentPage = () => {
                 status : item.status,
                 action: (
                     <div style={{display:"flex", gap:"6px"}}>
-                        <button type='button' onClick={()=> handleEdit(item)}>
+                        <button type='button' disabled={item.status=="N"} onClick={()=> handleEdit(item)}>
                             수정
                         </button>
-                        <button type='button' onClick={()=> handleDelete(item.departmentId)}>
+                        <button type='button' disabled={item.status=="N"} onClick={()=> handleDelete(item.departmentId)}>
                             삭제
                         </button>
                     </div>
@@ -82,19 +82,19 @@ const DepartmentPage = () => {
 
 
    const handleSubmit = async (departmentData) => {
-  try {
-if (selectedDepartment) {
-  await updateDepartment(departmentData);
-} else {
-  await registerDepartment(departmentData);
-}
+    try {
+        if (selectedDepartment) {
+        await updateDepartment(departmentData);
+        } else {
+        await registerDepartment(departmentData);
+        }
 
-    await loadDepartmentList();
-    handleClose();
-  } catch (error) {
-    console.error("부서 저장 실패", error);
-  }
-};
+            await loadDepartmentList();
+            handleClose();
+        } catch (error) {
+            console.error("부서 저장 실패", error);
+        }
+    };
 
     const handleSearch= () =>{
         const keyword = searchKeyword.replace(/\s/g, "").toLowerCase();

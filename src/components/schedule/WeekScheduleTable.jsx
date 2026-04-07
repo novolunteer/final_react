@@ -5,7 +5,7 @@ const WeekScheduleTable = ({
     scheduleList=[],
     scheduleTypeList=[],
     selectedDate,
-    groupedSchedule,
+    title,
     }) => {
     const [currentWeek, setCurrentWeek] = useState(
         selectedDate || getTodayString()
@@ -99,6 +99,7 @@ const WeekScheduleTable = ({
   return (
     <div style={styles.wrapper}>
         <div style={styles.topBar}>
+        
             <button type='button' onClick={()=> moveWeek(-1)}>이전 주</button>
             <div style={styles.weekTitle}>
                 {weekDates[0]?.date} ~ {weekDates[6]?.date}
@@ -108,7 +109,18 @@ const WeekScheduleTable = ({
         <table style={styles.table}>
             <thead>
                 <tr>
-                    <th style={{...styles.th, ...styles.staffHeader}}>직원명</th>
+                    <th rowSpan={2} 
+                    style={{...styles.th, ...styles.staffHeader}}>
+                    직원명(직원번호)
+                    </th>
+                    <th
+                    colSpan={7}
+                    style={{ ...styles.th, ...styles.departmentHeader }}
+                    >
+                    {title || "전체부서"}
+                    </th>
+                    </tr>
+                    <tr>
                     {weekDates.map((day)=>(
                         <th key={day.date} style={styles.th}>
                             <div>{day.dayName}</div>
@@ -120,7 +132,7 @@ const WeekScheduleTable = ({
             <tbody>
                 {staffList.map((staff)=>(
                     <tr key={staff.staffId}>
-                        <td style={{...styles.td, ...styles.staffCell}}>{staff.name}
+                        <td style={{...styles.td, ...styles.staffCell}}>{staff.name}({staff.staffId})
                         </td>
                         {weekDates.map((day)=>{
                             const type = scheduleMap[staff.staffId]?.[day.date]||"";

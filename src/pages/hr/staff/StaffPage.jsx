@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import StaffForm from "../../../components/form/StaffForm";
 import CommonModal from "../../../components/common/CommonModal";
 import CommonTable from "../../../components/common/CommonTable";
@@ -22,6 +22,7 @@ const StaffPage = () => {
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [searchCandidates, setSearchCandidates] = useState([]);
   const [departmentList, setDepartmentList] = useState([]);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
 
   const handleOpen = () => {
     setSelectedStaff(null);
@@ -31,18 +32,6 @@ const StaffPage = () => {
   const handleClose = () => {
     setOpen(false);
     setSelectedStaff(null);
-  };
-
-  const handleDelete = async (staffId) => {
-    const confirmDelete = window.confirm("정말 삭제하시겠습니까?");
-    if (!confirmDelete) return;
-
-    try {
-      await deleteStaff(staffId);
-      await loadStaffList();
-    } catch (error) {
-      console.error("직원 삭제 실패", error);
-    }
   };
 
   const handleEdit = (staff) => {
@@ -65,20 +54,18 @@ const StaffPage = () => {
         name: item.name,
         phone: item.phone,
         address: item.address,
+        isActive: item.isActive,
         action: (
           <div style={{ display: "flex", gap: "6px" }}>
-            <button type="button" onClick={() => handleEdit(item)}>
+            <button type="button" disabled={item.isActive=="N"} onClick={() => handleEdit(item)}>
               수정
-            </button>
-            <button type="button" onClick={() => handleDelete(item.staffId)}>
-              삭제
             </button>
           </div>
         ),
       }));
 
-      setStaffList(mappedData);
       setOriginalStaffList(mappedData);
+      setStaffList(mappedData);
     } catch (error) {
       console.error("직원 목록 조회 실패", error);
     }
@@ -87,7 +74,7 @@ const StaffPage = () => {
   const loadDepartmentList = async () => {
     try {
       const data = await getDepartmentList();
-      setDepartmentList(data);
+      setDepartmentList(data || []);
     } catch (error) {
       console.error("부서 목록 조회 실패", error);
     }
@@ -113,16 +100,67 @@ const StaffPage = () => {
     }
   };
 
+  const sortedFilteredStaffList = useMemo(() => {
+    let result = [...originalStaffList];
+
+    if (selectedDepartmentId) {
+      result = result.filter(
+        (item) => String(item.departmentId) === String(selectedDepartmentId)
+      );
+    }
+
+    if (searchKeyword.trim()) {
+      const keyword = searchKeyword.trim().toLowerCase();
+      result = result.filter((item) =>
+        (item.name || "").toLowerCase().includes(keyword)
+      );
+    }
+
+    result.sort((a, b) => {
+      const nameCompare = (a.name || "").localeCompare(b.name || "", "ko");
+      if (nameCompare !== 0) return nameCompare;
+
+      return Number(a.staffId) - Number(b.staffId);
+    });
+
+    return result;
+  }, [originalStaffList, selectedDepartmentId, searchKeyword]);
+
+  useEffect(() => {
+    setStaffList(sortedFilteredStaffList);
+  }, [sortedFilteredStaffList]);
+
   const handleSearch = () => {
     const keyword = searchKeyword.trim().toLowerCase();
 
+    let baseList = [...originalStaffList];
+
+    if (selectedDepartmentId) {
+      baseList = baseList.filter(
+        (item) => String(item.departmentId) === String(selectedDepartmentId)
+      );
+    }
+
     if (!keyword) {
-      setStaffList(originalStaffList);
+      const sortedList = baseList.sort((a, b) => {
+        const nameCompare = (a.name || "").localeCompare(b.name || "", "ko");
+        if (nameCompare !== 0) return nameCompare;
+
+        return Number(a.staffId) - Number(b.staffId);
+      });
+
+      setStaffList(sortedList);
       return;
     }
 
-    const matched = originalStaffList.filter(
-      (item) => (item.name || "").toLowerCase() === keyword);
+    const matched = baseList
+      .filter((item) => (item.name || "").toLowerCase().includes(keyword))
+      .sort((a, b) => {
+        const nameCompare = (a.name || "").localeCompare(b.name || "", "ko");
+        if (nameCompare !== 0) return nameCompare;
+
+        return Number(a.staffId) - Number(b.staffId);
+      });
 
     if (matched.length === 0) {
       alert("검색 결과가 없습니다.");
@@ -147,10 +185,26 @@ const StaffPage = () => {
 
   const handleResetSearch = () => {
     setSearchKeyword("");
-    setStaffList(originalStaffList);
+    setSelectedDepartmentId("");
     setSearchCandidates([]);
     setSearchModalOpen(false);
+
+    const resetList = [...originalStaffList].sort((a, b) => {
+      const nameCompare = (a.name || "").localeCompare(b.name || "", "ko");
+      if (nameCompare !== 0) return nameCompare;
+
+      return Number(a.staffId) - Number(b.staffId);
+    });
+
+    setStaffList(resetList);
   };
+
+  const sortedDepartmentList = useMemo(() => {
+  return [...departmentList].sort((a, b) =>
+    (a.departmentName || "").localeCompare(b.departmentName || "", "ko")
+  );
+}, [departmentList]);
+
 
   const columns = [
     { key: "id", title: "직원번호" },
@@ -161,6 +215,7 @@ const StaffPage = () => {
     { key: "name", title: "이름" },
     { key: "phone", title: "전화번호" },
     { key: "address", title: "주소" },
+    { key: "isActive", title:"상태"},
     { key: "action", title: "관리" },
   ];
 
@@ -178,6 +233,20 @@ const StaffPage = () => {
           onSearch={handleSearch}
           placeholder="이름으로 검색"
         />
+
+        <select
+          value={selectedDepartmentId}
+          onChange={(e) => setSelectedDepartmentId(e.target.value)}
+          style={styles.select}
+        >
+          <option value="">전체부서</option>
+          {sortedDepartmentList.map((dept) => (
+            <option key={dept.departmentId} value={dept.departmentId}>
+              {dept.departmentName}
+            </option>
+          ))}
+        </select>
+
         <button type="button" onClick={handleResetSearch}>
           전체보기
         </button>
@@ -235,6 +304,7 @@ const styles = {
     gap: "8px",
     alignItems: "center",
     marginBottom: "16px",
+    flexWrap: "wrap",
   },
   candidateButton: {
     padding: "10px",
