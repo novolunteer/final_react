@@ -4,7 +4,6 @@ import MainLayout from "../layout/MainLayout";
 import AdminPage from "../pages/admin/AdminPage";
 import AdmissionPage from "../pages/admission/AdmissionPage";
 import CommunicationPage from "../pages/communication/CommunicationPage";
-import BillingPage from "../pages/billing/BillingPage";
 import DashboardPage from "../pages/dashboard/DashboardPage";
 import PatientPage from "../pages/patient/PatientPage";
 import ReservationPage from "../pages/reservation/ReservationPage";
@@ -19,6 +18,7 @@ import LoginPage from "../pages/login/LoginPage";
 import ChatLayout from "../pages/chat/Layout/ChatLayout";
 import ReservationConfirm from "../pages/reservation/ReservationConfirm";
 import InquiryChatBotPage from "../pages/InquiryChatbot/InquiryChatBotPage";
+import BillingLayout from "../pages/billing/BillingLayout";
 
 
 const Router = () => {
@@ -37,7 +37,7 @@ const Router = () => {
           <Route path="/emergency" element={<EmergencyPage />} />
           <Route path="/admission" element={<AdmissionPage />} />
           <Route path="/ward" element={<WardPage />} />
-          <Route path="/billing" element={<BillingPage />} />
+          <Route path="/billing" element={<BillingLayout/>} />
           <Route path="/staff" element={<StaffPage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/statistics" element={<StatisticsPage />} />
