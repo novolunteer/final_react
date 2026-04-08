@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import BillingList from './component/BillingList'
 import PaymentList from './component/PaymentList'
+import './billingLayout.css';
 
 const BillingLayout = () => {
   const [keyword, setKeyword]=useState("");
@@ -14,7 +15,7 @@ const BillingLayout = () => {
     <div className='Billing-Layout'>
         <div className='Billing-Search-Area'>
           <div className='search-form'>
-            <input type='text' placeholder='진료 번호와 환자 이름으로 검색해 보세요.'
+            <input type='text' placeholder='접수 번호와 환자 이름으로 검색해 보세요.'
               value={searchInput} onChange={(e)=>setSearchInput(e.target.value)}
               onKeyDown={(e) => {
                 if(e.key === 'Enter'){
