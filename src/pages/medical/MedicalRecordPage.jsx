@@ -22,6 +22,7 @@ const MedicalRecordPage = () => {
       const [waitingStatus, setWaitingStatus] = useState("PENDING");
       const [newRecord, setNewRecord] = useState({
         title: "",
+        symptom: "",
         content: "",
         isSensitive: false,
       });
@@ -395,6 +396,21 @@ const MedicalRecordPage = () => {
                 style={{ width: "100%", padding: "5px" }}
               />
             </div>
+
+            {/* 증상 */}
+            {status === "DIAGNOSIS" && (
+              <div style={{ marginBottom: "10px" }}>
+                <label>증상</label><br />
+                <textarea
+                  value={newRecord.symptom}
+                  onChange={(e) =>
+                    setNewRecord({ ...newRecord, symptom: e.target.value })
+                  }
+                  rows={5}
+                  style={{ width: "100%", padding: "5px" }}
+                />
+              </div>
+            )}
 
             {/* 내용 */}
             <div style={{ marginBottom: "10px" }}>

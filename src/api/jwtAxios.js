@@ -5,6 +5,9 @@ const jwtAxios=axios.create();
 
 export const host=`${API_BASE_URL}/api`;
 const beforeRequest=(config)=>{
+    console.log("🔥 인터셉터 실행됨:", accessToken);
+    console.log("🔥 토큰 확인:", accessToken);
+    
     const accessToken=sessionStorage.getItem("accessToken");
     if(!accessToken){ //로그인 안 했을 때
         return Promise.reject({ //에러 정보를 갖는 response 객체

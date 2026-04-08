@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 import './Reservation.css'
 import { useQuery } from '@tanstack/react-query';
 import { useQueryClient } from '@tanstack/react-query';
+import jwtAxios from '../../api/jwtAxios';
 
 const ReservationConfirm = () => {
   const [department, setDepartment] = useState([]);
@@ -25,6 +26,7 @@ const ReservationConfirm = () => {
   const [page, setPage] = useState(0);
   const [size] = useState(3);
   const queryClient = useQueryClient();
+  const isRowClickRef = useRef(false);
 
   /* ================= API ================= */
   useEffect(() => {
@@ -56,6 +58,12 @@ const ReservationConfirm = () => {
     axios.get(`http://localhost:8080/api/doctor?departmentId=${selectedDept}`)
       .then(res => {
         setDoctor(res.data.content ?? []);
+
+        if (isRowClickRef.current) {
+          isRowClickRef.current = false; 
+          return;
+        }
+
         setSelectedDoc(null);
       })
       .catch(console.error);
@@ -211,6 +219,8 @@ const ReservationConfirm = () => {
 
     const handleRowClick = (item) => {
       const docId = item.doctorId ?? null;
+
+       isRowClickRef.current = true;
 
       setSelectedDept(item.departmentId);
       setSelectedDoc(docId);
