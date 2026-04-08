@@ -10,6 +10,7 @@ const initState = {
   name: "",
   phone: "",
   address: "",
+  isActive:"Y",
 };
 
 const positionOptionsMap = {
@@ -61,6 +62,7 @@ const StaffForm = ({
         name: initialData.name || "",
         phone: initialData.phone || "",
         address: initialData.address || "",
+        isActive: initialData.isActive ?? "Y",
       });
 
       const selectedManager = staffList.find(
@@ -81,7 +83,7 @@ const StaffForm = ({
   }, [initialData, staffList]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+  const { name, value } = e.target;
 
     if (name === "departmentId") {
       setForm((prev) => ({
@@ -155,6 +157,7 @@ const StaffForm = ({
       name: form.name,
       phone: form.phone,
       address: form.address,
+      isActive: form.isActive,
     };
 
     onSubmit(requestData);
@@ -264,6 +267,18 @@ const StaffForm = ({
             />
           </div>
         </div>
+
+        <div>
+                <label>상태</label>
+             <select
+                name="isActive"
+                value={form.isActive}
+                onChange={handleChange}
+                >
+                <option value="Y">사용</option>
+                <option value="N">비활성</option>
+            </select>
+            </div>
 
         <div style={styles.buttonBox}>
           <button type="submit">{initialData ? "수정" : "등록"}</button>

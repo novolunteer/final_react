@@ -1,10 +1,16 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import RegisterButton from '../../../components/common/RegisterButton';
-import SearchBar from '../../../components/common/SearchBar';
-import CommonTable from '../../../components/common/CommonTable';
-import CommonModal from '../../../components/common/CommonModal';
-import StaffScheduleForm from '../../../components/form/StaffScheduleForm';
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
+
+import RegisterButton from "../../../components/common/RegisterButton";
+import SearchBar from "../../../components/common/SearchBar";
+import CommonTable from "../../../components/common/CommonTable";
+import CommonModal from "../../../components/common/CommonModal";
+import StaffScheduleForm from "../../../components/form/StaffScheduleForm";
 import BulkScheduleForm from "../../../components/form/BulkScheduleForm";
+import WeekScheduleTable from "../../../components/schedule/WeekScheduleTable";
+
 import {
   bulkConfirmSchedule,
   bulkRegisterSchedule,
@@ -12,15 +18,12 @@ import {
   deleteSchedule,
   getScheduleList,
   registerSchedule,
-  updateSchedule
-} from '../../../api/hr/staffScheduleApi';
-import { getStaffList } from '../../../api/hr/staffApi';
+  updateSchedule,
+} from "../../../api/hr/staffScheduleApi";
+import { getStaffList } from "../../../api/hr/staffApi";
 import { getDepartmentList } from "../../../api/hr/departmentApi";
 import { getSchedulePolicyList } from "../../../api/hr/schedulePolicyApi";
-import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from "@fullcalendar/daygrid";
-import interactionPlugin from "@fullcalendar/interaction";
-import WeekScheduleTable from '../../../components/schedule/WeekScheduleTable';
+
 import "./StaffSchedulePage.css";
 
 const initialForm = {
@@ -38,7 +41,7 @@ const initialBulkForm = {
   startDate: "",
   endDate: "",
   scheduleTypeId: "",
-  status: "TEMP"
+  status: "TEMP",
 };
 
 const getTodayString = () => {
@@ -56,23 +59,150 @@ const StaffSchedulePage = () => {
   const [scheduleTypeList, setScheduleTypeList] = useState([]);
 
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState(initialForm);
-  const [isEdit, setIsEdit] = useState(false);
-  const [selectedIds, setSelectedIds] = useState([]);
-
-  const [bulkOpen, setBulkOpen] = useState(false);
-  const [bulkFormData, setBulkFormData] = useState(initialBulkForm);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
   const [selectedDate, setSelectedDate] = useState(getTodayString());
   const [viewMode, setViewMode] = useState("month");
 
-  const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
+  const [open, setOpen] = useState(false);
+  const [formData, setFormData] = useState(initialForm);
+  const [isEdit, setIsEdit] = useState(false);
+
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkFormData, setBulkFormData] = useState(initialBulkForm);
+
+  const [selectedIds, setSelectedIds] = useState([]);
 
   const calendarRef = useRef(null);
 
+
+  // 부서 정렬 목록
+  const sortedDepartmentList = useMemo(() => {
+    return [...departmentList].sort((a, b) =>
+      (a.departmentName || "").localeCompare(b.departmentName || "", "ko")
+    );
+  }, [departmentList]);
+
+  // 달력형에서 우측 목록에 보여줄 스케줄
+  const filteredScheduleList = useMemo(() => {
+    let result = scheduleList;
+
+    if (searchKeyword.trim()) {
+      result = result.filter((item) =>
+        (item.staffName || "").includes(searchKeyword.trim())
+      );
+    }
+
+    if (selectedDepartmentId) {
+      result = result.filter(
+        (item) => String(item.departmentId) === String(selectedDepartmentId)
+      );
+    }
+
+    if (selectedDate) {
+      result = result.filter((item) => item.workDate === selectedDate);
+    }
+
+    return result;
+  }, [scheduleList, searchKeyword, selectedDate, selectedDepartmentId]);
+
+  // 달력형 우측 목록을 부서별로 묶기
+  const groupedScheduleList = useMemo(() => {
+    return filteredScheduleList.reduce((acc, item) => {
+      const departmentName = item.departmentName || "미지정 부서";
+
+      if (!acc[departmentName]) {
+        acc[departmentName] = [];
+      }
+
+      acc[departmentName].push(item);
+      return acc;
+    }, {});
+  }, [filteredScheduleList]);
+
+  // 주간형에서 보여줄 부서별 그룹
+  const weekDepartmentGroups = useMemo(() => {
+    let result = scheduleList;
+
+    if (selectedDepartmentId) {
+      result = result.filter(
+        (item) => String(item.departmentId) === String(selectedDepartmentId)
+      );
+    }
+
+    return result.reduce((acc, item) => {
+      const departmentName = item.departmentName || "미지정 부서";
+
+      if (!acc[departmentName]) {
+        acc[departmentName] = [];
+      }
+
+      acc[departmentName].push(item);
+      return acc;
+    }, {});
+  }, [scheduleList, selectedDepartmentId]);
+
+  // 달력에 날짜별 총 근무자 수 표시용 이벤트
+  const events = useMemo(() => {
+    return Object.values(
+      scheduleList.reduce((acc, item) => {
+        const date = item.workDate;
+
+        if (!acc[date]) {
+          acc[date] = { date, count: 0 };
+        }
+
+        acc[date].count += 1;
+        return acc;
+      }, {})
+    ).map((item) => ({
+      title: `총 ${item.count}명 근무`,
+      date: item.date,
+    }));
+  }, [scheduleList]);
+
+  // 테이블 컬럼
+  const columns = [
+    {
+      key: "select",
+      title: (
+        <input
+          type="checkbox"
+          checked={
+            filteredScheduleList.filter((item) => item.status === "TEMP")
+              .length > 0 &&
+            filteredScheduleList
+              .filter((item) => item.status === "TEMP")
+              .every((item) => selectedIds.includes(item.scheduleId))
+          }
+          onChange={(e) => handleCheckAll(e.target.checked)}
+        />
+      ),
+    },
+    { key: "workDate", title: "날짜" },
+    { key: "staffName", title: "직원명(직원번호)" },
+    { key: "departmentName", title: "부서명" },
+    { key: "typeName", title: "근무유형" },
+    { key: "status", title: "상태" },
+    { key: "action", title: "관리" },
+  ];
+
+  // 최초 데이터 로드
   useEffect(() => {
     fetchInitData();
   }, []);
+
+  // 주간형으로 바뀌었을 때 부서 미선택이면 첫 부서 자동 선택
+  useEffect(() => {
+    if (
+      viewMode === "week" &&
+      !selectedDepartmentId &&
+      sortedDepartmentList.length > 0
+    ) {
+      setSelectedDepartmentId(String(sortedDepartmentList[0].departmentId));
+    }
+  }, [viewMode, selectedDepartmentId, sortedDepartmentList]);
+
+
 
   const fetchInitData = async () => {
     try {
@@ -103,67 +233,18 @@ const StaffSchedulePage = () => {
     }
   };
 
-  const sortedDepartmentList = useMemo(() => {
-    return [...departmentList].sort((a, b) =>
-      (a.departmentName || "").localeCompare(b.departmentName || "", "ko")
+
+  // 같은 직원 + 같은 날짜 중복 스케줄 여부 검사
+  const hasDuplicateSchedule = (target) => {
+    return scheduleList.some(
+      (item) =>
+        String(item.staffId) === String(target.staffId) &&
+        item.workDate === target.workDate &&
+        String(item.scheduleId) !== String(target.scheduleId || "")
     );
-  }, [departmentList]);
+  };
 
-  useEffect(() => {
-    if (
-      viewMode === "week" &&
-      !selectedDepartmentId &&
-      sortedDepartmentList.length > 0
-    ) {
-      setSelectedDepartmentId(String(sortedDepartmentList[0].departmentId));
-    }
-  }, [viewMode, selectedDepartmentId, sortedDepartmentList]);
 
-  const filteredScheduleList = useMemo(() => {
-    let result = scheduleList;
-
-    if (searchKeyword.trim()) {
-      result = result.filter((item) =>
-        (item.staffName || "").includes(searchKeyword.trim())
-      );
-    }
-
-    if (selectedDepartmentId) {
-      result = result.filter(
-        (item) => String(item.departmentId) === String(selectedDepartmentId)
-      );
-    }
-
-    if (selectedDate) {
-      result = result.filter((item) => item.workDate === selectedDate);
-    }
-
-    return result;
-  }, [scheduleList, searchKeyword, selectedDate, selectedDepartmentId]);
-
-  const columns = [
-    {
-      key: "select",
-      title: (
-        <input
-          type="checkbox"
-          checked={
-            filteredScheduleList.filter((item) => item.status === "TEMP").length > 0 &&
-            filteredScheduleList
-              .filter((item) => item.status === "TEMP")
-              .every((item) => selectedIds.includes(item.scheduleId))
-          }
-          onChange={(e) => handleCheckAll(e.target.checked)}
-        />
-      ),
-    },
-    { key: "workDate", title: "날짜" },
-    { key: "staffName", title: "직원명(직원번호)" },
-    { key: "departmentName", title: "부서명" },
-    { key: "typeName", title: "근무유형" },
-    { key: "status", title: "상태" },
-    { key: "action", title: "관리" },
-  ];
 
   const handleOpen = () => {
     setIsEdit(false);
@@ -177,26 +258,17 @@ const StaffSchedulePage = () => {
     setIsEdit(false);
   };
 
-  const handleResetAll = () => {
-    const today = getTodayString();
-    setSearchKeyword("");
-    setSelectedDate(today);
-
-    if (viewMode === "week" && sortedDepartmentList.length > 0) {
-      setSelectedDepartmentId(String(sortedDepartmentList[0].departmentId));
-    } else {
-      setSelectedDepartmentId("");
-    }
+  const handleBulkOpen = () => {
+    setBulkFormData(initialBulkForm);
+    setBulkOpen(true);
   };
 
-  const hasDuplicateSchedule = (target) => {
-    return scheduleList.some(
-      (item) =>
-        String(item.staffId) === String(target.staffId) &&
-        item.workDate === target.workDate &&
-        String(item.scheduleId) !== String(target.scheduleId || "")
-    );
+  const handleBulkClose = () => {
+    setBulkFormData(initialBulkForm);
+    setBulkOpen(false);
   };
+
+// 저장/ 수정 / 삭제 / 확정
 
   const handleSubmit = async (submitData) => {
     try {
@@ -221,6 +293,19 @@ const StaffSchedulePage = () => {
     }
   };
 
+  const handleEdit = (row) => {
+    setIsEdit(true);
+    setFormData({
+      scheduleId: row.scheduleId,
+      departmentId: row.departmentId || "",
+      staffId: row.staffId || "",
+      workDate: row.workDate || "",
+      scheduleTypeId: row.scheduleTypeId || "",
+      status: row.status || "TEMP",
+    });
+    setOpen(true);
+  };
+
   const handleDelete = async (row) => {
     const confirmDelete = window.confirm("삭제하시겠습니까?");
     if (!confirmDelete) return;
@@ -235,19 +320,6 @@ const StaffSchedulePage = () => {
     }
   };
 
-  const handleEdit = (row) => {
-    setIsEdit(true);
-    setFormData({
-      scheduleId: row.scheduleId,
-      departmentId: row.departmentId || "",
-      staffId: row.staffId || "",
-      workDate: row.workDate || "",
-      scheduleTypeId: row.scheduleTypeId || "",
-      status: row.status || "TEMP",
-    });
-    setOpen(true);
-  };
-
   const handleConfirm = async (scheduleId) => {
     const confirmResult = window.confirm("해당 스케줄을 확정하시겠습니까?");
     if (!confirmResult) return;
@@ -256,137 +328,8 @@ const StaffSchedulePage = () => {
       await confirmSchedule(scheduleId);
       alert("스케줄 확정완료");
       fetchScheduleData();
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const groupedScheduleList = filteredScheduleList.reduce((acc, item) => {
-    const departmentName = item.departmentName || "미지정 부서";
-
-    if (!acc[departmentName]) {
-      acc[departmentName] = [];
-    }
-
-    acc[departmentName].push(item);
-    return acc;
-  }, {});
-
-  const deptTableData = (list) => {
-    return list.map((item) => ({
-      ...item,
-      staffName : `${item.staffName} (${item.staffId})`,
-      select:
-        item.status === "TEMP" ? (
-          <input
-            type="checkbox"
-            checked={selectedIds.includes(item.scheduleId)}
-            onChange={() => handleCheck(item.scheduleId)}
-          />
-        ) : null,
-      action: (
-        <div style={{ display: "flex", gap: "6px" }}>
-          <button
-            type="button"
-            disabled={item.status === "CONFIRMED"}
-            onClick={() => handleEdit(item)}
-          >
-            수정
-          </button>
-          <button
-            type="button"
-            disabled={item.status === "CONFIRMED"}
-            onClick={() => handleDelete(item)}
-          >
-            삭제
-          </button>
-          {item.status === "TEMP" && (
-            <button type="button" onClick={() => handleConfirm(item.scheduleId)}>
-              확정
-            </button>
-          )}
-        </div>
-      ),
-    }));
-  };
-
-  const weekDepartmentGroups = useMemo(() => {
-    let result = scheduleList;
-
-    if (selectedDepartmentId) {
-      result = result.filter(
-        (item) => String(item.departmentId) === String(selectedDepartmentId)
-      );
-    }
-
-    return result.reduce((acc, item) => {
-      const departmentName = item.departmentName || "미지정 부서";
-
-      if (!acc[departmentName]) {
-        acc[departmentName] = [];
-      }
-
-      acc[departmentName].push(item);
-      return acc;
-    }, {});
-  }, [scheduleList, selectedDepartmentId]);
-
-  const handleBulkConfirm = async () => {
-    if (selectedIds.length === 0) {
-      alert("선택된 스케줄이 없습니다");
-      return;
-    }
-
-    const confirmBulk = window.confirm("선택한 스케줄을 확정하시겠습니까?");
-    if (!confirmBulk) return;
-
-    try {
-      await bulkConfirmSchedule(selectedIds);
-      alert("스케줄 확정 완료");
-      setSelectedIds([]);
-      fetchScheduleData();
     } catch (error) {
-      console.error("스케줄 확정 실패", error);
-      alert("스케줄 확정 중 오류가 발생했습니다");
-    }
-  };
-
-  const events = Object.values(
-    scheduleList.reduce((acc, item) => {
-      const date = item.workDate;
-
-      if (!acc[date]) {
-        acc[date] = {
-          date,
-          count: 0,
-        };
-      }
-
-      acc[date].count += 1;
-      return acc;
-    }, {})
-  ).map((item) => ({
-    title: `총 ${item.count}명 근무`,
-    date: item.date,
-  }));
-
-  const handleCheck = (scheduleId) => {
-    setSelectedIds((prev) =>
-      prev.includes(scheduleId)
-        ? prev.filter((id) => id !== scheduleId)
-        : [...prev, scheduleId]
-    );
-  };
-
-  const handleCheckAll = (checked) => {
-    if (checked) {
-      const tempIds = filteredScheduleList
-        .filter((item) => item.status === "TEMP")
-        .map((item) => item.scheduleId);
-
-      setSelectedIds(tempIds);
-    } else {
-      setSelectedIds([]);
+      console.error(error);
     }
   };
 
@@ -413,16 +356,50 @@ const StaffSchedulePage = () => {
     }
   };
 
-  const handleBulkOpen = () => {
-    setBulkFormData(initialBulkForm);
-    setBulkOpen(true);
+  const handleBulkConfirm = async () => {
+    if (selectedIds.length === 0) {
+      alert("선택된 스케줄이 없습니다");
+      return;
+    }
+
+    const confirmBulk = window.confirm("선택한 스케줄을 확정하시겠습니까?");
+    if (!confirmBulk) return;
+
+    try {
+      await bulkConfirmSchedule(selectedIds);
+      alert("스케줄 확정 완료");
+      setSelectedIds([]);
+      fetchScheduleData();
+    } catch (error) {
+      console.error("스케줄 확정 실패", error);
+      alert("스케줄 확정 중 오류가 발생했습니다");
+    }
   };
 
-  const handleBulkClose = () => {
-    setBulkFormData(initialBulkForm);
-    setBulkOpen(false);
+
+// 체크박스선택
+  const handleCheck = (scheduleId) => {
+    setSelectedIds((prev) =>
+      prev.includes(scheduleId)
+        ? prev.filter((id) => id !== scheduleId)
+        : [...prev, scheduleId]
+    );
   };
 
+  const handleCheckAll = (checked) => {
+    if (checked) {
+      const tempIds = filteredScheduleList
+        .filter((item) => item.status === "TEMP")
+        .map((item) => item.scheduleId);
+
+      setSelectedIds(tempIds);
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+
+// 날짜ㅣ이동
   const handleToday = () => {
     const today = getTodayString();
     setSelectedDate(today);
@@ -444,6 +421,62 @@ const StaffSchedulePage = () => {
     }
   };
 
+  const handleResetAll = () => {
+    const today = getTodayString();
+
+    setSearchKeyword("");
+    setSelectedDate(today);
+
+    if (viewMode === "week" && sortedDepartmentList.length > 0) {
+      setSelectedDepartmentId(String(sortedDepartmentList[0].departmentId));
+    } else {
+      setSelectedDepartmentId("");
+    }
+  };
+
+
+  // 부서별 테이블에 표시할 데이터
+  const deptTableData = (list) => {
+    return list.map((item) => ({
+      ...item,
+      staffName: `${item.staffName} (${item.staffId})`,
+      select:
+        item.status === "TEMP" ? (
+          <input
+            type="checkbox"
+            checked={selectedIds.includes(item.scheduleId)}
+            onChange={() => handleCheck(item.scheduleId)}
+          />
+        ) : null,
+      action: (
+        <div style={{ display: "flex", gap: "6px" }}>
+          <button
+            type="button"
+            disabled={item.status === "CONFIRMED"}
+            onClick={() => handleEdit(item)}
+          >
+            수정
+          </button>
+
+          <button
+            type="button"
+            disabled={item.status === "CONFIRMED"}
+            onClick={() => handleDelete(item)}
+          >
+            삭제
+          </button>
+
+          {item.status === "TEMP" && (
+            <button type="button" onClick={() => handleConfirm(item.scheduleId)}>
+              확정
+            </button>
+          )}
+        </div>
+      ),
+    }));
+  };
+
+ 
   return (
     <div style={styles.container}>
       <div style={styles.header}>
@@ -492,6 +525,7 @@ const StaffSchedulePage = () => {
       <div style={styles.content}>
         {viewMode === "month" ? (
           <>
+            {/* 달력형 왼쪽 */}
             <div style={styles.calendar}>
               <FullCalendar
                 ref={calendarRef}
@@ -519,32 +553,39 @@ const StaffSchedulePage = () => {
               />
             </div>
 
+            {/* 달력형 오른쪽 목록 */}
             <div style={styles.list}>
               <h2>{selectedDate || getTodayString()} 스케줄</h2>
-              {Object.entries(groupedScheduleList).map(([departmentName, items]) => (
-                <div key={departmentName}>
-                  <h3>{departmentName}</h3>
-                  <CommonTable columns={columns} data={deptTableData(items)} />
-                </div>
-              ))}
+
+              {Object.entries(groupedScheduleList).map(
+                ([departmentName, items]) => (
+                  <div key={departmentName}>
+                    <h3>{departmentName}</h3>
+                    <CommonTable columns={columns} data={deptTableData(items)} />
+                  </div>
+                )
+              )}
             </div>
           </>
         ) : (
+          /* 주간형 */
           <div style={styles.weekWrapper}>
             {Object.entries(weekDepartmentGroups).length > 0 ? (
-              Object.entries(weekDepartmentGroups).map(([departmentName, items]) => (
-                <WeekScheduleTable
-                  key={departmentName}
-                  title={departmentName}
-                  staffList={staffList.filter(
-                    (staff) =>
-                      String(staff.departmentId) === String(selectedDepartmentId)
-                  )}
-                  scheduleList={items}
-                  scheduleTypeList={scheduleTypeList}
-                  selectedDate={selectedDate}
-                />
-              ))
+              Object.entries(weekDepartmentGroups).map(
+                ([departmentName, items]) => (
+                  <WeekScheduleTable
+                    key={departmentName}
+                    title={departmentName}
+                    staffList={staffList.filter(
+                      (staff) =>
+                        String(staff.departmentId) === String(selectedDepartmentId)
+                    )}
+                    scheduleList={items}
+                    scheduleTypeList={scheduleTypeList}
+                    selectedDate={selectedDate}
+                  />
+                )
+              )
             ) : (
               <div style={styles.emptyWeekBox}>
                 표시할 주간 스케줄이 없습니다.
@@ -554,6 +595,7 @@ const StaffSchedulePage = () => {
         )}
       </div>
 
+      {/* 개별 등록/수정 모달 */}
       <CommonModal open={open} onClose={handleClose}>
         <StaffScheduleForm
           formData={formData}
@@ -567,6 +609,7 @@ const StaffSchedulePage = () => {
         />
       </CommonModal>
 
+      {/* 일괄 등록 모달 */}
       <CommonModal open={bulkOpen} onClose={handleBulkClose}>
         <BulkScheduleForm
           formData={bulkFormData}
@@ -593,20 +636,15 @@ const styles = {
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: "20px",
+    flexWrap: "wrap",
+    gap: "8px",
   },
   topBar: {
     display: "flex",
     gap: "8px",
     alignItems: "center",
     marginBottom: "16px",
-  },
-  candidateButton: {
-    padding: "10px",
-    border: "1px solid #ccc",
-    borderRadius: "6px",
-    background: "#fff",
-    cursor: "pointer",
-    textAlign: "left",
+    flexWrap: "wrap",
   },
   content: {
     display: "flex",
