@@ -23,8 +23,8 @@ const ReceptionPage = () => {
       return () => clearTimeout(timer);
     }, [name]);
 
-    const confirmedHandler=(receptionId)=>{
-        jwtAxios.get(`http://localhost:8080/api/administration/recieved?receptionId=${receptionId}`).then((res) => {
+    const confirmedHandler=async(receptionId)=>{
+        await jwtAxios.get(`http://localhost:8080/api/administration/recieved?receptionId=${receptionId}`).then((res) => {
             alert("접수 완료")
             queryClient.invalidateQueries({ queryKey: ['receptionList'] });
         })
@@ -37,17 +37,16 @@ const ReceptionPage = () => {
 
     }
 
-    const fetchReceptionList = ({ status, name, page }) => {
-      return jwtAxios.get('http://localhost:8080/api/reception', {
+    const fetchReceptionList = async ({ status, name, page }) => {
+      const res = await jwtAxios.get('http://localhost:8080/api/reception', {
         params: {
           status: status || undefined,
           name: name,
           page: page,
           size: 3
         }
-      }).then(res => {
-        return res.data;
       });
+      return res.data;
     };
 
     const { data , isLoading } = useQuery({

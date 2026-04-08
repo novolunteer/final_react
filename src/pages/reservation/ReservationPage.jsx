@@ -1,5 +1,6 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react'
+import jwtAxios from '../../api/jwtAxios';
 
 const ReservationPage = () => {
   const [department,setDepartment]=useState([]);
@@ -11,7 +12,7 @@ const ReservationPage = () => {
   const [selectedTime, setSelectedTime] = useState("");
 
   useEffect(()=>{
-      axios.get('http://localhost:8080/api/department').then((res) => {
+      jwtAxios.get('http://localhost:8080/api/department').then((res) => {
           setDepartment(res.data.content)
         })
         .catch((err) => {
@@ -26,7 +27,7 @@ const ReservationPage = () => {
       return;
     }
 
-    axios.get(`http://localhost:8080/api/doctor?departmentId=${selectedDept}`)
+    jwtAxios.get(`http://localhost:8080/api/doctor?departmentId=${selectedDept}`)
       .then((res) => {
         setDoctor(res.data.content)
         console.log(res.data.content)
@@ -44,7 +45,7 @@ const ReservationPage = () => {
       symptom: symptom
     };
 
-    axios.post('http://localhost:8080/api/reservation', reservationData)
+    jwtAxios.post('http://localhost:8080/api/reservation', reservationData)
       .then(res => {
         alert('예약이 완료되었습니다. 예약번호: '+res.data.reservationId);
         setSelectedDept("");

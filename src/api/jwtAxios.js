@@ -1,13 +1,9 @@
 import axios from "axios";
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+export const API_BASE_URL = import.meta.env.VITE_SPRING_API_BASE_URL;
 
 const jwtAxios=axios.create();
 
-export const host=`${API_BASE_URL}/api`;
 const beforeRequest=(config)=>{
-    console.log("🔥 인터셉터 실행됨:", accessToken);
-    console.log("🔥 토큰 확인:", accessToken);
-    
     const accessToken=sessionStorage.getItem("accessToken");
     if(!accessToken){ //로그인 안 했을 때
         return Promise.reject({ //에러 정보를 갖는 response 객체
@@ -27,7 +23,7 @@ const beforeRequest=(config)=>{
 
 const refreshJWT=async(accessToken, refreshToken)=>{
     const header={headers:{"Authorization":`Bearer ${accessToken}`}};
-    const res=await axios.get(`${host}/user/refresh?refreshToken=${refreshToken}`,
+    const res=await axios.get(`${API_BASE_URL}/jwt/token/refresh?refreshToken=${refreshToken}`,
         header
     );
     console.log("refresh => ", res)
