@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 import './Reservation.css'
 import { useQuery } from '@tanstack/react-query';
 import { useQueryClient } from '@tanstack/react-query';
+import jwtAxios from '../../api/jwtAxios';
 
 const ReservationConfirm = () => {
   const [department, setDepartment] = useState([]);
@@ -25,6 +26,7 @@ const ReservationConfirm = () => {
   const [page, setPage] = useState(0);
   const [size] = useState(3);
   const queryClient = useQueryClient();
+  const isRowClickRef = useRef(false);
 
   /* ================= API ================= */
   useEffect(() => {
@@ -37,7 +39,7 @@ const ReservationConfirm = () => {
   }, [name]);
 
   useEffect(() => {
-    axios.get('http://localhost:8080/api/department')
+    jwtAxios.get('http://localhost:8080/api/department')
       .then(res => setDepartment(res.data.content ?? []))
       .catch(console.error);
   }, []);
@@ -53,9 +55,15 @@ const ReservationConfirm = () => {
       return;
     }
 
-    axios.get(`http://localhost:8080/api/doctor?departmentId=${selectedDept}`)
+    jwtAxios.get(`http://localhost:8080/api/doctor?departmentId=${selectedDept}`)
       .then(res => {
         setDoctor(res.data.content ?? []);
+
+        if (isRowClickRef.current) {
+          isRowClickRef.current = false; 
+          return;
+        }
+
         setSelectedDoc(null);
       })
       .catch(console.error);
@@ -84,7 +92,7 @@ const ReservationConfirm = () => {
         : { monthly: currentMonth, departmentId: selectedDept };
     }
 
-    axios.get(url, {params})
+    jwtAxios.get(url, {params})
       .then(res => {
         const data = res.data.content ?? [];
 
@@ -106,7 +114,7 @@ const ReservationConfirm = () => {
     if (status === "PENDING") url += "/pending";
     if (status === "CONFIRMED") url += "/confirmed";
 
-    return axios.get(url, {
+    return jwtAxios.get(url, {
       params: {
         department: dept || undefined,
         name: name,
@@ -147,7 +155,7 @@ const ReservationConfirm = () => {
     ? { daily: dailyIso, doctorId: selectedDoc }
     : { daily: dailyIso, departmentId: selectedDept };
 
-    axios.get(url, { params })
+    jwtAxios.get(url, { params })
     .then(res => {
       const data = res.data.content ?? [];
       const slotsByHour = [];
@@ -192,7 +200,7 @@ const ReservationConfirm = () => {
           ? { daily: dailyIso, doctorId: selectedDoc }
           : { daily: dailyIso, departmentId: selectedDept };
 
-        axios.get(url, { params })
+        jwtAxios.get(url, { params })
           .then(res => {
             const data = res.data.content ?? [];
             const slotsByHour = [];
@@ -211,6 +219,8 @@ const ReservationConfirm = () => {
 
     const handleRowClick = (item) => {
       const docId = item.doctorId ?? null;
+
+       isRowClickRef.current = true;
 
       setSelectedDept(item.departmentId);
       setSelectedDoc(docId);
@@ -234,7 +244,7 @@ const ReservationConfirm = () => {
         ? { daily: dailyIso, doctorId: docId }
         : { daily: dailyIso, departmentId: item.departmentId };
 
-      axios.get(url, { params })
+      jwtAxios.get(url, { params })
         .then(res => {
           const data = res.data.content ?? [];
           const slotsByHour = [];
@@ -272,8 +282,8 @@ const ReservationConfirm = () => {
 
       const request =
         status === "CONFIRMED"
-          ? axios.put('http://localhost:8080/api/reservation', payload)
-          : axios.post('http://localhost:8080/api/reservation/confirm', payload);
+          ? jwtAxios.put('http://localhost:8080/api/reservation', payload)
+          : jwtAxios.post('http://localhost:8080/api/reservation/confirm', payload);
 
       request
         .then(() => {
@@ -295,7 +305,7 @@ const ReservationConfirm = () => {
       if (status === "PENDING") url += "/pending";
       if (status === "CONFIRMED") url += "/confirmed";
 
-      axios.get(url, {
+      jwtAxios.get(url, {
         params: selectedDept ? { department: selectedDept } : {}
       })
         .then(res => setList(res.data.content ?? []))
@@ -324,7 +334,7 @@ const ReservationConfirm = () => {
           : { monthly: currentMonth, departmentId: selectedDept };
       }
 
-      axios.get(url, { params })
+      jwtAxios.get(url, { params })
         .then(res => {
           const data = res.data.content ?? [];
 
@@ -351,7 +361,7 @@ const ReservationConfirm = () => {
         ? { daily: dailyIso, doctorId: selectedDoc }
         : { daily: dailyIso, departmentId: selectedDept };
 
-      axios.get(url, { params })
+      jwtAxios.get(url, { params })
         .then(res => {
           const data = res.data.content ?? [];
           const slotsByHour = [];
@@ -374,7 +384,7 @@ const ReservationConfirm = () => {
     };
 
   const handleCancel=(reservationId)=>{
-    axios.get(`http://localhost:8080/api/reservation/delete?reservationId=${reservationId}`)
+    jwtAxios.get(`http://localhost:8080/api/reservation/delete?reservationId=${reservationId}`)
     .then(res => {
       alert("예약 취소 완료")
       setSelectedRow(null);
@@ -385,7 +395,7 @@ const ReservationConfirm = () => {
         if (status === "PENDING") url += "/pending";
         if (status === "CONFIRMED") url += "/confirmed";
 
-        axios.get(url, {
+        jwtAxios.get(url, {
           params: selectedDept ? { department: selectedDept } : {}
         })
         .then(res => setList(res.data.content ?? []))

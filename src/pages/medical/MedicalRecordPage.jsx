@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios'
 import React, { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query';
+import jwtAxios from '../../api/jwtAxios';
 
 const MedicalRecordPage = () => {
       const queryClient = useQueryClient();
@@ -20,8 +21,12 @@ const MedicalRecordPage = () => {
       const [pendingReceptionId, setPendingReceptionId] = useState(null);
       const [pendingPatientId, setPendingPatientId] = useState(null);
       const [waitingStatus, setWaitingStatus] = useState("PENDING");
+      const [selectedDepartmentId, setSelectedDepartmentId] = useState(null);
+      const [selectedDepartmentName, setSelectedDepartmentName] = useState("");
+      const [aiResult, setAiResult] = useState(null);
       const [newRecord, setNewRecord] = useState({
         title: "",
+        symptom: "",
         content: "",
         isSensitive: false,
       });
@@ -29,7 +34,7 @@ const MedicalRecordPage = () => {
     const {data: waitingData} = useQuery({
       queryKey: ["medicalRecords", waitingStatus, waitingPage, waitingSize],
       queryFn: async () =>{
-        const res = await axios.get("http://localhost:8080/api/waitingList",{
+        const res = await jwtAxios.get("http://localhost:8080/api/waitingList",{
           params:{
             page: waitingPage,
             size: waitingSize,
@@ -44,7 +49,7 @@ const MedicalRecordPage = () => {
     const { data: patientData } = useQuery({
       queryKey: ["patientInfo", selectedPat],
       queryFn: async () => {
-        const res = await axios.get(
+        const res = await jwtAxios.get(
           "http://localhost:8080/api/medicalrecord/patientInfo",
           {
             params: { patientId: selectedPat },
@@ -61,7 +66,7 @@ const MedicalRecordPage = () => {
     } = useQuery({
       queryKey: ["medicalRecord", selectedPat, status, page],
       queryFn: async () => {
-        const res = await axios.get("http://localhost:8080/api/medicalrecord", {
+        const res = await jwtAxios.get("http://localhost:8080/api/medicalrecord", {
           params: {
             patientId: selectedPat,
             status: status,
@@ -78,7 +83,7 @@ const MedicalRecordPage = () => {
 
     const handleAdd = async () => {
       try {
-        await axios.post("http://localhost:8080/api/medicalrecord", {
+        await jwtAxios.post("http://localhost:8080/api/medicalrecord", {
           patientId: selectedPat,
           medicalRecordStatus: status,
           title: newRecord.title,
@@ -110,7 +115,7 @@ const MedicalRecordPage = () => {
 
       const handleSubmitReason = async () => {
         try {
-          await axios.post("http://localhost:8080/api/medicalrecord/access-log", {
+          await jwtAxios.post("http://localhost:8080/api/medicalrecord/access-log", {
             recordId: pendingRecord.medicalRecordId,
             reason: reason,
           });
@@ -128,7 +133,7 @@ const MedicalRecordPage = () => {
 
       const handleChangeToInProgress = async () => {
         try {
-          await axios.patch("http://localhost:8080/api/reception/status", null, {
+          await jwtAxios.patch("http://localhost:8080/api/reception/status", null, {
             params: {
               receptionId: pendingReceptionId,
               status: "CONSULTING",
@@ -146,6 +151,41 @@ const MedicalRecordPage = () => {
           alert("상태 변경 실패");
         }
       };
+
+      const aiHandler= async ()=>{
+        if (!newRecord.symptom) {
+          alert("증상을 입력하세요");
+          return;
+        }
+       try {
+          const payload = {
+            patientId: parseInt(selectedPat),
+            departmentId: parseInt(selectedDepartmentId),
+            departmentName: selectedDepartmentName,
+            symptom: newRecord.symptom,
+          };
+
+          const res = await jwtAxios.post("http://localhost:8000/diagnose", payload, {
+                                          headers: { "Content-Type": "application/json" }
+                                        });
+          const data = res.data;
+
+          const warningText = `⚠️ 본 기록에는 AI 보조 진단 결과가 포함되어 있습니다.
+          AI는 참고용이며, 최종 진단 및 치료 결정에 대한 책임은 담당 의사에게 있습니다.
+          ----------------------------------------
+          `;
+                        
+          setAiResult(data);
+          setNewRecord(prev => ({
+            ...prev,
+            content: warningText + data.ai_diagnosis
+          }));
+
+        } catch (err) {
+          console.error("AI 진단 오류:", err.response || err);
+          alert("AI 진단 요청 실패");
+        }
+      }
 
   return (
     <div style={{ display: "flex", gap: "20px" }}>
@@ -189,8 +229,10 @@ const MedicalRecordPage = () => {
               <td><button type='button'
                           onClick={() => {
                             setPendingReceptionId(item.receptionId);
-                             setPendingPatientId(item.patientId); 
-                             setSelectedPat(item.patientId);
+                            setPendingPatientId(item.patientId); 
+                            setSelectedPat(item.patientId);
+                            setSelectedDepartmentId(item.departmentId);      
+                            setSelectedDepartmentName(item.departmentName); 
                             setShowStatusModal(true);
                           }}
               >보기</button></td>
@@ -396,6 +438,22 @@ const MedicalRecordPage = () => {
               />
             </div>
 
+            {/* 증상 */}
+            {status === "DIAGNOSIS" && (
+              <div style={{ marginBottom: "10px" }}>
+                <label>증상</label>
+                <button onClick={aiHandler}>AI 진단</button><br />
+                <textarea
+                  value={newRecord.symptom}
+                  onChange={(e) =>
+                    setNewRecord({ ...newRecord, symptom: e.target.value })
+                  }
+                  rows={5}
+                  style={{ width: "100%", padding: "5px" }}
+                />
+              </div>
+            )}
+
             {/* 내용 */}
             <div style={{ marginBottom: "10px" }}>
               <label>내용</label><br />
@@ -426,6 +484,32 @@ const MedicalRecordPage = () => {
             {/* 버튼 */}
             <button onClick={handleAdd}>저장</button>
             <button onClick={() => setIsAdding(false)}>취소</button>
+          </div>
+        )}
+        {aiResult && (
+          <div style={{
+            marginTop: "20px",
+            border: "1px solid #4CAF50",
+            padding: "15px",
+            borderRadius: "8px",
+            backgroundColor: "#f6fff6"
+          }}>
+            <h3>🧠 AI 진단 결과</h3>
+
+            <div style={{
+              whiteSpace: "pre-wrap",
+              lineHeight: "1.6",
+              fontSize: "14px"
+            }}>
+              {aiResult.ai_diagnosis}
+            </div>
+
+            <h4 style={{ marginTop: "15px" }}>📌 추천 진료과</h4>
+            <ul>
+              {aiResult.agent_response.map((id) => (
+                <li key={id}>진료과 ID: {id}</li>
+              ))}
+            </ul>
           </div>
         )}
         </div>
