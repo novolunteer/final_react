@@ -5,7 +5,7 @@ import dayjs from 'dayjs';
 
 const PaymentList = ({ keyword }) => {
   const [page, setPage]=useState(0);
-  const [sort, setSort]=useState("paymentDatetime,desc");  
+  const [sort, setSort]=useState("paymentDatetime,desc");
 
   useEffect(()=>{
     setPage(0);
@@ -55,7 +55,7 @@ const PaymentList = ({ keyword }) => {
                                 <td>{(page * 10) + index + 1}</td>
                                 <td>{payment.patientName}</td><td>{payment.receptionId}</td>
                                 <td>{payment.amount}</td><td>{payment.method}</td>
-                                <td>{dayjs(payment.paymentDatetime).format('YYYY년 M월 D일 H시 m분 s시')}</td>
+                                <td>{dayjs(payment.paymentDatetime).format('YYYY년 M월 D일 H시 m분 s초')}</td>
                             </tr>
                             ))
                         )
