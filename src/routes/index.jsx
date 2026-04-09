@@ -2,15 +2,12 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "../layout/MainLayout";
 import AdminPage from "../pages/admin/AdminPage";
-import AdmissionPage from "../pages/admission/AdmissionPage";
 import CommunicationPage from "../pages/communication/CommunicationPage";
 import DashboardPage from "../pages/dashboard/DashboardPage";
 import PatientPage from "../pages/patient/PatientPage";
 import ReservationPage from "../pages/reservation/ReservationPage";
 import ReceptionPage from "../pages/reception/ReceptionPage";
-import EmergencyPage from "../pages/emergency/EmergencyPage";
 import MedicalRecordPage from "../pages/medical/MedicalRecordPage";
-import WardPage from "../pages/ward/WardPage";
 import StaffPage from "../pages/hr/staff/StaffPage";
 import StatisticsPage from "../pages/statistics/StatisticsPage";
 import NotificationPage from "../pages/notification/NotificationPage";
@@ -37,9 +34,6 @@ const Router = () => {
           <Route path="/reservationconfirm" element={<ReservationConfirm />} />
           <Route path="/reception" element={<ReceptionPage />} />
           <Route path="/medical" element={<MedicalRecordPage />} />
-          <Route path="/emergency" element={<EmergencyPage />} />
-          <Route path="/admission" element={<AdmissionPage />} />
-          <Route path="/ward" element={<WardPage />} />
           <Route path="/billing" element={<BillingLayout/>} />
           <Route path="/staff" element={<StaffPage />} />
           <Route path="/department" element={<DepartmentPage/>}/>

@@ -8,9 +8,6 @@ const Sidebar = () => {
     { path: "/reservationconfirm", label: "예약 확인" },
     { path: "/reception", label: "접수" },
     { path: "/medical", label: "진료 관리" },
-    { path: "/emergency", label: "응급실" },
-    { path: "/admission", label: "입원관리" },
-    { path: "/ward", label: "병동관리" },
     { path: "/billing", label: "수납 / 보험" },
 
     {
