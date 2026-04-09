@@ -1,27 +1,27 @@
-import axios from "axios";
+import jwtAxios from "../jwtAxios";
 
 const host = "http://localhost:8080/api/staff";
 
 export const getStaffList = async() => {
-    const res = await axios.get(`${host}/list`);
+    const res = await jwtAxios.get(`${host}/list`);
     return res.data;
 };
 
 export const getStaffOne = async(staffId) => {
-    const res = await axios.get(`${host}/${staffId}`);
+    const res = await jwtAxios.get(`${host}/${staffId}`);
     return res.data;
 };
 
 export const registerStaff = async(staffData) => {
-    const res = await axios.post(`${host}/register`, staffData);
+    const res = await jwtAxios.post(`${host}/register`, staffData);
     return res.data;
 };
 
 export const updateStaff = async (staffData) =>{
-    const res = await axios.put(`${host}/update`, staffData);
+    const res = await jwtAxios.put(`${host}/update`, staffData);
     return res.data;
 };
 export const deleteStaff = async(staffId) => {
-    const res= await axios.delete(`${host}/${staffId}`);
+    const res= await jwtAxios.delete(`${host}/${staffId}`);
     return res.data;
 };

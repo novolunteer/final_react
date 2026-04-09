@@ -6,7 +6,8 @@ const initialState={
     accessToken:sessionStorage.getItem("accessToken") ? sessionStorage.getItem("accessToken") : null,
     refreshToken:sessionStorage.getItem("refreshToken") ? sessionStorage.getItem("refreshToken") : null,
     roles: sessionStorage.getItem("roles") ? JSON.parse(sessionStorage.getItem("roles")) : [],
-    status:sessionStorage.getItem("status") ? sessionStorage.getItem("status") : null
+    status:sessionStorage.getItem("status") ? sessionStorage.getItem("status") : null,
+    departmentId:sessionStorage.getItem("departmentId") ? Number(sessionStorage.getItem("departmentId")) : null
 };
 
 const authSlice=createSlice({
@@ -14,7 +15,7 @@ const authSlice=createSlice({
     initialState,
     reducers:{
         loginSuccess:(state, action)=>{
-            const { userId, email, accessToken, refreshToken, roles, status }=action.payload;
+            const { userId, email, accessToken, refreshToken, roles, status, departmentId }=action.payload;
 
             state.userId=userId;
             state.email=email;
@@ -22,6 +23,7 @@ const authSlice=createSlice({
             state.refreshToken=refreshToken;
             state.roles=roles;
             state.status=status;
+            state.departmentId=departmentId;
 
             sessionStorage.setItem("userId", String(userId));
             sessionStorage.setItem("email", email);
@@ -29,6 +31,7 @@ const authSlice=createSlice({
             sessionStorage.setItem("refreshToken", refreshToken);
             sessionStorage.setItem("roles", JSON.stringify(roles));
             sessionStorage.setItem("status", status);
+            sessionStorage.setItem("departmentId", String(departmentId));
         },
         logout:(state)=>{
             state.userId=null;
@@ -37,6 +40,7 @@ const authSlice=createSlice({
             state.refreshToken=null;
             state.roles=[];
             state.status=null;
+            state.departmentId=null;
 
             sessionStorage.removeItem("userId");
             sessionStorage.removeItem("email");
@@ -44,6 +48,7 @@ const authSlice=createSlice({
             sessionStorage.removeItem("refreshToken");
             sessionStorage.removeItem("roles");
             sessionStorage.removeItem("status");
+            sessionStorage.removeItem("departmentId");
         }
     }
 });

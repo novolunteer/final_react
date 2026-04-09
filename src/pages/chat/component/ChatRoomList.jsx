@@ -10,13 +10,6 @@ const ChatRoomList = ({ rooms, selectedRoomId, onSelectRoom, staffList, setStaff
   const [selectedUsers, setSelectedUsers]=useState([]);
   const [roomName, setRoomName]=useState("");
 
-  const navigate=useNavigate();
-
-  const accessToken=sessionStorage.getItem('accessToken');
-  if(!accessToken){
-    navigate("/login", {replace:true});
-  }
-
   useEffect(()=>{
     const timer=setTimeout(async () => {
         try{

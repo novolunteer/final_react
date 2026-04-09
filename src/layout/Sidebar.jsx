@@ -17,14 +17,14 @@ const Sidebar = () => {
       label: "인사관리",
       children: [
         { path: "/staff", label: "직원관리" },
-        { path: "/work-schedule", label: "근무스케줄 관리" },
-        { path: "/attendance", label: "근태관리" },
+        { path: "/department", label: "부서관리" },
+        { path: "/staff_schedule", label: "근무스케줄 관리" },
       ],
     },
     {
       label: "운영관리",
       children: [
-        { path: "/schedule-policy", label: "스케줄 운영설정" },
+        { path: "/operation/schedule_policy", label: "스케줄 운영설정" },
       ],
     },
     {
@@ -35,10 +35,8 @@ const Sidebar = () => {
       ],
     },
 
-    { path: "/statistics", label: "통계" },
     { path: "/communication", label: "커뮤니케이션" },
     { path: "/notification", label: "알림" },
-    { path: "/login", label: "로그인" },
     { path: "/chat", label: "채팅" },
     { path: "/inquiry/chatbot", label: "AI 문의하기" },
   ];

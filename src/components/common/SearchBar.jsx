@@ -5,6 +5,7 @@ const SearchBar = ({
     onChange,
     onSearch,
     placeholder,
+    showButton = true,
 }) => {
 
     const handleKeyDown= (e)=>{
@@ -22,7 +23,10 @@ const SearchBar = ({
         placeholder={placeholder}
         style={styles.input}
         />
-        <button type='button' onClick={onSearch} style={styles.button}>검색</button>
+
+        {/* 실시간 검색이라면 해당페이지에서 showbutton={false} */}
+        {showButton && (
+        <button type='button' onClick={onSearch} style={styles.button}>검색</button>)}
     </div>
   )
 }

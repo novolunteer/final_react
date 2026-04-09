@@ -27,7 +27,7 @@ const ReservationPage = () => {
       return;
     }
 
-    jwtAxios.get(`http://localhost:8080/api/doctor?departmentId=${selectedDept}`)
+    jwtAxios.get(`http://localhost:8080/api/staff/doctor?departmentId=${selectedDept}`)
       .then((res) => {
         setDoctor(res.data.content)
         console.log(res.data.content)

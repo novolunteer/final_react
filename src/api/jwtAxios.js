@@ -1,7 +1,9 @@
 import axios from "axios";
 export const API_BASE_URL = import.meta.env.VITE_SPRING_API_BASE_URL;
 
-const jwtAxios=axios.create();
+const jwtAxios=axios.create({
+    baseURL: API_BASE_URL,
+});
 
 const beforeRequest=(config)=>{
     const accessToken=sessionStorage.getItem("accessToken");
