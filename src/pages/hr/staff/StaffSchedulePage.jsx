@@ -60,6 +60,7 @@ const StaffSchedulePage = () => {
 
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
+  const [selectedScheduleTypeId, setSelectedScheduleTypeId] = useState("");
   const [selectedDate, setSelectedDate] = useState(getTodayString());
   const [viewMode, setViewMode] = useState("month");
 
@@ -82,6 +83,13 @@ const StaffSchedulePage = () => {
     );
   }, [departmentList]);
 
+  //근무유형 정렬 목록
+  const sortedScheduleTypeList = useMemo(()=>{
+    return[...scheduleTypeList].sort((a,b)=>
+    (a.typeName || "").localeCompare(b.typeName || "", "ko")
+    );
+  },[scheduleTypeList]);
+
   // 달력형에서 우측 목록에 보여줄 스케줄
   const filteredScheduleList = useMemo(() => {
     let result = scheduleList;
@@ -97,13 +105,19 @@ const StaffSchedulePage = () => {
         (item) => String(item.departmentId) === String(selectedDepartmentId)
       );
     }
+    
+    if(selectedScheduleTypeId){
+        result = result.filter(
+            (item) => String(item.scheduleTypeId) === String(selectedScheduleTypeId) 
+        )
+    }
 
     if (selectedDate) {
       result = result.filter((item) => item.workDate === selectedDate);
     }
 
     return result;
-  }, [scheduleList, searchKeyword, selectedDate, selectedDepartmentId]);
+  }, [scheduleList, searchKeyword, selectedDate, selectedDepartmentId, selectedScheduleTypeId]);
 
   // 달력형 우측 목록을 부서별로 묶기
   const groupedScheduleList = useMemo(() => {
@@ -118,9 +132,32 @@ const StaffSchedulePage = () => {
       return acc;
     }, {});
   }, [filteredScheduleList]);
+  
+  // 주간형 직원검색
+    const filteredWeekStaffList= useMemo(()=>{
+        let result = staffList;
+        
+        const keyword = searchKeyword.trim().toLowerCase();
+
+        if(selectedDepartmentId){
+            result = result.filter(
+                (staff) => String(staff.departmentId) === String(selectedDepartmentId)
+            );
+        }
+        if(keyword){
+            result = result.filter((staff)=>
+                (staff.name || "").toLowerCase().includes(keyword)
+        );
+        }
+        return result;
+    }, [staffList, selectedDepartmentId, searchKeyword]);
 
   // 주간형에서 보여줄 부서별 그룹
   const weekDepartmentGroups = useMemo(() => {
+    const filteredStaffIds = new Set(
+        filteredWeekStaffList.map((staff)=> String(staff.staffId))
+    );
+
     let result = scheduleList;
 
     if (selectedDepartmentId) {
@@ -128,6 +165,15 @@ const StaffSchedulePage = () => {
         (item) => String(item.departmentId) === String(selectedDepartmentId)
       );
     }
+
+    if (selectedScheduleTypeId){
+        result = result.filter(
+            (item) => String(item.scheduleTypeId) === String(selectedScheduleTypeId)
+        );
+    }
+    result = result.filter((item)=>
+        filteredStaffIds.has(String(item.staffId))
+    );
 
     return result.reduce((acc, item) => {
       const departmentName = item.departmentName || "미지정 부서";
@@ -139,7 +185,9 @@ const StaffSchedulePage = () => {
       acc[departmentName].push(item);
       return acc;
     }, {});
-  }, [scheduleList, selectedDepartmentId]);
+  }, [scheduleList, selectedDepartmentId, filteredWeekStaffList, selectedScheduleTypeId]);
+
+
 
   // 달력에 날짜별 총 근무자 수 표시용 이벤트
   const events = useMemo(() => {
@@ -289,7 +337,11 @@ const StaffSchedulePage = () => {
       fetchScheduleData();
     } catch (error) {
       console.error("저장실패", error);
-      alert("저장 중 오류가 발생했습니다");
+
+      const message = 
+      error.response?.data?.message || "저장 중 오류가 발생했습니다";
+
+      alert(message);
     }
   };
 
@@ -352,7 +404,10 @@ const StaffSchedulePage = () => {
       setBulkOpen(false);
     } catch (error) {
       console.error("스케줄 일괄등록 실패", error);
-      alert("스케줄 등록이 완료되지 않았습니다");
+      const message = 
+        error.response?.data?.message || "저장 중 오류가 발생했습니다";
+
+        alert(message);
     }
   };
 
@@ -426,6 +481,7 @@ const StaffSchedulePage = () => {
 
     setSearchKeyword("");
     setSelectedDate(today);
+    setSelectedScheduleTypeId("");
 
     if (viewMode === "week" && sortedDepartmentList.length > 0) {
       setSelectedDepartmentId(String(sortedDepartmentList[0].departmentId));
@@ -500,7 +556,8 @@ const StaffSchedulePage = () => {
           showButton={false}
           placeholder="직원의 이름을 입력하세요"
         />
-
+        {/* 부서선택 */}
+        <label>부서선택</label>
         <select
           value={selectedDepartmentId}
           onChange={(e) => setSelectedDepartmentId(e.target.value)}
@@ -514,6 +571,28 @@ const StaffSchedulePage = () => {
           ))}
         </select>
 
+        {/* 근무유형선택 */}
+        <label>근무유형선택</label>
+        <select
+         value={selectedScheduleTypeId}
+         onChange={(e)=> setSelectedScheduleTypeId(e.target.value)}
+         >
+            <option value="">전체</option>
+
+            {sortedScheduleTypeList.map((type)=>
+                <option 
+                key={type.scheduleTypeId} 
+                value={type.scheduleTypeId}
+                disabled={type.isActive === false}
+                >
+                    {type.typeName}
+                    {type.isActive === false ? " (비활성)" : ""}
+                </option>
+                
+            )}
+         </select>
+
+        
         <button type="button" onClick={handleResetAll}>
           전체 초기화
         </button>
@@ -576,10 +655,7 @@ const StaffSchedulePage = () => {
                   <WeekScheduleTable
                     key={departmentName}
                     title={departmentName}
-                    staffList={staffList.filter(
-                      (staff) =>
-                        String(staff.departmentId) === String(selectedDepartmentId)
-                    )}
+                    staffList={filteredWeekStaffList}
                     scheduleList={items}
                     scheduleTypeList={scheduleTypeList}
                     selectedDate={selectedDate}

@@ -207,8 +207,13 @@ const StaffScheduleForm = ({
             >
               <option value="">근무유형 선택</option>
               {scheduleTypeList.map((type) => (
-                <option key={type.scheduleTypeId} value={type.scheduleTypeId}>
+                <option 
+                key={type.scheduleTypeId} 
+                value={type.scheduleTypeId}
+                disabled={type.isActive === false}
+                >
                   {type.typeName}
+                  {type.isActive === false ? "(비활성)" : ""}
                 </option>
               ))}
             </select>

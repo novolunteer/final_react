@@ -161,7 +161,11 @@ const BulkScheduleForm = ({
                         <option
                         key={type.scheduleTypeId}
                         value={type.scheduleTypeId}
-                        >{type.typeName}</option>
+                        disabled = {type.isActive === false}
+                        >
+                            {type.typeName}
+                            {type.isActive === false ? "(비활성)" : ""}
+                        </option>
                     ))}
                 </select>
             </div>
