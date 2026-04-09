@@ -1,12 +1,11 @@
 import React from 'react'
 
-const CommonModal = ({open, onClose, children}) => {
+const CommonModal = ({open, onClose, children, showCloseButton = true}) => {
     if(!open) return null;
 
   return (
     <div style={styles.overlay}>
         <div style={styles.modal}>
-            <button onClick={onClose} style={styles.close}>X</button>
             {children} 
             
         </div>
@@ -23,19 +22,24 @@ const styles = {
     left: 0,
     width: "100%",
     height: "100%",
-    backgroundColor: "rgba(0,0,0,0.3)",
+    backgroundColor: "rgba(0,0,0,0.35)",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
+    zIndex: 9999,
   },
   modal: {
+    position: "relative",
     background: "#fff",
-    padding: "20px",
-    borderRadius: "8px",
-    minWidth: "300px",
+    padding: "24px",
+    borderRadius: "12px",
+    minWidth: "420px",
+    zIndex: 10000,
   },
   close: {
-    float: "right",
-    cursor: "pointer",
+    position: "absolute",
+    top: "12px",
+    right: "12px",
+    zIndex: 10001,
   },
 };

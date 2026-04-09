@@ -1,0 +1,48 @@
+import jwtAxios from "../jwtAxios";
+import { data } from "react-router-dom";
+
+const host="http://localhost:8080/api/staff_schedule";
+
+export const getScheduleList=async()=>{
+    const res=await jwtAxios.get(`${host}/list`);
+    return res.data;
+};
+
+export const getSchedule = async(scheduleId)=>{
+    const res=await jwtAxios.get(`${host}/${scheduleId}`);
+    return res.data;
+};
+
+export const registerSchedule = async(scheduleData)=>{
+    const res = await jwtAxios.post(`${host}/register`, scheduleData);
+    return res.data;
+};
+
+export const updateSchedule = async(scheduleId, scheduleData)=>{
+    const res = await jwtAxios.put(`${host}/${scheduleId}`, scheduleData);
+    return res.data;
+};
+
+export const deleteSchedule = async(scheduleId)=>{
+    const res = await jwtAxios.delete(`${host}/${scheduleId}`);
+    return res.data;
+};
+
+//개별확정
+export const confirmSchedule = async(scheduleId) =>{
+    const res = await jwtAxios.put(`${host}/${scheduleId}/confirm`);
+    return res.data;
+};
+
+//선택 일괄 확정
+export const bulkConfirmSchedule = async(scheduleIds) =>{
+    const res = await jwtAxios.put(`${host}/confirm/bulk`, scheduleIds);
+    return res.data;
+};
+
+//스케줄 일괄등록
+export const bulkRegisterSchedule = async (data) => {
+    const res = await jwtAxios.post(`${host}/bulk_register`,data);
+    return res.data;
+};
+

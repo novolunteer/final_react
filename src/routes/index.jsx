@@ -11,12 +11,15 @@ import ReceptionPage from "../pages/reception/ReceptionPage";
 import EmergencyPage from "../pages/emergency/EmergencyPage";
 import MedicalRecordPage from "../pages/medical/MedicalRecordPage";
 import WardPage from "../pages/ward/WardPage";
-import StaffPage from "../pages/staff/StaffPage";
+import StaffPage from "../pages/hr/staff/StaffPage";
 import StatisticsPage from "../pages/statistics/StatisticsPage";
 import NotificationPage from "../pages/notification/NotificationPage";
 import LoginPage from "../pages/login/LoginPage";
 import ChatLayout from "../pages/chat/Layout/ChatLayout";
 import ReservationConfirm from "../pages/reservation/ReservationConfirm";
+import DepartmentPage from "../pages/hr/department/DepartmentPage";
+import Schedule_policyPage from "../pages/operation/Schedule_PolicyPage";
+import StaffSchedulePage from "../pages/hr/staff/StaffSchedulePage";
 import InquiryChatBotPage from "../pages/InquiryChatbot/InquiryChatBotPage";
 import BillingLayout from "../pages/billing/BillingLayout";
 
@@ -39,6 +42,9 @@ const Router = () => {
           <Route path="/ward" element={<WardPage />} />
           <Route path="/billing" element={<BillingLayout/>} />
           <Route path="/staff" element={<StaffPage />} />
+          <Route path="/department" element={<DepartmentPage/>}/>
+          <Route path="/operation/schedule_policy" element={<Schedule_policyPage/>}/>
+          <Route path="/staff_schedule" element={<StaffSchedulePage/>}/>
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/statistics" element={<StatisticsPage />} />
           <Route path="/communication" element={<CommunicationPage />} />
