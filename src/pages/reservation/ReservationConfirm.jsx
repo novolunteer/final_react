@@ -8,6 +8,8 @@ import './Reservation.css'
 import { useQuery } from '@tanstack/react-query';
 import { useQueryClient } from '@tanstack/react-query';
 import jwtAxios from '../../api/jwtAxios';
+import { useDispatch } from 'react-redux';
+import { setDoctorId } from "../../store/sseSlice";
 
 const ReservationConfirm = () => {
   const [department, setDepartment] = useState([]);
@@ -27,6 +29,7 @@ const ReservationConfirm = () => {
   const [size] = useState(3);
   const queryClient = useQueryClient();
   const isRowClickRef = useRef(false);
+  const dispatch = useDispatch();
 
   /* ================= API ================= */
   useEffect(() => {
@@ -295,6 +298,9 @@ const ReservationConfirm = () => {
             queryKey: ['reservationList']
           });
           refreshCalendar();
+           if (selectedDoc) {
+              dispatch(setDoctorId(selectedDoc));
+            }
         })
         .catch(console.error);
     };
