@@ -19,6 +19,7 @@ import ChatLayout from "../pages/chat/Layout/ChatLayout";
 import ReservationConfirm from "../pages/reservation/ReservationConfirm";
 import InquiryChatBotPage from "../pages/InquiryChatbot/InquiryChatBotPage";
 import BillingLayout from "../pages/billing/BillingLayout";
+import JoinPage from "../pages/join/JoinPage";
 
 
 const Router = () => {
@@ -46,6 +47,7 @@ const Router = () => {
           <Route path="/login" element={<LoginPage/>}/>
           <Route path="/chat" element={<ChatLayout/>}/>
           <Route path="/inquiry/chatbot" element={<InquiryChatBotPage/>}/>
+          <Route path="/join" element={<JoinPage/>} />
         </Route>
       </Routes>
     </BrowserRouter>

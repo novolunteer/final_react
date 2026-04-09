@@ -5,6 +5,7 @@ import "./chatLayout.css"
 import { Client } from '@stomp/stompjs'
 import { chatRoomList, getStaffList } from '../../../api/chatApi'
 import AttachmentArchive from '../component/AttachmentArchive'
+import { useNavigate } from 'react-router-dom'
 
 const ChatLayout = () => {
   const [selectedRoomId, setSelectedRoomId]=useState(null);
@@ -17,6 +18,20 @@ const ChatLayout = () => {
   const [roomName, setRoomName]=useState("");
 
   const clientRef=useRef(null);
+  const navigate=useNavigate();
+
+  const accessToken=sessionStorage.getItem('accessToken');
+  const roles = sessionStorage.getItem("roles") || [];
+
+  useEffect(()=>{
+      if(!accessToken){
+        navigate("/login", {replace:true});
+      }
+
+      if(roles.includes("PATIENT")){
+        navigate("/", {replace:true});
+      }
+  },[])
 
   const getRooms=useCallback(
     async()=>{

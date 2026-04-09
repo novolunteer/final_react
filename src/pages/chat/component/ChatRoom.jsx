@@ -301,13 +301,6 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
   const popoverRef=useRef(null);
   const fileInputRef=useRef(null);
 
-  const navigate=useNavigate();
-
-  const accessToken=sessionStorage.getItem('accessToken');
-  if(!accessToken){
-    navigate("/login", {replace:true});
-  }
-
   const userId=Number(sessionStorage.getItem("userId"));
 
   const isGroup=room?.roomType === 'GROUP';

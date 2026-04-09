@@ -1,4 +1,3 @@
-import { host } from "./chatApi";
 import jwtAxios from "./jwtAxios";
 export const API_BASE_URL = import.meta.env.VITE_SPRING_API_BASE_URL;
 

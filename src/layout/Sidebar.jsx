@@ -38,7 +38,6 @@ const Sidebar = () => {
     { path: "/statistics", label: "통계" },
     { path: "/communication", label: "커뮤니케이션" },
     { path: "/notification", label: "알림" },
-    { path: "/login", label: "로그인" },
     { path: "/chat", label: "채팅" },
     { path: "/inquiry/chatbot", label: "AI 문의하기" },
   ];
