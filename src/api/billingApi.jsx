@@ -37,3 +37,8 @@ export const getPaymentList=async(page, sort, keyword)=>{
 
     return res.data;
 }
+
+export const insertTotalAmount=async(param) => {
+    const res=await jwtAxios.post(`${API_BASE_URL}/billing/total/amount`, param);
+    return res.data;
+}

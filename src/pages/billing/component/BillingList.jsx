@@ -1,6 +1,6 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import React, { use, useEffect, useState } from 'react'
-import { confirmPayment, getBillingList, preparePayment } from '../../../api/billingApi';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useEffect, useState } from 'react'
+import { confirmPayment, getBillingList, insertTotalAmount, preparePayment } from '../../../api/billingApi';
 import { loadTossPayments } from '@tosspayments/tosspayments-sdk';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -57,6 +57,19 @@ const BillingList = ({ keyword }) => {
 
     confirm();
   }, [searchParams, navigate, queryClient])
+
+  const insertAmountMutation=useMutation({
+    mutationFn: insertTotalAmount,
+    onSuccess: () => {
+      alert("총 금액이 변경되었습니다.");
+      queryClient.invalidateQueries({ queryKey: ['billingList'] });
+      closeTotalAmountModal();
+    },
+    onError: (error) => {
+      console.log(error);
+      alert("총 금액 변경에 실패했습니다.");
+    }
+  });
 
   const { data, isLoading, isError }=useQuery({
     queryKey: ['billingList', keyword, page, sort],
@@ -124,6 +137,12 @@ const BillingList = ({ keyword }) => {
     setAmount("");
   };
 
+  const closeTotalAmountModal=()=>{
+    setOpenTotalAmountModal(false);
+    setBilling(null);
+    setInputAmount("");
+  }
+
   if(isLoading){
     return <div>청구 목록 불러오는 중...</div>;
   }
@@ -147,7 +166,7 @@ const BillingList = ({ keyword }) => {
         <table className='billing-table'>
           <thead>
             <tr>
-              <th>번호</th><th>환자</th><th>진료 번호</th>
+              <th>번호</th><th>환자</th><th>접수 번호</th>
               <th>총 금액</th><th>처리 현황</th>
               <th>결제</th>
             </tr>
@@ -160,22 +179,48 @@ const BillingList = ({ keyword }) => {
                 </tr>
               ) : (
                 data?.content?.map((billing, index) => {
-                  
-
                   return (
                     <tr key={billing.billingId}>
                     <td>{(page * 10) + index + 1}</td><td>{billing.patientName}</td>
                     <td>{billing.receptionId}</td>
-                    <td>
+                    <td className='billing-table-total-amount-td'>
                       {
-                        billing.totalAmount !== null ? billing.totalAmount : (
-                          <button type='button'
-                            onClick={()=>{
-                              setInputAmount("");
-                              setOpenTotalAmountModal(true);
-                            }}>
-                            입력
-                          </button>
+                        billing.totalAmount === null ? (
+                          <div className='total-amount-is-null'>
+                            <button
+                              type='button' className='total-amount-insert-btn'
+                              onClick={() => {
+                                setBilling(billing);
+                                setInputAmount("");
+                                setOpenTotalAmountModal(true);
+                              }}
+                            >
+                              입력
+                            </button>
+                          </div>
+                        ) : (
+                          <div className='unpaid-td-box'>
+                            <div className='unpaid-td-total-amount'>
+                              {billing.totalAmount}
+                            </div>
+                            {
+                              billing.status === 'PENDING' && (
+                                <div className='unpaid-td-update-box'>
+                                  <button
+                                    type='button'
+                                    onClick={() => {
+                                      setBilling(billing);
+                                      setInputAmount(billing.totalAmount);
+                                      setOpenTotalAmountModal(true);
+                                    }}
+                                    className='unpaid-td-update-btn'
+                                  >
+                                    수정
+                                  </button>
+                                </div>
+                              )
+                            }
+                          </div>
                         )
                       }
                     </td>
@@ -257,18 +302,56 @@ const BillingList = ({ keyword }) => {
       }
       {
         openTotalAmountModal && (
-          <div className='totalAmount-modal-overlay'>
-            <div className='totalAmount-modal-inner'>
+          <div className='totalAmount-modal-overlay'
+            onClick={(e) => {
+              e.preventDefault();
+              closeTotalAmountModal();
+            }}>
+            <div className='totalAmount-modal-inner'
+              onClick={(e)=>e.stopPropagation()}>
               <div className='totalAmount-modal-box'>
-                <div>
+                <div className='totalAmount-modal-header'>
+                  {billing?.receptionId}번 접수 건의 총 금액을 입력하세요.
+                </div>
+                <div className='input-amount-area'>
+                  <input type='number' value={inputAmount}
+                    onChange={(e)=>setInputAmount(e.target.value)}/>
+                </div>
+                <div className='totalAmount-modal-footer'>
+                  <button type='button' className='totalAmount-modal-close-btn'
+                    onClick={()=>closeTotalAmountModal()}>
+                    취소
+                  </button>
+                  <button type='button'
+                    onClick={() => {
+                      if(!billing) {
+                        alert("청구서 정보가 없습니다.");
+                        return;
+                      }
 
+                      const amount=Number(inputAmount);
+
+                      if(!amount || amount <= 0){
+                        alert("금액이 올바르지 않습니다.");
+                        return;
+                      }
+
+                      insertAmountMutation.mutate({
+                        billingId: billing.billingId,
+                        totalAmount: amount
+                      });
+                    }}
+                    disabled={insertAmountMutation.isPending}
+                  >
+                    {insertAmountMutation.isPending ? '진행 중':'확인'}
+                  </button>
                 </div>
               </div>
             </div>
-          </div>
-        )
-      }
-    </div>
+        </div>
+      )
+    }
+  </div>
   )
 }
 
