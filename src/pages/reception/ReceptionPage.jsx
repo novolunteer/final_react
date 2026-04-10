@@ -33,8 +33,14 @@ const ReceptionPage = () => {
         })
     }
 
-    const cancelHandler=()=>{
-
+    const cancelHandler=async (reservationId)=>{
+      await jwtAxios.get(`http://localhost:8080/api/reception/cancel?reservationId=${reservationId}`).then((res) => {
+            alert("취소 완료")
+            queryClient.invalidateQueries({ queryKey: ['receptionList'] });
+        })
+        .catch((err) => {
+            console.error(err)
+        })
     }
 
     const fetchReceptionList = async ({ status, name, page }) => {
@@ -94,7 +100,7 @@ const ReceptionPage = () => {
               <td>{item.reservationDate}</td>
               <td>{item.status}</td>
               <td><button type='button' onClick={()=>confirmedHandler(item.receptionId)}>확정</button></td>
-              <td><button type='button' onClick={()=>cancelHandler(item.receptionId)}>취소</button></td>
+              <td><button type='button' onClick={()=>cancelHandler(item.reservationId)}>취소</button></td>
             </tr>
           ))}
         </tbody>

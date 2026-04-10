@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios'
 import React, { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query';
 import jwtAxios from '../../api/jwtAxios';
@@ -24,6 +23,7 @@ const MedicalRecordPage = () => {
       const [selectedDepartmentId, setSelectedDepartmentId] = useState(null);
       const [selectedDepartmentName, setSelectedDepartmentName] = useState("");
       const [aiResult, setAiResult] = useState(null);
+      const [showCompleteModal, setShowCompleteModal] = useState(false);
       const [newRecord, setNewRecord] = useState({
         title: "",
         symptom: "",
@@ -49,8 +49,7 @@ const MedicalRecordPage = () => {
     const { data: patientData } = useQuery({
       queryKey: ["patientInfo", selectedPat],
       queryFn: async () => {
-        const res = await jwtAxios.get(
-          "http://localhost:8080/api/medicalrecord/patientInfo",
+        const res = await jwtAxios.get("http://localhost:8080/api/medicalrecord/patientInfo",
           {
             params: { patientId: selectedPat },
           }
@@ -66,7 +65,7 @@ const MedicalRecordPage = () => {
     } = useQuery({
       queryKey: ["medicalRecord", selectedPat, status, page],
       queryFn: async () => {
-        const res = await jwtAxios.get("http://localhost:8080/api/medicalrecord", {
+        const res = await jwtAxios.get("http://localhost:8080/api/medicalrecord/record", {
           params: {
             patientId: selectedPat,
             status: status,
@@ -81,44 +80,87 @@ const MedicalRecordPage = () => {
 
     const recordList = recordData?.content || [];
 
+    const saveRecord = async () => {
+      await jwtAxios.post("http://localhost:8080/api/medicalrecord", {
+        patientId: selectedPat,
+        medicalRecordStatus: status,
+        title: newRecord.title,
+        content: newRecord.content,
+        isSensitive: newRecord.isSensitive,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["medicalRecord"] });
+
+      alert("추가 완료");
+
+      setIsAdding(false);
+      setNewRecord({ title: "", content: "", isSensitive: false });
+
+      setShowCompleteModal(false);
+      setPendingReceptionId(null);
+    };
+
     const handleAdd = async () => {
+      setPendingReceptionId(pendingReceptionId);
+      setShowCompleteModal(true);
+    };
+
+    const handleConfirmYes = async () => {
       try {
-        await jwtAxios.post("http://localhost:8080/api/medicalrecord", {
-          patientId: selectedPat,
-          medicalRecordStatus: status,
-          title: newRecord.title,
-          content: newRecord.content,
-          isSensitive: newRecord.isSensitive,
-        });
-
-        queryClient.invalidateQueries({ queryKey: ["medicalRecord"] });
-
-        alert("추가 완료");
-
-        setIsAdding(false);
-        setNewRecord({ title: "", content: "", isSensitive: false });
+        if (pendingReceptionId) {
+          await jwtAxios.patch(
+            "http://localhost:8080/api/reception/status",
+            null,{
+              params: {
+                receptionId: pendingReceptionId,
+                status: "COMPLETED",
+              },});}
+        await saveRecord();
 
       } catch (err) {
-        console.error("🔥에러 확인:", err.response || err);
         console.error(err);
       }
     };
 
-    const handleRecordClick = (item) => {
-        if (item.isSensitive) {
-          setPendingRecord(item);
-          setShowReasonModal(true);
-        } else {
-          setSelectedRecord(item);
+    const handleConfirmNo = async () => {
+        try {
+          await saveRecord();
+        } catch (err) {
+          console.error(err);
         }
       };
 
+    const handleRecordClick = async (item) => {
+        try {
+          if (item.isSensitive) {
+            setPendingRecord(item);
+            setShowReasonModal(true);
+            return;
+          }
+
+          const res = await jwtAxios.get(
+            "http://localhost:8080/api/medicalrecord/record/detail", {
+              params: {
+                recordId: item.medicalRecordId,
+                reason: null
+              }});
+            
+              console.log(res.data);
+          setSelectedRecord(res.data);
+
+        } catch (err) {
+          console.error(err);
+        }
+    };
+
       const handleSubmitReason = async () => {
         try {
-          await jwtAxios.post("http://localhost:8080/api/medicalrecord/access-log", {
-            recordId: pendingRecord.medicalRecordId,
-            reason: reason,
-          });
+          const res = await jwtAxios.get(
+              "http://localhost:8080/api/medicalrecord/record/detail", {
+                params: {
+                  recordId: pendingRecord.medicalRecordId,
+                  reason: reason
+                }});
 
           setSelectedRecord(pendingRecord);
           setShowReasonModal(false);
@@ -233,7 +275,7 @@ const MedicalRecordPage = () => {
                             setSelectedPat(item.patientId);
                             setSelectedDepartmentId(item.departmentId);      
                             setSelectedDepartmentName(item.departmentName); 
-                            setShowStatusModal(true);
+                            setShowStatusModal(item.status === "PENDING");
                           }}
               >보기</button></td>
             </tr>
@@ -580,6 +622,31 @@ const MedicalRecordPage = () => {
                 <button onClick={() => setShowStatusModal(false)}>
                   아니오
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showCompleteModal && (
+          <div style={{
+            position: "fixed",
+            top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center"}}>
+            <div style={{
+              background: "white",
+              padding: "20px",
+              borderRadius: "8px",
+              width: "300px",
+              textAlign: "center"}}>
+              <h3>진료 완료</h3>
+              <p>진료를 완료하시겠습니까?</p>
+
+              <div>
+                <button onClick={handleConfirmYes}>예</button>
+                <button onClick={handleConfirmNo}>아니오</button>
               </div>
             </div>
           </div>

@@ -58,7 +58,7 @@ const ReservationConfirm = () => {
       return;
     }
 
-    jwtAxios.get(`http://localhost:8080/api/doctor?departmentId=${selectedDept}`)
+    jwtAxios.get(`http://localhost:8080/api/staff/doctor?departmentId=${selectedDept}`)
       .then(res => {
         setDoctor(res.data.content ?? []);
 
@@ -80,8 +80,6 @@ const ReservationConfirm = () => {
 
     const isNextMonthOrLater =
       dayjs(currentMonth).isAfter(dayjs().endOf('month'));
-
-      console.log("month:", currentMonth, "dept:", selectedDept, "month:", isNextMonthOrLater);
 
     if (isNextMonthOrLater) {
       url = "http://localhost:8080/api/slot/department";
