@@ -33,6 +33,10 @@ const authSlice=createSlice({
             sessionStorage.setItem("status", status);
             sessionStorage.setItem("departmentId", String(departmentId));
         },
+        updateAccessToken: (state, action) => {
+            state.accessToken = action.payload;
+            sessionStorage.setItem("accessToken", action.payload);
+        },
         logout:(state)=>{
             state.userId=null;
             state.email=null;
@@ -52,5 +56,5 @@ const authSlice=createSlice({
         }
     }
 });
-export const {loginSuccess, logout}=authSlice.actions;
+export const {loginSuccess, logout, updateAccessToken}=authSlice.actions;
 export default authSlice.reducer;

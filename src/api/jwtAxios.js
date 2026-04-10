@@ -43,6 +43,8 @@ const requestFail=(error)=>{
 const responseFail=async(error)=>{
     const errorRes=error.response;
 
+    console.log("인터셉터 실행됨");
+
     if(errorRes && errorRes.status === 401){
         const data=errorRes.data;
 
