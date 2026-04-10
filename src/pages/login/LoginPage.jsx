@@ -1,18 +1,46 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { loginPost } from '../../api/userApi'
 import { loginSuccess } from '../../store/authSlice'
 import "./loginPage.css"
+import { useMutation } from '@tanstack/react-query'
+import { naverUserLogin } from '../../api/socialLoginApi'
 
 export const NAVER_API_URL = import.meta.env.VITE_NAVER_LOGIN_API_URL;
 
 const LoginPage = () => {
-  const [email, setEmail]=useState("")
-  const [password, setPassword]=useState("")
+  const [email, setEmail]=useState("");
+  const [password, setPassword]=useState("");
+  const [searchParams]=useSearchParams();
+  const [called, setCalled]=useState(false);
 
   const dispatch=useDispatch();
   const navigate=useNavigate();
+
+  const naverLoginMutation=useMutation({
+    mutationFn: naverUserLogin,
+    onSuccess: (result) => {
+        dispatch(loginSuccess(result));
+        console.log("session ==> ", sessionStorage.getItem("userId"));
+        alert("네이버 로그인 성공!");
+        navigate("/", {replace:true});
+    },
+    onError: (error) => {
+        alert("네이버 로그인 실패!");
+        console.log(error);
+    }
+  });
+
+  useEffect(()=>{
+    const mode=searchParams.get("mode");
+
+    if(!called && mode === 'naverLogin'){
+        setCalled(true);
+        naverLoginMutation.mutate();
+    }
+
+  }, [searchParams])
 
   const handleLogin=async()=>{
     try{

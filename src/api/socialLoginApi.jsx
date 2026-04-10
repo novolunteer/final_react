@@ -10,3 +10,8 @@ export const naverLogin=async(param)=>{
     const res=await socialAxios.post(`${API_BASE_URL}/social/login/naver/complete`, param);
     return res.data;
 }
+
+export const naverUserLogin=async()=>{
+    const res=await socialAxios.get(`${API_BASE_URL}/social/login/naver/complete`);
+    return res.data;
+}

@@ -63,6 +63,7 @@ const NaverJoin = () => {
     onSuccess: (result) => {
       dispatch(loginSuccess(result));
       console.log("session ==> ", sessionStorage.getItem("userId"));
+      alert("네이버 로그인 성공!");
       navigate("/", {replace:true})
     },
     onError: (error) => {
