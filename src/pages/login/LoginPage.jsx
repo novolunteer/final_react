@@ -8,6 +8,8 @@ import { useMutation } from '@tanstack/react-query'
 import { naverUserLogin } from '../../api/socialLoginApi'
 
 export const NAVER_API_URL = import.meta.env.VITE_NAVER_LOGIN_API_URL;
+export const KAKAO_CLIENT_ID=import.meta.env.VITE_KAKAO_CLIENT_ID;
+export const KAKAO_REDIRECT_URI=import.meta.env.VITE_KAKAO_REDIRECT_URI;
 
 const LoginPage = () => {
   const [email, setEmail]=useState("");
@@ -22,6 +24,7 @@ const LoginPage = () => {
     mutationFn: naverUserLogin,
     onSuccess: (result) => {
         dispatch(loginSuccess(result));
+        console.log("res", result);
         console.log("session ==> ", sessionStorage.getItem("userId"));
         alert("네이버 로그인 성공!");
         navigate("/", {replace:true});
@@ -52,8 +55,22 @@ const LoginPage = () => {
         setPassword("")
         navigate("/", {replace:true})
     }catch (error){
-        alert("로그인 실패!");
         console.log(error);
+        const data=error.response?.data;
+
+        if(data?.error === "SOCIAL_LOGIN_ONLY"){
+            const providers=data.providers || [];
+            const providerNames=providers.map(p => {
+                if(p === 'NAVER') return "네이버";
+                if(p === 'KAKAO') return "카카오";
+                return p;
+            });
+
+            alert(`소셜 로그인 전용 계정입니다. ${providerNames.join(", ")} 로그인을 이용해 주세요`);
+            return;
+        }
+
+        alert("로그인 실패!");
     }
   }
 
