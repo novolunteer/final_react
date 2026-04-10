@@ -20,6 +20,7 @@ import StaffSchedulePage from "../pages/hr/staff/StaffSchedulePage";
 import InquiryChatBotPage from "../pages/InquiryChatbot/InquiryChatBotPage";
 import BillingLayout from "../pages/billing/BillingLayout";
 import JoinPage from "../pages/join/JoinPage";
+import NaverJoin from "../pages/login/social/NaverJoin";
 
 
 const Router = () => {
@@ -48,6 +49,7 @@ const Router = () => {
           <Route path="/chat" element={<ChatLayout/>}/>
           <Route path="/inquiry/chatbot" element={<InquiryChatBotPage/>}/>
           <Route path="/join" element={<JoinPage/>} />
+          <Route path="/social/login/naver" element={<NaverJoin/>}/>
         </Route>
       </Routes>
     </BrowserRouter>

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { emailCheck, join, rrnCheck } from '../../api/joinApi';
 import { useNavigate } from 'react-router-dom';
 import "./joinPage.css"
+import { useMutation } from '@tanstack/react-query';
 
 export const heightOptions=[];
 
@@ -32,7 +33,25 @@ const JoinPage = () => {
 
   const navigate=useNavigate();
 
-  const handleEmailCheck=async()=>{
+  const emailCheckMutation=useMutation({
+    mutationFn: emailCheck,
+    onSuccess: (result) => {
+        if(result === 'success'){
+            setEmailCheckResult("사용 가능한 이메일입니다.");
+            setEmailChecked(true);
+        } else {
+            setEmailCheckResult("이미 사용 중인 이메일입니다.");
+            setEmailChecked(false);
+        }
+    },
+    onError: (error) => {
+        console.log(error);
+        setEmailCheckResult("오류가 발생했습니다.");
+        setEmailChecked(false);
+    }
+  });
+
+  const handleEmailCheck=()=>{
     if(!email) {
         setEmailCheckResult("이메일을 입력하세요.");
         return;
@@ -45,24 +64,34 @@ const JoinPage = () => {
         return;
     }
 
-    try{
-        const result=await emailCheck(email);
-
-        if(result === 'success'){
-            setEmailCheckResult("사용 가능한 이메일입니다.");
-            setEmailChecked(true);
-        } else {
-            setEmailCheckResult("이미 사용 중인 이메일입니다.");
-            setEmailChecked(false);
-        }
-    }catch(error){
-        console.log(error);
-        setEmailCheckResult("오류가 발생했습니다.");
-        setEmailChecked(false);
-    }
+    emailCheckMutation.mutate(email);
   }
 
-  const handleRrnCheck=async()=>{
+  const rrnCheckMutation=useMutation({
+    mutationFn: rrnCheck,
+    onSuccess: (result) => {
+        if(result === 'REGISTERED_USER'){
+            alert("이미 등록된 회원입니다. 기존 계정으로 로그인하세요.");
+            navigate("/login", {replace:true});
+        } else if (result === 'SOCIAL_USER'){
+            alert("소셜 로그인 정보가 존재합니다. 소셜 계정으로 로그인하세요.");
+            navigate("/login", {replace:true});
+        } else if(result === 'UNREGISTERED_USER'){
+            setRrnCheckResult("환자 정보가 존재합니다. 가입 후 자동으로 연동됩니다.");
+            setRrnChecked(true);
+        } else {
+            setRrnCheckResult("가입 가능한 주민등록번호입니다.");
+            setRrnChecked(true);
+        }
+    },
+    onError: (error) => {
+        console.log(error);
+        setRrnCheckResult("오류가 발생했습니다.");
+        setRrnChecked(false);
+    }
+  });
+
+  const handleRrnCheck=()=>{
     if(!rrn) {
         setRrnCheckResult("주민등록번호를 입력하세요");
         return;
@@ -73,24 +102,7 @@ const JoinPage = () => {
         return;
     }
 
-    try{
-        const result=await rrnCheck(rrn);
-
-        if(result === 'REGISTERED_USER'){
-            alert("이미 등록된 회원입니다. 기존 계정으로 로그인하세요.");
-            navigate("/login", {replace:true});
-        } else if(result === 'UNREGISTERED_USER') {
-            setRrnCheckResult("환자 정보가 존재합니다. 가입 후 자동으로 연동됩니다.");
-            setRrnChecked(true);
-        } else {
-            setRrnCheckResult("가입 가능한 주민등록번호입니다.");
-            setRrnChecked(true);
-        }
-    }catch(error){
-        console.log(error);
-        setRrnCheckResult("오류가 발생했습니다.");
-        setRrnChecked(false);
-    }
+    rrnCheckMutation.mutate(rrn);
   }
 
   const validate=()=>{
@@ -119,34 +131,38 @@ const JoinPage = () => {
     return Object.keys(newErrors).length === 0;
   }
 
-  const handleJoin=async()=>{
-    if(!validate()) return;
-
-    try{
-        const result=await join({
-            email:email,
-            password:password,
-            name:name,
-            rrn:rrn,
-            phone:phone,
-            address:address,
-            gender:gender,
-            bloodType:bloodType,
-            height:height,
-            weight:weight
-        });
-
+  const joinMutation=useMutation({
+    mutationFn: join,
+    onSuccess: (result) => {
         if(result === 'REGISTERED_USER'){
             alert("회원 가입에 성공했습니다. 생성된 계정이 기존 환자 정보와 연동되었습니다.");
             navigate("/login", {replace:true});
-        } else if(result === 'NEW_USER'){
+        } else if (result === 'NEW_USER'){
             alert("회원 가입에 성공했습니다.");
             navigate("/login", {replace:true});
         }
-    }catch(error){
+    },
+    onError: (error) => {
         console.log(error);
         alert("회원 가입에 실패했습니다. 다시 시도해 주세요.");
     }
+  });
+
+  const handleJoin=()=>{
+    if(!validate()) return;
+
+    joinMutation.mutate({
+        email:email,
+        password:password,
+        name:name,
+        rrn:rrn,
+        phone:phone,
+        address:address,
+        gender:gender,
+        bloodType:bloodType,
+        height:height,
+        weight:weight 
+    });
   }
 
   const isPasswordMatched = checkedPwd !== "" && password === checkedPwd;
@@ -169,10 +185,10 @@ const JoinPage = () => {
                                 setErrors((prev) => ({...prev, email:"", emailChecked:""}));
                             }}/>
                         <button type='button'
-                            disabled={!email || emailChecked}
+                            disabled={!email || emailChecked || emailCheckMutation.isPending}
                             onClick={handleEmailCheck}
                         >
-                            중복 확인
+                            {emailCheckMutation.isPending ? '확인 중':'중복 확인'}
                         </button>
                     </div>
                     {
@@ -274,10 +290,10 @@ const JoinPage = () => {
                                 setErrors((prev) => ({ ...prev, rrn: "", rrn2: "", rrnChecked: "" }));
                             }}/>
                         <button type='button'
-                            disabled={!rrn || rrnChecked}
+                            disabled={!rrn || rrnChecked || rrnCheckMutation.isPending}
                             onClick={handleRrnCheck}
                         >
-                            주민등록번호 조회
+                            {rrnCheckMutation.isPending ? '조회 중':'주민등록번호 조회'}
                         </button>
                     </div>
                     {
@@ -381,8 +397,9 @@ const JoinPage = () => {
                         </select>
                     </div>
                     <div className='submit-box'>
-                        <button type='submit' className='submit-btn'>
-                            가입
+                        <button type='submit' className='submit-btn'
+                            disabled={joinMutation.isPending}>
+                            {joinMutation.isPending ? '처리 중':'가입'}
                         </button>
                     </div>
                 </form>

@@ -5,6 +5,8 @@ import { loginPost } from '../../api/userApi'
 import { loginSuccess } from '../../store/authSlice'
 import "./loginPage.css"
 
+export const NAVER_API_URL = import.meta.env.VITE_NAVER_LOGIN_API_URL;
+
 const LoginPage = () => {
   const [email, setEmail]=useState("")
   const [password, setPassword]=useState("")
@@ -26,6 +28,10 @@ const LoginPage = () => {
         console.log(error);
     }
   }
+
+  const HandleNaverLogin=()=>{
+    window.location.href=NAVER_API_URL;
+  };
 
   return (
     <div className='login-panel'>
@@ -50,10 +56,24 @@ const LoginPage = () => {
                             className='login-input'/>
                     </div>
                     <div className='login-button-box'>
-                        <button type='button' onClick={handleLogin}
-                            className='login-btn'>
-                                로그인
-                        </button>
+                        <div className='local-login'>
+                            <button type='button' onClick={handleLogin}
+                                className='local-login-btn'>
+                                    로그인
+                            </button>
+                        </div>
+                        <div className='naver-login'>
+                            <button type='button' className='naver-login-btn'
+                                onClick={HandleNaverLogin}>
+                                네이버 로그인
+                            </button>
+                        </div>
+                        <div className='kakao-login'>
+                            <button type='button' className='kakao-login-btn'
+                                >
+                                카카오 로그인
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>

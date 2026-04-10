@@ -23,7 +23,7 @@ const authSlice=createSlice({
             state.refreshToken=refreshToken;
             state.roles=roles;
             state.status=status;
-            state.departmentId=departmentId;
+            state.departmentId=departmentId ? departmentId : null;
 
             sessionStorage.setItem("userId", String(userId));
             sessionStorage.setItem("email", email);
@@ -31,7 +31,7 @@ const authSlice=createSlice({
             sessionStorage.setItem("refreshToken", refreshToken);
             sessionStorage.setItem("roles", JSON.stringify(roles));
             sessionStorage.setItem("status", status);
-            sessionStorage.setItem("departmentId", String(departmentId));
+            sessionStorage.setItem("departmentId", departmentId != null ? String(departmentId) : null);
         },
         logout:(state)=>{
             state.userId=null;
