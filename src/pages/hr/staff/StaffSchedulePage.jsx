@@ -9,13 +9,17 @@ import CommonTable from "../../../components/common/CommonTable";
 import CommonModal from "../../../components/common/CommonModal";
 import StaffScheduleForm from "../../../components/form/StaffScheduleForm";
 import BulkScheduleForm from "../../../components/form/BulkScheduleForm";
+import AutoScheduleConditionForm from "../../../components/form/AutoScheduleConditionForm";
+import AutoScheduleResultView from "../../../components/schedule/AutoScheduleResultView";
 import WeekScheduleTable from "../../../components/schedule/WeekScheduleTable";
 
 import {
   bulkConfirmSchedule,
   bulkRegisterSchedule,
+  confirmAutoSchedule,
   confirmSchedule,
   deleteSchedule,
+  generateAutoSchedule,
   getScheduleList,
   registerSchedule,
   updateSchedule,
@@ -70,6 +74,17 @@ const StaffSchedulePage = () => {
 
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkFormData, setBulkFormData] = useState(initialBulkForm);
+
+  const [autoOpen, setAutoOpen] = useState(false);
+  const [autoLoading, setAutoLoading] = useState(false);
+  const [autoResultOpen, setAutoResultOpen] = useState(false);
+  const [autoResultSchedules, setAutoResultSchedules] = useState({
+    assignments: [],
+    unassigned: [],
+    warnings: [],
+    validationErrors: [],
+  });
+  const [autoConfirmLoading, setAutoConfirmLoading] = useState(false);
 
   const [selectedIds, setSelectedIds] = useState([]);
 
@@ -316,6 +331,63 @@ const StaffSchedulePage = () => {
     setBulkOpen(false);
   };
 
+  const handleAutoOpen = () => setAutoOpen(true);
+  const handleAutoClose = () => setAutoOpen(false);
+
+  const handleAutoSubmit = async (conditionData) => {
+    setAutoLoading(true);
+    try {
+      const result = await generateAutoSchedule(conditionData);
+      console.log("[AI 자동스케줄] 백엔드 응답:", result);
+
+      setAutoResultSchedules({
+        assignments: result.assignments || [],
+        unassigned: result.unassigned || [],
+        warnings: result.warnings || [],
+        validationErrors: result.validationErrors || [],
+      });
+      setAutoOpen(false);
+      setAutoResultOpen(true);
+    } catch (error) {
+      console.error("AI 스케줄 생성 실패", error);
+      const message =
+        error.response?.data?.message || "AI 스케줄 생성 중 오류가 발생했습니다";
+      alert(message);
+    } finally {
+      setAutoLoading(false);
+    }
+  };
+
+  const handleAutoResultCancel = () => {
+    setAutoResultOpen(false);
+    setAutoResultSchedules({ assignments: [], unassigned: [], warnings: [], validationErrors: [] });
+  };
+
+  const handleAutoConfirm = async () => {
+    setAutoConfirmLoading(true);
+    try {
+      const result = await confirmAutoSchedule(autoResultSchedules.assignments);
+
+      if (result.validationErrors && result.validationErrors.length > 0) {
+        alert(
+          `저장 완료 (일부 스킵됨)\n\n` +
+          result.validationErrors.join("\n")
+        );
+      } else {
+        alert("스케줄 확정 완료");
+      }
+
+      setAutoResultOpen(false);
+      setAutoResultSchedules({ assignments: [], unassigned: [], warnings: [], validationErrors: [] });
+      fetchScheduleData();
+    } catch (error) {
+      console.error("AI 스케줄 확정 실패", error);
+      alert(error.response?.data?.message || "확정 중 오류가 발생했습니다");
+    } finally {
+      setAutoConfirmLoading(false);
+    }
+  };
+
 // 저장/ 수정 / 삭제 / 확정
 
   const handleSubmit = async (submitData) => {
@@ -539,8 +611,7 @@ const StaffSchedulePage = () => {
         <h2>직원 스케줄 관리</h2>
         <RegisterButton onClick={handleOpen}>개별등록</RegisterButton>
         <button onClick={handleBulkOpen}>일괄등록</button>
-        <button onClick={handleOpen}>자동등록</button>
-        <button onClick={handleOpen}>자동화 조건 등록</button>
+        <button onClick={handleAutoOpen}>자동스케줄 조건등록</button>
         <button
           onClick={handleBulkConfirm}
           disabled={viewMode === "week" || selectedIds.length === 0}
@@ -695,6 +766,29 @@ const StaffSchedulePage = () => {
           departmentList={departmentList}
           staffList={staffList}
           scheduleTypeList={scheduleTypeList}
+        />
+      </CommonModal>
+
+      {/* AI 자동 스케줄 조건 등록 모달 */}
+      <CommonModal open={autoOpen} onClose={!autoLoading ? handleAutoClose : undefined}>
+        <AutoScheduleConditionForm
+          onSubmit={handleAutoSubmit}
+          onClose={handleAutoClose}
+          departmentList={departmentList}
+          isLoading={autoLoading}
+        />
+      </CommonModal>
+
+      {/* AI 생성 결과 리뷰 모달 */}
+      <CommonModal open={autoResultOpen} onClose={!autoConfirmLoading ? handleAutoResultCancel : undefined}>
+        <AutoScheduleResultView
+          assignments={autoResultSchedules.assignments}
+          unassigned={autoResultSchedules.unassigned}
+          warnings={autoResultSchedules.warnings}
+          validationErrors={autoResultSchedules.validationErrors}
+          onConfirm={handleAutoConfirm}
+          onCancel={handleAutoResultCancel}
+          isLoading={autoConfirmLoading}
         />
       </CommonModal>
     </div>
