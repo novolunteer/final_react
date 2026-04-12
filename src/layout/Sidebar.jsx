@@ -22,6 +22,7 @@ const Sidebar = () => {
       label: "운영관리",
       children: [
         { path: "/operation/schedule_policy", label: "스케줄 운영설정" },
+        { path: "/operation/dept_schedule_policy", label: "부서별 스케줄 정책" },
       ],
     },
     {
