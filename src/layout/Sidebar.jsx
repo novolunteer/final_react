@@ -23,10 +23,10 @@ const Sidebar = () => {
     { path: "/communication", label: "공지사항" },
 
     { path: "/", label: "대시보드" },
-    { path: "/reservation", label: "예약", roles: ["PATIENT"] },
-    { path: "/reservationconfirm", label: "예약 확인", roles: ["ADMINISTRATIVE_STAFF"]},
-    { path: "/reception", label: "접수", roles: ["ADMINISTRATIVE_STAFF"]},
+    { path: "/reservation", label: "예약", roles: ["DOCTOR","PATIENT"] },
     { path: "/medical", label: "진료 관리", roles: ["DOCTOR"] },
+    { path: "/reservationconfirm", label: "예약 확인", roles: ["DOCTOR", "ADMINISTRATIVE_STAFF"]},
+    { path: "/reception", label: "접수", roles: ["DOCTOR","ADMINISTRATIVE_STAFF"]},
     { path: "/billing", label: "수납", roles: ["ADMINISTRATIVE_STAFF"]},
 
     {
