@@ -4,12 +4,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import dayjs from 'dayjs';
-import './Reservation.css'
 import { useQuery } from '@tanstack/react-query';
 import { useQueryClient } from '@tanstack/react-query';
 import jwtAxios from '../../api/jwtAxios';
 import { useDispatch } from 'react-redux';
 import { setDoctorId } from "../../store/sseSlice";
+import './Reservation.css'
 
 const ReservationConfirm = () => {
   const [department, setDepartment] = useState([]);

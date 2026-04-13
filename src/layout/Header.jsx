@@ -3,6 +3,7 @@ import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../store/authSlice";
 import { useNavigate } from "react-router-dom";
+import jwtAxios from "../api/jwtAxios";
 
 const Header = () => {
   const userId=useSelector(state => state.auth.userId);
@@ -11,11 +12,13 @@ const Header = () => {
   const dispatch=useDispatch();
   const navigate=useNavigate();
 
-  const handleLogInAndOut = () => {
+  const handleLogInAndOut = async() => {
     if(!userId){
       navigate("/login", {replace:true})
     } else {
       try{
+         console.log("🔥 버튼 클릭됨");
+        await jwtAxios.post("http://localhost:8080/api/auth/logout");
         dispatch(logout())
         alert("로그아웃 성공!");
         navigate("/", {replace:true});

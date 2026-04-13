@@ -1,9 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { chatRoomDetail, deleteMessage, editMessage, getStaffListForInvite, inviteStaff, leaveChatRoom, markAsRead, uploadAttachment } from '../../../api/chatApi';
 import dayjs from 'dayjs';
-import { useNavigate } from 'react-router-dom';
-
-export const API_BASE_URL = import.meta.env.VITE_SPRING_API_BASE_URL;
 
 const getAttachmentType=(file)=>{
     const contentType=file.contentType || "";
@@ -58,11 +55,11 @@ const AttachmentItem=({file}) => {
         <div className={`attachment-card ${fileType}`}>
             {fileType === "image" ? (
                 <a
-                    href={`${API_BASE_URL}${file.fileUrl}`}
+                    href={file.fileUrl}
                         target="_blank"
                         rel="noopener noreferrer">
                             <img 
-                                src={`${API_BASE_URL}${file.fileUrl}`}
+                                src={file.fileUrl}
                                 alt={file.originalFileName}
                                 className='attachment-file-image'/>
                 </a>
@@ -70,7 +67,7 @@ const AttachmentItem=({file}) => {
                 <div className='attachment-file-box'>
                     <div className='attachment-icon'>{getFileIcon()}</div>
                     <div className='attachment-file-info'>
-                        <a href={`${API_BASE_URL}${file.fileUrl}`}
+                        <a href={file.fileUrl}
                             target='_blank' rel='noreferrer'
                             className='attachment-name'>
                             {file.originalFileName}

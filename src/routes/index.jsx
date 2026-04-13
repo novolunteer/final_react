@@ -23,6 +23,7 @@ import BillingLayout from "../pages/billing/BillingLayout";
 import JoinPage from "../pages/join/JoinPage";
 import NaverJoin from "../pages/login/social/NaverJoin";
 import SurgerySchedulePage from "../pages/surgery/SurgerySchedulePage";
+import KakaoJoin from "../pages/login/social/KakaoJoin";
 
 
 const Router = () => {
@@ -53,6 +54,7 @@ const Router = () => {
           <Route path="/inquiry/chatbot" element={<InquiryChatBotPage/>}/>
           <Route path="/join" element={<JoinPage/>} />
           <Route path="/social/login/naver" element={<NaverJoin/>}/>
+          <Route path="/social/login/kakao" element={<KakaoJoin/>}/>
           <Route path="/surgery" element={<SurgerySchedulePage/>}/>
         </Route>
       </Routes>

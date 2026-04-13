@@ -24,12 +24,34 @@ const MedicalRecordPage = () => {
       const [selectedDepartmentName, setSelectedDepartmentName] = useState("");
       const [aiResult, setAiResult] = useState(null);
       const [showCompleteModal, setShowCompleteModal] = useState(false);
+      const [searchKeyword, setSearchKeyword] = useState("");
+      const [searchPage, setSearchPage] = useState(0);
+      const [searchSize] = useState(3);
+      const [searchData, setSearchData] = useState(null);
       const [newRecord, setNewRecord] = useState({
         title: "",
         symptom: "",
         content: "",
         isSensitive: false,
       });
+
+      const handleSearch = async (newPage = 0) => {
+        if (!searchKeyword || !selectedPat) return;
+
+        const res = await jwtAxios.post(
+          "http://localhost:8080/api/elastic/search",
+          {
+            patientId: selectedPat,
+            keyword: searchKeyword,
+            page: newPage,
+            size: searchSize
+          }
+        );
+
+        setSearchData(res.data);
+        setSearchPage(newPage);
+        setSelectedRecord(null); 
+      };
 
     const {data: waitingData} = useQuery({
       queryKey: ["medicalRecords", waitingStatus, waitingPage, waitingSize],
@@ -80,12 +102,18 @@ const MedicalRecordPage = () => {
 
     const recordList = recordData?.content || [];
 
+    const displayList =
+      status === "SEARCH"
+        ? searchData?.content || []
+        : recordList;
+
     const saveRecord = async () => {
       await jwtAxios.post("http://localhost:8080/api/medicalrecord", {
         patientId: selectedPat,
         medicalRecordStatus: status,
         title: newRecord.title,
         content: newRecord.content,
+        symptom: newRecord.symptom,
         isSensitive: newRecord.isSensitive,
       });
 
@@ -343,8 +371,12 @@ const MedicalRecordPage = () => {
             </div>
           )}
 
-          {/* 진료 기록 */}
-          <div>
+     {!selectedPat ? (
+      <div style={{ padding: "20px", textAlign: "center", color: "#888" }}>
+        환자를 선택해주세요
+      </div>
+         ) : (
+        <div>
           <h3>진료 기록</h3>
 
           {/* 상태 버튼 */}
@@ -353,6 +385,7 @@ const MedicalRecordPage = () => {
             <button onClick={() => { setStatus("TEST"); setPage(0); }}>검사</button>
             <button onClick={() => { setStatus("SURGERY"); setPage(0); }}>수술</button>
             <button onClick={() => { setStatus("PRESCRIPTION"); setPage(0); }}>처방</button>
+            <button onClick={() => { setStatus("SEARCH"); setPage(0); }}>검색</button>
             
             <button
               onClick={() => {
@@ -365,6 +398,21 @@ const MedicalRecordPage = () => {
             </button>
           </div>
 
+          {status === "SEARCH" && (
+            <>
+              <h3>🔍 진료 기록 검색</h3>
+              <div style={{ marginBottom: "10px" }}>
+                <input
+                  type="text"
+                  value={searchKeyword}
+                  onChange={(e) => setSearchKeyword(e.target.value)}
+                  placeholder="증상 / 내용 검색"
+                />
+                <button onClick={() => handleSearch(0)}>검색</button>
+              </div>
+            </>
+          )}
+
           {/* 테이블 */}
           <table border="1" style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
@@ -374,7 +422,7 @@ const MedicalRecordPage = () => {
               </tr>
             </thead>
             <tbody>
-              {recordList.map((item) => (
+              {displayList.map((item) => (
                 <tr key={item.medicalRecordId}
                     onClick={() => handleRecordClick(item)}
                     style={{ cursor: "pointer" }}>
@@ -389,23 +437,47 @@ const MedicalRecordPage = () => {
 
           {/* 페이징 */}
           <div style={{ marginTop: "10px" }}>
-            <button
-              disabled={page === 0}
-              onClick={() => setPage((prev) => prev - 1)}
-            >
-              이전
-            </button>
+            {status === "SEARCH" ? (
+              <>
+                <button
+                  disabled={searchPage === 0}
+                  onClick={() => handleSearch(searchPage - 1)}
+                >
+                  이전
+                </button>
 
-            <span style={{ margin: "0 10px" }}>
-              {page + 1} / {recordData?.totalPages || 1}
-            </span>
+                <span style={{ margin: "0 10px" }}>
+                  {searchPage + 1} / {searchData?.totalPages || 1}
+                </span>
 
-            <button
-              disabled={page + 1 >= (recordData?.totalPages || 1)}
-              onClick={() => setPage((prev) => prev + 1)}
-            >
-              다음
-            </button>
+                <button
+                  disabled={searchPage + 1 >= (searchData?.totalPages || 1)}
+                  onClick={() => handleSearch(searchPage + 1)}
+                >
+                  다음
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  disabled={page === 0}
+                  onClick={() => setPage((prev) => prev - 1)}
+                >
+                  이전
+                </button>
+
+                <span style={{ margin: "0 10px" }}>
+                  {page + 1} / {recordData?.totalPages || 1}
+                </span>
+
+                <button
+                  disabled={page + 1 >= (recordData?.totalPages || 1)}
+                  onClick={() => setPage((prev) => prev + 1)}
+                >
+                  다음
+                </button>
+              </>
+            )}
           </div>
           <div style={{ marginTop: "20px" }}>
           <h3>내용</h3>
@@ -455,14 +527,16 @@ const MedicalRecordPage = () => {
                 lineHeight: "1.6",
                 fontSize: "15px"
               }}>
+                증상: {selectedRecord.symptom} <br />
                 {selectedRecord.content}
               </div>
 
             </div>
           ) : (
             <p>기록을 선택하세요</p>
-          )}
-        </div>
+          )}  
+          </div>
+
         {isAdding && (
           <div style={{ border: "1px solid #ccc", padding: "15px", marginTop: "20px" }}>
             <h3>새 기록 추가 ({status})</h3>
@@ -526,8 +600,10 @@ const MedicalRecordPage = () => {
             {/* 버튼 */}
             <button onClick={handleAdd}>저장</button>
             <button onClick={() => setIsAdding(false)}>취소</button>
-          </div>
-        )}
+          </div> 
+        
+      )}
+
         {aiResult && (
           <div style={{
             marginTop: "20px",
@@ -555,6 +631,8 @@ const MedicalRecordPage = () => {
           </div>
         )}
         </div>
+      )}
+
         {showReasonModal && (
           <div style={{
             position: "fixed",
