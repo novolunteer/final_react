@@ -22,6 +22,7 @@ import InquiryChatBotPage from "../pages/InquiryChatbot/InquiryChatBotPage";
 import BillingLayout from "../pages/billing/BillingLayout";
 import JoinPage from "../pages/join/JoinPage";
 import NaverJoin from "../pages/login/social/NaverJoin";
+import KakaoJoin from "../pages/login/social/KakaoJoin";
 
 
 const Router = () => {
@@ -52,6 +53,7 @@ const Router = () => {
           <Route path="/inquiry/chatbot" element={<InquiryChatBotPage/>}/>
           <Route path="/join" element={<JoinPage/>} />
           <Route path="/social/login/naver" element={<NaverJoin/>}/>
+          <Route path="/social/login/kakao" element={<KakaoJoin/>}/>
         </Route>
       </Routes>
     </BrowserRouter>

@@ -11,7 +11,17 @@ export const naverLogin=async(param)=>{
     return res.data;
 }
 
-export const naverUserLogin=async()=>{
-    const res=await socialAxios.get(`${API_BASE_URL}/social/login/naver/complete`);
+export const socialUserLogin=async()=>{
+    const res=await socialAxios.get(`${API_BASE_URL}/social/login/complete`);
+    return res.data;
+}
+
+export const getKakaoUserInfo=async()=>{
+    const res=await socialAxios.get(`${API_BASE_URL}/social/login/kakao/info`);
+    return res.data;
+}
+
+export const kakaoLogin=async(param)=>{
+    const res=await socialAxios.post(`${API_BASE_URL}/social/login/kakao/complete`, param);
     return res.data;
 }

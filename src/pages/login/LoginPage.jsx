@@ -5,7 +5,7 @@ import { loginPost } from '../../api/userApi'
 import { loginSuccess } from '../../store/authSlice'
 import "./loginPage.css"
 import { useMutation } from '@tanstack/react-query'
-import { naverUserLogin } from '../../api/socialLoginApi'
+import { socialUserLogin } from '../../api/socialLoginApi'
 
 export const NAVER_API_URL = import.meta.env.VITE_NAVER_LOGIN_API_URL;
 export const KAKAO_CLIENT_ID=import.meta.env.VITE_KAKAO_CLIENT_ID;
@@ -21,7 +21,7 @@ const LoginPage = () => {
   const navigate=useNavigate();
 
   const naverLoginMutation=useMutation({
-    mutationFn: naverUserLogin,
+    mutationFn: socialUserLogin,
     onSuccess: (result) => {
         dispatch(loginSuccess(result));
         console.log("res", result);
@@ -35,12 +35,30 @@ const LoginPage = () => {
     }
   });
 
+  const kakaoLoginMutation=useMutation({
+    mutationFn: socialUserLogin,
+    onSuccess: (result) => {
+        dispatch(loginSuccess(result));
+        console.log("res", result);
+        console.log("session ==> ", sessionStorage.getItem("userId"));
+        alert("카카오 로그인 성공!");
+        navigate("/", {replace:true});
+    },
+    onError: (error) => {
+        alert("카카오 로그인 실패!");
+        console.log(error);
+    }
+  });
+
   useEffect(()=>{
     const mode=searchParams.get("mode");
 
     if(!called && mode === 'naverLogin'){
         setCalled(true);
         naverLoginMutation.mutate();
+    } else if(!called && mode === 'kakaoLogin'){
+        setCalled(true);
+        kakaoLoginMutation.mutate();
     }
 
   }, [searchParams])
@@ -74,9 +92,16 @@ const LoginPage = () => {
     }
   }
 
-  const HandleNaverLogin=()=>{
+  const handleNaverLogin=()=>{
     window.location.href=NAVER_API_URL;
   };
+
+  const handleKakaoLogin=()=>{
+    const url=
+        `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${KAKAO_REDIRECT_URI}&response_type=code`;
+
+    window.location.href=url;
+  }
 
   return (
     <div className='login-panel'>
@@ -109,13 +134,13 @@ const LoginPage = () => {
                         </div>
                         <div className='naver-login'>
                             <button type='button' className='naver-login-btn'
-                                onClick={HandleNaverLogin}>
+                                onClick={handleNaverLogin}>
                                 네이버 로그인
                             </button>
                         </div>
                         <div className='kakao-login'>
                             <button type='button' className='kakao-login-btn'
-                                >
+                                onClick={handleKakaoLogin}>
                                 카카오 로그인
                             </button>
                         </div>
