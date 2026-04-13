@@ -1,6 +1,7 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react'
 import jwtAxios from '../../api/jwtAxios';
+import styles from './ReservationPage.module.css';
 
 const ReservationPage = () => {
   const [department,setDepartment]=useState([]);
@@ -61,55 +62,83 @@ const ReservationPage = () => {
   };
 
   return (
-    <div>
-      <div>
-        <h1>예약</h1>
+      <div className={styles.reservationContainer}>
+        <h1 className={styles.reservationTitle}>예약</h1>
+
         <form>
-          <label>
-          진료과 
-          <select value={selectedDept}
-              onChange={(e) => setSelectedDept(e.target.value)}>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>진료과</label>
+            <select
+              className={styles.select}
+              value={selectedDept}
+              onChange={(e) => setSelectedDept(e.target.value)}
+            >
               <option value="">선택하세요</option>
               {department.map(dep => (
                 <option key={dep.departmentId} value={dep.departmentId}>
                   {dep.departmentName}
                 </option>
               ))}
-          </select>
-          </label><br />
-          희망 의사 
-          <select value={selectedDoc}
-              onChange={(e) => setSelectedDoc(Number(e.target.value))}>
+            </select>
+          </div>
+
+          <div className={styles.formGroup}>
+            <label className={styles.label}>희망 의사</label>
+            <select
+              className={styles.select}
+              value={selectedDoc}
+              onChange={(e) => setSelectedDoc(Number(e.target.value))}
+            >
               <option value="">희망 의사 없음</option>
               {doctor.map(doc => (
                 <option key={doc.staffId} value={doc.staffId}>
                   {doc.name}
                 </option>
               ))}
-          </select><br />
-          <label>
-            희망 날짜:
+            </select>
+          </div>
+
+          <div className={styles.formGroup}>
+            <label className={styles.label}>희망 날짜</label>
             <input
+              className={styles.input}
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
             />
-          </label> <br />
-          <label>
-            희망 시간:
+          </div>
+
+          <div className={styles.formGroup}>
+            <label className={styles.label}>희망 시간</label>
             <input
+              className={styles.input}
               type="time"
+              step="3600"
               value={selectedTime}
               onChange={(e) => setSelectedTime(e.target.value)}
             />
-          </label><br />
-          증상 <input type="text" 
-                      value={symptom}
-                      onChange={(e) => setSymptom(e.target.value)}/><br />
-          <button type="button" onClick={submitHandler}>예약</button>
+          </div>
+
+          <div className={styles.formGroup}>
+            <label className={styles.label}>증상</label>
+            <textarea
+              className={styles.textarea}
+              value={symptom}
+              onChange={(e) => setSymptom(e.target.value)}
+              rows={4}
+              placeholder="증상을 자세히 입력해주세요"
+            />
+          </div>
+
+          <button
+            className={styles.button}
+            type="button"
+            onClick={submitHandler}
+          >
+            예약하기
+          </button>
         </form>
-        </div>
-    </div>
+      </div>
   )
 }
 
