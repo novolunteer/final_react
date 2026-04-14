@@ -9,6 +9,7 @@ import {
 } from "../../api/surgeryApi";
 import { getStaffList } from "../../api/hr/staffApi";
 import { getDepartmentList } from "../../api/hr/departmentApi";
+import { getScheduleList } from "../../api/hr/staffScheduleApi";
 
 
 const getTodayString = () => {
@@ -78,6 +79,7 @@ const SurgeryForm = ({
   isEmergency,
   staffList,
   departmentList,
+  scheduleList,
 }) => {
   const [filterDeptId, setFilterDeptId] = useState("");
 
@@ -88,6 +90,23 @@ const SurgeryForm = ({
     );
   }, [staffList, filterDeptId]);
 
+  // 선택된 의사+날짜의 직원 스케줄 확인
+  const scheduleWarning = useMemo(() => {
+    if (!formData.doctorId || !formData.startTime) return null;
+    const dateStr = formData.startTime.slice(0, 10);
+    const schedule = scheduleList.find(
+      (s) =>
+        String(s.staffId) === String(formData.doctorId) &&
+        s.workDate === dateStr
+    );
+    if (!schedule) return { level: "error", msg: "해당 날짜에 직원 스케줄이 등록되지 않아 수술 등록이 불가합니다." };
+    if (schedule.scheduleTypeId === 3) return { level: "error", msg: `휴일(${schedule.typeName || "OFF"}) 스케줄입니다. 수술 등록이 불가합니다.` };
+    if (schedule.status === "TEMP") return { level: "warn", msg: `스케줄이 미확정(임시) 상태입니다. 확정 후 등록을 권장합니다.` };
+    return { level: "ok", msg: `근무 스케줄 확인됨 (${schedule.typeName || schedule.typeCode || "근무"})` };
+  }, [formData.doctorId, formData.startTime, scheduleList]);
+
+  const isScheduleBlocked = !isEmergency && scheduleWarning?.level === "error";
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -97,6 +116,10 @@ const SurgeryForm = ({
     e.preventDefault();
     if (!formData.doctorId || !formData.patientId || !formData.startTime || !formData.durationHours) {
       alert("의사, 환자, 수술 시작 시간, 예상 시간은 필수입니다");
+      return;
+    }
+    if (isScheduleBlocked) {
+      alert(scheduleWarning.msg);
       return;
     }
     onSubmit(formData);
@@ -179,6 +202,31 @@ const SurgeryForm = ({
         />
       </div>
 
+      {/* 직원 스케줄 상태 */}
+      {scheduleWarning && (
+        <div style={{
+          ...formStyles.field,
+          padding: "8px 12px",
+          borderRadius: "6px",
+          fontSize: "13px",
+          background: scheduleWarning.level === "error" ? "#fee2e2"
+            : scheduleWarning.level === "warn" ? "#fef9c3"
+            : "#dcfce7",
+          color: scheduleWarning.level === "error" ? "#b91c1c"
+            : scheduleWarning.level === "warn" ? "#92400e"
+            : "#15803d",
+          border: `1px solid ${scheduleWarning.level === "error" ? "#fca5a5"
+            : scheduleWarning.level === "warn" ? "#fde68a"
+            : "#86efac"}`,
+        }}>
+          {scheduleWarning.level === "error" ? "⛔ " : scheduleWarning.level === "warn" ? "⚠️ " : "✅ "}
+          {scheduleWarning.msg}
+          {isEmergency && scheduleWarning.level === "error" && (
+            <span style={{ marginLeft: "6px", fontWeight: "bold" }}>(응급 수술이므로 강제 등록 가능)</span>
+          )}
+        </div>
+      )}
+
       {/* 수술 예상 시간 */}
       <div style={formStyles.field}>
         <label style={formStyles.label}>수술 예상 시간 (시간) *</label>
@@ -231,7 +279,11 @@ const SurgeryForm = ({
         </button>
         <button
           type="submit"
-          style={isEmergency ? formStyles.emergencyBtn : formStyles.submitBtn}
+          disabled={isScheduleBlocked}
+          style={{
+            ...(isEmergency ? formStyles.emergencyBtn : formStyles.submitBtn),
+            ...(isScheduleBlocked ? { opacity: 0.45, cursor: "not-allowed" } : {}),
+          }}
         >
           {isEmergency ? "응급 등록" : isEdit ? "수정" : "등록"}
         </button>
@@ -258,6 +310,7 @@ const SurgerySchedulePage = () => {
   const [surgeryList, setSurgeryList] = useState([]);
   const [staffList, setStaffList] = useState([]);
   const [departmentList, setDepartmentList] = useState([]);
+  const [scheduleList, setScheduleList] = useState([]);
 
 
   const [selectedDeptId, setSelectedDeptId] = useState("");
@@ -283,14 +336,16 @@ const SurgerySchedulePage = () => {
 
   const fetchAll = async () => {
     try {
-      const [surgeries, staffs, depts] = await Promise.all([
+      const [surgeries, staffs, depts, schedules] = await Promise.all([
         getSurgeryList(),
         getStaffList(),
         getDepartmentList(),
+        getScheduleList(),
       ]);
       setSurgeryList(surgeries);
       setStaffList(staffs);
       setDepartmentList(depts);
+      setScheduleList(Array.isArray(schedules) ? schedules : schedules?.content ?? []);
     } catch (err) {
       console.error("초기 데이터 로드 실패", err);
       alert("데이터를 불러오는 중 오류가 발생했습니다");
@@ -623,14 +678,39 @@ const SurgerySchedulePage = () => {
                       const surgeries =
                         surgeryMap[doctor.staffId]?.[day.date] || [];
 
+                      // 해당 의사의 해당 날짜 직원 스케줄 확인
+                      const docSchedule = scheduleList.find(
+                        (s) =>
+                          String(s.staffId) === String(doctor.staffId) &&
+                          s.workDate === day.date
+                      );
+                      const isOff = docSchedule?.scheduleTypeId === 3;
+                      const hasNoSchedule = !docSchedule;
+
                       return (
                         <td
                           key={day.date}
                           style={{
                             ...styles.surgeryCell,
                             ...(day.isToday ? styles.todayCell : {}),
+                            background: isOff ? "#fef2f2" : hasNoSchedule ? "#f9fafb" : undefined,
                           }}
                         >
+                          {/* 스케줄 상태 뱃지 */}
+                          {isOff && (
+                            <div style={styles.scheduleBadge.off}>휴일</div>
+                          )}
+                          {!isOff && !hasNoSchedule && docSchedule.status === "TEMP" && (
+                            <div style={styles.scheduleBadge.temp}>미확정</div>
+                          )}
+                          {!isOff && !hasNoSchedule && docSchedule.status !== "TEMP" && (
+                            <div style={styles.scheduleBadge.on}>
+                              {docSchedule.typeName || docSchedule.typeCode || "근무"}
+                            </div>
+                          )}
+                          {hasNoSchedule && (
+                            <div style={styles.scheduleBadge.none}>스케줄없음</div>
+                          )}
                           {surgeries.map((s) => {
                             const statusStyle =
                               STATUS_COLOR[s.status] || STATUS_COLOR.SCHEDULED;
@@ -753,6 +833,7 @@ const SurgerySchedulePage = () => {
           isEmergency={isEmergency}
           staffList={staffList}
           departmentList={departmentList}
+          scheduleList={scheduleList}
         />
       </CommonModal>
     </div>
@@ -903,6 +984,48 @@ const styles = {
     height: "auto",
   },
   todayCell: {},
+
+  // 스케줄 상태 뱃지
+  scheduleBadge: {
+    off: {
+      fontSize: "10px",
+      fontWeight: "bold",
+      color: "#b91c1c",
+      background: "#fee2e2",
+      borderRadius: "4px",
+      padding: "1px 5px",
+      marginBottom: "3px",
+      display: "inline-block",
+    },
+    temp: {
+      fontSize: "10px",
+      fontWeight: "bold",
+      color: "#92400e",
+      background: "#fef3c7",
+      borderRadius: "4px",
+      padding: "1px 5px",
+      marginBottom: "3px",
+      display: "inline-block",
+    },
+    on: {
+      fontSize: "10px",
+      fontWeight: "bold",
+      color: "#166534",
+      background: "#dcfce7",
+      borderRadius: "4px",
+      padding: "1px 5px",
+      marginBottom: "3px",
+      display: "inline-block",
+    },
+    none: {
+      fontSize: "10px",
+      color: "#9ca3af",
+      borderRadius: "4px",
+      padding: "1px 5px",
+      marginBottom: "3px",
+      display: "inline-block",
+    },
+  },
 
   // 수술 카드
   surgeryCard: {

@@ -1,11 +1,10 @@
 import jwtAxios from "../jwtAxios";
-import { data } from "react-router-dom";
 
 const host="http://localhost:8080/api/staff_schedule";
 
 export const getScheduleList=async()=>{
-    const res=await jwtAxios.get(`${host}/list`);
-    return res.data;
+    const res=await jwtAxios.get(`${host}/list?size=1000`);
+    return res.data?.content ?? res.data;
 };
 
 export const getSchedule = async(scheduleId)=>{

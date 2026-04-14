@@ -4,7 +4,7 @@ import { jwtDecode } from "jwt-decode";
 const Sidebar = () => {
   const token = sessionStorage.getItem("accessToken");
   let roles = [];
-  
+
   if (token) {
     try {
       const decoded = jwtDecode(token);
@@ -23,19 +23,19 @@ const Sidebar = () => {
     { path: "/communication", label: "공지사항" },
 
     { path: "/", label: "대시보드" },
-    { path: "/reservation", label: "예약", roles: ["DOCTOR","PATIENT"] },
-    { path: "/medical", label: "진료 관리", roles: ["DOCTOR"] },
-    { path: "/reservationconfirm", label: "예약 확인", roles: ["DOCTOR", "ADMINISTRATIVE_STAFF"]},
-    { path: "/reception", label: "접수", roles: ["DOCTOR","ADMINISTRATIVE_STAFF"]},
+    { path: "/reservation", label: "예약", roles: ["DOCTOR","PATIENT","HEAD_NURSE"] },
+    { path: "/medical", label: "진료 관리", roles: ["DOCTOR","HEAD_NURSE"] },
+    { path: "/reservationconfirm", label: "예약 확인", roles: ["DOCTOR", "ADMINISTRATIVE_STAFF","HEAD_NURSE"]},
+    { path: "/reception", label: "접수", roles: ["DOCTOR","ADMINISTRATIVE_STAFF","HEAD_NURSE"]},
     { path: "/billing", label: "수납", roles: ["ADMINISTRATIVE_STAFF"]},
 
     {
       label: "인사관리",
       children: [
-        { path: "/staff", label: "직원관리" , roles: ["ADMIN"]},
-        { path: "/department", label: "부서관리" , roles: ["ADMIN"]},
-        { path: "/staff_schedule", label: "근무스케줄 관리" , roles: ["ADMIN"]},
-        { path: "/surgery", label: "수술 스케줄 관리" , roles: ["ADMIN"]},
+        { path: "/staff", label: "직원관리" , roles: ["ADMIN","HEAD_NURSE"]},
+        { path: "/department", label: "부서관리" , roles: ["ADMIN","HEAD_NURSE"]},
+        { path: "/staff_schedule", label: "근무스케줄 관리" , roles: ["ADMIN","HEAD_NURSE"]},
+        { path: "/surgery", label: "수술 스케줄 관리" , roles: ["ADMIN","HEAD_NURSE"]},
       ],
     },
     {
@@ -72,13 +72,13 @@ const Sidebar = () => {
 
             return (
               <div key={item.label} className="sidebar-group">
-   
+
                 <div className="sidebar-link sidebar-group-title">
                   {item.label}
                 </div>
 
                 <div className="sidebar-submenu">
-                  {item.children.map((child) => (
+                  {filteredChildren.map((child) => (
                     <NavLink
                       key={child.path}
                       to={child.path}

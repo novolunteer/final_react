@@ -17,6 +17,7 @@ const ReservationConfirm = () => {
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [selectedDept, setSelectedDept] = useState("");
   const [events, setEvents] = useState([]);
+  const [unavailableDates, setUnavailableDates] = useState(new Set());
   const [selectedDate, setSelectedDate] = useState(null);
   const [timeSlots, setTimeSlots] = useState([]);
   const [status, setStatus] = useState("RECEIVED");
@@ -98,12 +99,19 @@ const ReservationConfirm = () => {
         const data = res.data.content ?? [];
 
           const slotEvents = data.map(slot => ({
-            title: slot.available ? `가능 (${slot.totalCapacity}명)` : '불가',
+            title: slot.available
+              ? `가능 (${slot.totalCapacity}명)`
+              : (slot.scheduleType || 'OFF'),
             start: slot.date,
-            color: slot.available ? "#69a56b" : "#ccc", // 초록/회색으로 구분
-            allDay: true // 일 단위 표시
-          }))
+            color: slot.available ? "#69a56b" : "#e5e7eb",
+            textColor: slot.available ? "#fff" : "#9ca3af",
+            allDay: true,
+            extendedProps: { available: slot.available }
+          }));
           setEvents(slotEvents);
+          setUnavailableDates(new Set(
+            data.filter(s => !s.available).map(s => s.date)
+          ));
       })
       .catch(console.error);
   }, [selectedDoc, currentMonth, selectedDept]);
@@ -343,13 +351,20 @@ const ReservationConfirm = () => {
           const data = res.data.content ?? [];
 
           const slotEvents = data.map(slot => ({
-            title: slot.available ? `가능 (${slot.totalCapacity}명)` : '불가',
+            title: slot.available
+              ? `가능 (${slot.totalCapacity}명)`
+              : (slot.scheduleType || 'OFF'),
             start: slot.date,
-            color: slot.available ? "#69a56b" : "#ccc",
-            allDay: true
+            color: slot.available ? "#69a56b" : "#e5e7eb",
+            textColor: slot.available ? "#fff" : "#9ca3af",
+            allDay: true,
+            extendedProps: { available: slot.available }
           }));
 
           setEvents(slotEvents);
+          setUnavailableDates(new Set(
+            data.filter(s => !s.available).map(s => s.date)
+          ));
         })
         .catch(console.error);
     };
@@ -593,8 +608,11 @@ const ReservationConfirm = () => {
             height="100%"
             dayCellClassNames={(info) => {
               const dateStr = dayjs(info.date).format('YYYY-MM-DD');
-              return selectedDate === dateStr ? ['selected-day'] : [];
-              }}
+              const classes = [];
+              if (selectedDate === dateStr) classes.push('selected-day');
+              if (unavailableDates.has(dateStr)) classes.push('unavailable-day');
+              return classes;
+            }}
           />
         </div>
 
