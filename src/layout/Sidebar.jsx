@@ -8,7 +8,18 @@ const Sidebar = () => {
   if (token) {
     try {
       const decoded = jwtDecode(token);
-      roles = decoded.roles || [];
+      console.log("decoded :", decoded);
+      
+      if(Array.isArray(decoded.roles)){
+        roles = decoded.roles;
+      } else if(typeof decoded.roles==="string"){
+        roles = [decoded.roles];
+      } else {
+        roles = [];
+      }
+
+      // roles = decoded.roles || [];
+      console.log("user roles:", roles);
     } catch (e) {
       console.error("토큰 디코딩 실패", e);
     }
@@ -16,39 +27,33 @@ const Sidebar = () => {
 
   const hasAccess = (itemRoles) => {
     if (!itemRoles) return true; // roles 없으면 누구나 접근 가능
-    return itemRoles.some(role => roles.includes(role));
+    return itemRoles.some((role) => roles.includes(role));
   };
-
+//HEAD_NURSE 테스트하려고 임시로 넣은거임
   const menuItems = [
     { path: "/communication", label: "공지사항" },
 
     { path: "/", label: "대시보드" },
-    { path: "/reservation", label: "예약", roles: ["DOCTOR","PATIENT"] },
+    { path: "/reservation", label: "예약", roles: ["DOCTOR","PATIENT","HEAD_NURSE"] },
     { path: "/medical", label: "진료 관리", roles: ["DOCTOR"] },
-    { path: "/reservationconfirm", label: "예약 확인", roles: ["DOCTOR", "ADMINISTRATIVE_STAFF"]},
+    { path: "/reservationconfirm", label: "예약 확인", roles: ["DOCTOR", "ADMINISTRATIVE_STAFF","HEAD_NURSE"]},
     { path: "/reception", label: "접수", roles: ["DOCTOR","ADMINISTRATIVE_STAFF"]},
     { path: "/billing", label: "수납", roles: ["ADMINISTRATIVE_STAFF"]},
 
     {
       label: "인사관리",
       children: [
-<<<<<<< HEAD
-        { path: "/staff", label: "직원관리" },
-        { path: "/department", label: "부서관리" },
-        { path: "/staff_schedule", label: "근무스케줄 관리" },
-        { path: "/surgery", label: "수술 스케줄 관리" },
-=======
-        { path: "/staff", label: "직원관리", roles: ["ADMIN"]},
-        { path: "/department", label: "부서관리", roles: ["ADMIN"] },
-        { path: "/staff_schedule", label: "근무스케줄 관리", roles: ["ADMIN"] },
->>>>>>> cc82bf39dc6b3b0d279a1ca10718bce9a8de07db
+        { path: "/staff", label: "직원관리", roles: ["ADMIN","HEAD_NURSE"]},
+        { path: "/department", label: "부서관리", roles: ["ADMIN","HEAD_NURSE"] },
+        { path: "/staff_schedule", label: "근무스케줄 관리", roles: ["ADMIN","HEAD_NURSE"] },
+        { path: "/surgery", label: "수술 스케줄 관리" , roles:["HEAD_NURSE"]},
       ],
     },
     {
       label: "운영관리",
       children: [
-        { path: "/operation/schedule_policy", label: "스케줄 운영설정", roles: ["ADMIN"] },
-        { path: "/operation/dept_schedule_policy", label: "부서별 스케줄 정책", roles: ["ADMIN"] },
+        { path: "/operation/schedule_policy", label: "스케줄 운영설정", roles: ["ADMIN","HEAD_NURSE"] },
+        { path: "/operation/dept_schedule_policy", label: "부서별 스케줄 정책", roles: ["ADMIN","HEAD_NURSE"] },
       ],
     },
     {
@@ -84,7 +89,7 @@ const Sidebar = () => {
                 </div>
 
                 <div className="sidebar-submenu">
-                  {item.children.map((child) => (
+                  {filteredChildren.map((child) => (
                     <NavLink
                       key={child.path}
                       to={child.path}
