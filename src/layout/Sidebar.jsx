@@ -32,16 +32,10 @@ const Sidebar = () => {
     {
       label: "인사관리",
       children: [
-<<<<<<< HEAD
-        { path: "/staff", label: "직원관리" },
-        { path: "/department", label: "부서관리" },
-        { path: "/staff_schedule", label: "근무스케줄 관리" },
-        { path: "/surgery", label: "수술 스케줄 관리" },
-=======
-        { path: "/staff", label: "직원관리", roles: ["ADMIN"]},
-        { path: "/department", label: "부서관리", roles: ["ADMIN"] },
-        { path: "/staff_schedule", label: "근무스케줄 관리", roles: ["ADMIN"] },
->>>>>>> cc82bf39dc6b3b0d279a1ca10718bce9a8de07db
+        { path: "/staff", label: "직원관리" , roles: ["ADMIN"]},
+        { path: "/department", label: "부서관리" , roles: ["ADMIN"]},
+        { path: "/staff_schedule", label: "근무스케줄 관리" , roles: ["ADMIN"]},
+        { path: "/surgery", label: "수술 스케줄 관리" , roles: ["ADMIN"]},
       ],
     },
     {
