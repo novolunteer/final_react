@@ -19,7 +19,7 @@ const MedicalRecordPage = () => {
       const [showStatusModal, setShowStatusModal] = useState(false);
       const [pendingReceptionId, setPendingReceptionId] = useState(null);
       const [pendingPatientId, setPendingPatientId] = useState(null);
-      const [waitingStatus, setWaitingStatus] = useState("PENDING");
+      const [waitingStatus, setWaitingStatus] = useState("");
       const [selectedDepartmentId, setSelectedDepartmentId] = useState(null);
       const [selectedDepartmentName, setSelectedDepartmentName] = useState("");
       const [aiResult, setAiResult] = useState(null);
@@ -28,6 +28,7 @@ const MedicalRecordPage = () => {
       const [searchPage, setSearchPage] = useState(0);
       const [searchSize] = useState(3);
       const [searchData, setSearchData] = useState(null);
+      const [isSearching, setIsSearching] = useState(false);
       const [newRecord, setNewRecord] = useState({
         title: "",
         symptom: "",
@@ -51,6 +52,13 @@ const MedicalRecordPage = () => {
         setSearchData(res.data);
         setSearchPage(newPage);
         setSelectedRecord(null); 
+        setIsSearching(true);
+      };
+
+      const clearSearch = () => {
+        setSearchKeyword("");
+        setIsSearching(false);
+        setSearchData(null);
       };
 
     const {data: waitingData} = useQuery({
@@ -60,9 +68,10 @@ const MedicalRecordPage = () => {
           params:{
             page: waitingPage,
             size: waitingSize,
-            status: waitingStatus,
+              ...(waitingStatus && { status: waitingStatus })
           },
         });
+        console.log(res.data);
         return res.data;
       }})
 
@@ -102,10 +111,9 @@ const MedicalRecordPage = () => {
 
     const recordList = recordData?.content || [];
 
-    const displayList =
-      status === "SEARCH"
-        ? searchData?.content || []
-        : recordList;
+    const displayList = isSearching
+  ? searchData?.content || []
+  : recordList;
 
     const saveRecord = async () => {
       await jwtAxios.post("http://localhost:8080/api/medicalrecord", {
@@ -257,119 +265,213 @@ const MedicalRecordPage = () => {
         }
       }
 
+
+      const isSearch = status === "SEARCH";
+
+      const currentPage = isSearching ? searchPage : page;
+      const totalPages = isSearching
+        ? (searchData?.totalPages || 1)
+        : (recordData?.totalPages || 1);
+
+      const goPrev = () => {
+        if (isSearch) handleSearch(searchPage - 1);
+        else setPage(prev => prev - 1);
+      };
+
+      const goNext = () => {
+        if (isSearch) handleSearch(searchPage + 1);
+        else setPage(prev => prev + 1);
+      };
+
   return (
-    <div style={{ display: "flex", gap: "20px" }}>
-      <div style={{ width: "40%" }}>
+    <div style={{  display: "flex",
+                    gap: "20px",
+                    padding: "20px",
+                    backgroundColor: "#f5f7fa",
+                    minHeight: "100vh"}}>
+      <div style={{   width: "40%",
+                      background: "white",
+                      borderRadius: "12px",
+                      padding: "20px",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
         <h1>진료</h1>
-        <div style={{ marginBottom: "10px" }}>
+        <div style={{
+            display: "flex",
+            gap: "8px",
+            background: "#f1f3f5",
+            padding: "6px",
+            borderRadius: "10px",
+            width: "fit-content"
+          }}>
+            <button
+            onClick={() => { setWaitingStatus(""); setWaitingPage(0); }}
+             style={tabBtn(waitingStatus === "" ? "active" : "non")}
+          >
+            전체
+          </button>
           <button
             onClick={() => { setWaitingStatus("RECEIVED"); setWaitingPage(0); }}
-            style={{ fontWeight: waitingStatus === "RECEIVED" ? "bold" : "normal" }}
+             style={tabBtn(waitingStatus === "RECEIVED" ? "active" : "non")}
           >
             대기
           </button>
           <button
             onClick={() => { setWaitingStatus("CONSULTING"); setWaitingPage(0); }}
-            style={{ fontWeight: waitingStatus === "CONSULTING" ? "bold" : "normal" }}
+            style={tabBtn( waitingStatus === "CONSULTING" ? "active" : "non" )}
           >
             진료중
           </button>
           <button
             onClick={() => { setWaitingStatus("COMPLETED"); setWaitingPage(0); }}
-            style={{ fontWeight: waitingStatus === "COMPLETED" ? "bold" : "normal" }}
+            style={tabBtn(waitingStatus === "COMPLETED" ? "active" : "non" )}
           >
             완료
           </button>
         </div>
-        <table border="1">
-        <thead>
-          <tr>
-            <th>예약번호</th>
-            <th>환자</th>
-            <th>접수상태</th>
-            <th>진료기록보기</th>
-          </tr>
-        </thead>
-        <tbody>
-          {list?.map((item) => (
-            <tr key={item.receptionId}>
-              <td>{item.receptionId}</td>
-              <td>{item.patientName}</td>
-              <td>{item.status}</td>
-              <td><button type='button'
-                          onClick={() => {
-                            setPendingReceptionId(item.receptionId);
-                            setPendingPatientId(item.patientId); 
-                            setSelectedPat(item.patientId);
-                            setSelectedDepartmentId(item.departmentId);      
-                            setSelectedDepartmentName(item.departmentName); 
-                            setShowStatusModal(item.status === "PENDING");
-                          }}
-              >보기</button></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <div style={{ marginTop: "10px" }}>
-        <button
-          disabled={waitingPage === 0}
-          onClick={() => setWaitingPage((prev) => prev - 1)}
-        >
-          이전
-        </button>
+        
+        <div style={{ marginTop: "10px" }}>
+          {list.map((item) => (
+            <div
+              key={item.receptionId}
+              onClick={() => {
+                setPendingReceptionId(item.receptionId);
+                setPendingPatientId(item.patientId);
+                setSelectedPat(item.patientId);
+                setSelectedDepartmentId(item.departmentId);
+                setSelectedDepartmentName(item.departmentName);
+                setShowStatusModal(item.status === "RECEIVED");
+              }}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "14px",
+                borderRadius: "10px",
+                marginBottom: "10px",
+                background:
+                  selectedPat === item.patientId ? "#dbeafe" : "#fafafa",
+                border: "1px solid #eee",
+                cursor: "pointer",
+                transition: "0.2s",
+              }}
+            >
+              {/* 왼쪽 */}
+              <div>
+                <div style={{ fontWeight: "bold", fontSize: "15px" }}>
+                  {item.patientName}
+                </div>
 
-        <span style={{ margin: "0 10px" }}>
-          {waitingPage + 1} / {waitingData?.totalPages || 1}
-        </span>
+                <div style={{ fontSize: "12px", color: "#888", marginTop: "4px" }}>
+                  예약번호 #{item.receptionId}
+                </div>
+              </div>
 
-        <button
-          disabled={waitingPage + 1 >= (waitingData?.totalPages || 1)}
-          onClick={() => setWaitingPage((prev) => prev + 1)}
-        >
-          다음
-        </button>
-      </div>
-      </div>
-
-
-      <div style={{ width: "60%", borderLeft: "1px solid #ccc", paddingLeft: "20px" }}>
-        <h1>진료</h1>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-          
-          {/* 환자 정보 */}
-          {patientData?.patient && (
-            <div>
-              <h3>환자 정보</h3>
-
-              <table border="1" style={{ width: "100%", borderCollapse: "collapse" }}>
-                <tbody>
-                  <tr>
-                    <th>이름</th>
-                    <td>{patientData.patient.name}</td>
-                    <th>전화번호</th>
-                    <td>{patientData.patient.phone}</td>
-                  </tr>
-                  <tr>
-                    <th>성별</th>
-                    <td>{patientData.patient.gender}</td>
-                    <th>혈액형</th>
-                    <td>{patientData.patient.bloodType}</td>
-                  </tr>
-                  <tr>
-                    <th>주소</th>
-                    <td colSpan="3">{patientData.patient.address}</td>
-                  </tr>
-                  <tr>
-                    <th>키</th>
-                    <td>{patientData.patient.height}</td>
-                    <th>몸무게</th>
-                    <td>{patientData.patient.weight}</td>
-                  </tr>
-                </tbody>
-              </table>
+              {/* 👉 오른쪽 상태 */}
+              <div style={{
+                fontSize: "12px",
+                padding: "5px 10px",
+                borderRadius: "20px",
+                fontWeight: "bold",
+                background:
+                  item.status === "PENDING"
+                    ? "#fff3cd"
+                    : item.status === "CONSULTING"
+                    ? "#d1ecf1"
+                    : "#d4edda",
+                color:
+                  item.status === "PENDING"
+                    ? "#856404"
+                    : item.status === "CONSULTING"
+                    ? "#0c5460"
+                    : "#155724"
+              }}>
+                {item.status === "RECEIVED" && "대기"}
+                {item.status === "CONSULTING" && "진료중"}
+                {item.status === "COMPLETED" && "완료"}
+              </div>
             </div>
-          )}
+          ))}
+        </div>
+
+
+        <div style={{
+            marginTop: "16px",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: "10px"
+          }}>
+            <button
+              disabled={waitingPage === 0}
+              onClick={() => setWaitingPage((prev) => prev - 1)}
+              style={pageBtn(waitingPage === 0)}
+            >
+              이전
+            </button>
+
+            <span style={{
+              fontSize: "14px",
+              color: "#555",
+              minWidth: "60px",
+              textAlign: "center"
+            }}>
+              {waitingPage + 1} / {waitingData?.totalPages || 1}
+            </span>
+
+            <button
+              disabled={waitingPage + 1 >= (waitingData?.totalPages || 1)}
+              onClick={() => setWaitingPage((prev) => prev + 1)}
+              style={pageBtn(waitingPage + 1 >= (waitingData?.totalPages || 1))}
+            >
+              다음
+            </button>
+          </div>
+      </div>
+
+
+      <div style={{
+          width: "60%",
+          background: "white",
+          borderRadius: "12px",
+          padding: "20px",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
+        }}>
+
+        {patientData?.patient && (
+        <div style={{
+          border: "1px solid #e5e7eb",
+          borderRadius: "10px",
+          padding: "12px",
+          background: "#fafafa"
+        }}>
+          <h3 style={{ marginBottom: "10px", fontSize: "15px" }}>
+            👤 환자 정보
+          </h3>
+
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "8px"
+          }}>
+
+            <InfoItem label="이름" value={patientData.patient.name} />
+            <InfoItem label="전화번호" value={patientData.patient.phone} />
+
+            <InfoItem label="성별" value={patientData.patient.gender} />
+            <InfoItem label="혈액형" value={patientData.patient.bloodType} />
+
+            <InfoItem
+              label="주소"
+              value={patientData.patient.address}
+              full
+            />
+
+            <InfoItem label="키" value={`${patientData.patient.height}cm`} />
+            <InfoItem label="몸무게" value={`${patientData.patient.weight}kg`} />
+
+          </div>
+        </div>
+      )}
 
      {!selectedPat ? (
       <div style={{ padding: "20px", textAlign: "center", color: "#888" }}>
@@ -379,229 +481,381 @@ const MedicalRecordPage = () => {
         <div>
           <h3>진료 기록</h3>
 
-          {/* 상태 버튼 */}
-          <div style={{ marginBottom: "10px" }}>
-            <button onClick={() => { setStatus("DIAGNOSIS"); setPage(0); }}>진료</button>
-            <button onClick={() => { setStatus("TEST"); setPage(0); }}>검사</button>
-            <button onClick={() => { setStatus("SURGERY"); setPage(0); }}>수술</button>
-            <button onClick={() => { setStatus("PRESCRIPTION"); setPage(0); }}>처방</button>
-            <button onClick={() => { setStatus("SEARCH"); setPage(0); }}>검색</button>
-            
-            <button
-              onClick={() => {
-                setIsAdding(true);
-                setSelectedRecord(null);
+          <div style={{
+            display: "flex",
+            gap: "6px",
+            marginBottom: "12px",
+            borderBottom: "1px solid #eee",
+            paddingBottom: "8px"
+          }}>
+            {["DIAGNOSIS","TEST","SURGERY","PRESCRIPTION","SEARCH"].map((s) => (
+              <button
+                key={s}
+                onClick={() => { setStatus(s); setPage(0); }}
+                style={{
+                  padding: "6px 12px",
+                  border: "none",
+                  borderBottom: status === s ? "2px solid #1976d2" : "2px solid transparent",
+                  background: "transparent",
+                  color: status === s ? "#1976d2" : "#666",
+                  fontWeight: status === s ? "bold" : "normal",
+                  cursor: "pointer"
+                }}
+              >
+                {{
+                  DIAGNOSIS: "진료",
+                  TEST: "검사",
+                  SURGERY: "수술",
+                  PRESCRIPTION: "처방"
+                }[s]}
+              </button>
+            ))}
+
+            <div style={{ marginLeft: "auto", display: "flex", gap: "8px" }}>
+            <input
+              type="text"
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              placeholder="검색"
+              style={{
+                padding: "6px 10px",
+                borderRadius: "6px",
+                border: "1px solid #ddd",
+                fontSize: "13px"
               }}
-              disabled={!status}
-            >
-              추가
+            />
+
+            <button onClick={() => handleSearch(0)} style={searchBtn}>
+              검색
             </button>
-          </div>
 
-          {status === "SEARCH" && (
-            <>
-              <h3>🔍 진료 기록 검색</h3>
-              <div style={{ marginBottom: "10px" }}>
-                <input
-                  type="text"
-                  value={searchKeyword}
-                  onChange={(e) => setSearchKeyword(e.target.value)}
-                  placeholder="증상 / 내용 검색"
-                />
-                <button onClick={() => handleSearch(0)}>검색</button>
-              </div>
-            </>
-          )}
-
-          {/* 테이블 */}
-          <table border="1" style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th>의사</th>
-                <th>제목</th>
-              </tr>
-            </thead>
-            <tbody>
-              {displayList.map((item) => (
-                <tr key={item.medicalRecordId}
-                    onClick={() => handleRecordClick(item)}
-                    style={{ cursor: "pointer" }}>
-                  <td>{item.doctorName}</td>
-                  <td>
-                    {item.isSensitive ? "⚠ 민감 정보 포함" : item.title}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {/* 페이징 */}
-          <div style={{ marginTop: "10px" }}>
-            {status === "SEARCH" ? (
-              <>
-                <button
-                  disabled={searchPage === 0}
-                  onClick={() => handleSearch(searchPage - 1)}
-                >
-                  이전
-                </button>
-
-                <span style={{ margin: "0 10px" }}>
-                  {searchPage + 1} / {searchData?.totalPages || 1}
-                </span>
-
-                <button
-                  disabled={searchPage + 1 >= (searchData?.totalPages || 1)}
-                  onClick={() => handleSearch(searchPage + 1)}
-                >
-                  다음
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  disabled={page === 0}
-                  onClick={() => setPage((prev) => prev - 1)}
-                >
-                  이전
-                </button>
-
-                <span style={{ margin: "0 10px" }}>
-                  {page + 1} / {recordData?.totalPages || 1}
-                </span>
-
-                <button
-                  disabled={page + 1 >= (recordData?.totalPages || 1)}
-                  onClick={() => setPage((prev) => prev + 1)}
-                >
-                  다음
-                </button>
-              </>
+            {isSearching && (
+              <button onClick={clearSearch} style={resetBtn}>
+                초기화
+              </button>
             )}
-          </div>
-          <div style={{ marginTop: "20px" }}>
-          <h3>내용</h3>
 
-          {selectedRecord ? (
-            <div style={{ border: "1px solid #ccc", padding: "20px", borderRadius: "8px" }}>
-              
-              {/* 1️⃣ 헤더 (진료과 / 담당의 + 날짜) */}
-              <div style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "10px",
-                borderBottom: "1px solid #eee",
-                paddingBottom: "8px"
-              }}>
-                <div style={{ fontWeight: "bold" }}>
-                  {selectedRecord.departmentName || "-"} / {selectedRecord.doctorName || "-"}
-                </div>
-
-                <div style={{ fontSize: "14px", color: "#666" }}>
-                  {selectedRecord.createAt
-                    ? new Date(selectedRecord.createAt).toLocaleString()
-                    : ""}
-                </div>
-              </div>
-
-              {/* 2️⃣ 제목 */}
-              <div style={{
-                fontSize: "18px",
-                fontWeight: "bold",
-                marginBottom: "12px"
-              }}>
-                {selectedRecord.title}
-              </div>
-
-              {/* ⚠️ 민감 정보 표시 */}
-              {selectedRecord.isSensitive && (
-                <div style={{ color: "red", fontSize: "13px", marginBottom: "8px" }}>
-                  ⚠ 민감 정보 포함
-                </div>
-              )}
-
-              {/* 3️⃣ 내용 */}
-              <div style={{
-                whiteSpace: "pre-wrap",
-                lineHeight: "1.6",
-                fontSize: "15px"
-              }}>
-                증상: {selectedRecord.symptom} <br />
-                {selectedRecord.content}
-              </div>
-
+            <div style={{ marginLeft: "auto" }}>
+               {status !== "SEARCH" && (
+              <button
+                onClick={() => {
+                  setIsAdding(true);
+                  setSelectedRecord(null);
+                }}
+                style={primaryBtn}
+              >
+                + 추가
+              </button>
+               )}
             </div>
-          ) : (
-            <p>기록을 선택하세요</p>
-          )}  
           </div>
+        </div>
 
-        {isAdding && (
-          <div style={{ border: "1px solid #ccc", padding: "15px", marginTop: "20px" }}>
-            <h3>새 기록 추가 ({status})</h3>
+        {isAdding ? (
+          <div style={{
+            border: "1px solid #e5e7eb",
+            padding: "20px",
+            marginTop: "20px",
+            borderRadius: "12px",
+            background: "#fafafa"
+          }}>
+            <h3 style={{ marginBottom: "15px" }}>
+              📝 새 기록 추가 ({status})
+            </h3>
 
             {/* 제목 */}
-            <div style={{ marginBottom: "10px" }}>
-              <label>제목</label><br />
+            <div style={{ marginBottom: "14px" }}>
+              <label style={labelStyle}>제목</label>
               <input
                 type="text"
                 value={newRecord.title}
                 onChange={(e) =>
                   setNewRecord({ ...newRecord, title: e.target.value })
                 }
-                style={{ width: "100%", padding: "5px" }}
+                style={inputStyle}
               />
             </div>
 
             {/* 증상 */}
             {status === "DIAGNOSIS" && (
-              <div style={{ marginBottom: "10px" }}>
-                <label>증상</label>
-                <button onClick={aiHandler}>AI 진단</button><br />
+              <div style={{ marginBottom: "14px" }}>
+                <div style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center"
+                }}>
+                  <label style={labelStyle}>증상</label>
+
+                  <button onClick={aiHandler} style={aiBtn}>
+                    🤖 AI 진단
+                  </button>
+                </div>
+
                 <textarea
                   value={newRecord.symptom}
                   onChange={(e) =>
                     setNewRecord({ ...newRecord, symptom: e.target.value })
                   }
-                  rows={5}
-                  style={{ width: "100%", padding: "5px" }}
+                  rows={4}
+                  style={textareaStyle}
                 />
               </div>
             )}
 
             {/* 내용 */}
-            <div style={{ marginBottom: "10px" }}>
-              <label>내용</label><br />
+            <div style={{ marginBottom: "14px" }}>
+              <label style={labelStyle}>내용</label>
               <textarea
                 value={newRecord.content}
                 onChange={(e) =>
                   setNewRecord({ ...newRecord, content: e.target.value })
                 }
                 rows={5}
-                style={{ width: "100%", padding: "5px" }}
+                style={textareaStyle}
               />
             </div>
 
             {/* 민감 여부 */}
-            <div style={{ marginBottom: "10px" }}>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={newRecord.isSensitive}
-                  onChange={(e) =>
-                    setNewRecord({ ...newRecord, isSensitive: e.target.checked })
-                  }
-                />
-                민감 정보
-              </label>
+            <div style={{
+              marginBottom: "16px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px"
+            }}>
+              <input
+                type="checkbox"
+                checked={newRecord.isSensitive}
+                onChange={(e) =>
+                  setNewRecord({ ...newRecord, isSensitive: e.target.checked })
+                }
+              />
+              <span style={{ fontSize: "14px" }}>
+                ⚠ 민감 정보 포함
+              </span>
             </div>
 
             {/* 버튼 */}
-            <button onClick={handleAdd}>저장</button>
-            <button onClick={() => setIsAdding(false)}>취소</button>
-          </div> 
+            <div style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: "10px"
+            }}>
+              <button onClick={() => setIsAdding(false)} style={cancelBtn}>
+                취소
+              </button>
+
+              <button onClick={handleAdd} style={saveBtn}>
+                저장
+              </button>
+            </div>
+          </div>
         
+      ):(
+        <>
+        {status === "SEARCH" && (
+                    <>
+                      <div style={{ marginBottom: "14px" }}>
+                        <div style={{
+                          fontSize: "14px",
+                          fontWeight: "bold",
+                          marginBottom: "6px",
+                          color: "#333"
+                        }}>
+                          🔍 진료 기록 검색
+                        </div>
+
+                        <div style={{
+                          display: "flex",
+                          gap: "8px",
+                          alignItems: "center"
+                        }}>
+                          <input
+                            type="text"
+                            value={searchKeyword}
+                            onChange={(e) => setSearchKeyword(e.target.value)}
+                            placeholder="증상 / 내용 검색"
+                            style={{
+                              flex: 1,
+                              padding: "8px 10px",
+                              borderRadius: "6px",
+                              border: "1px solid #ddd",
+                              fontSize: "13px",
+                              outline: "none"
+                            }}
+                            onFocus={e => e.target.style.border = "1px solid #1976d2"}
+                            onBlur={e => e.target.style.border = "1px solid #ddd"}
+                          />
+
+                          <button
+                            onClick={() => handleSearch(0)}
+                            style={{
+                              padding: "8px 14px",
+                              borderRadius: "6px",
+                              border: "none",
+                              background: "#1976d2",
+                              color: "white",
+                              fontSize: "13px",
+                              cursor: "pointer",
+                              whiteSpace: "nowrap"
+                            }}
+                          >
+                            검색
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* 테이블 */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                    {displayList.map((item) => (
+                      <div
+                        key={item.medicalRecordId}
+                        onClick={() => handleRecordClick(item)}
+                        style={{
+                          padding: "12px",
+                          border: "1px solid #eee",
+                          borderRadius: "8px",
+                          cursor: "pointer",
+                          transition: "0.2s",
+                          background: "white"
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.background = "#f9fafb";
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.background = "white";
+                        }}
+                      >
+                        {/* 👉 윗줄 (의사 + 날짜) */}
+                        <div style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center"
+                        }}>
+                          <div style={{ fontSize: "13px", color: "#888" }}>
+                            {item.doctorName}
+                          </div>
+
+                          <div style={{ fontSize: "12px", color: "#aaa" }}>
+                            {item.createAt
+                              ? new Date(item.createAt).toLocaleDateString()
+                              : ""}
+                          </div>
+                        </div>
+
+                        {/* 👉 제목 */}
+                        <div style={{ fontWeight: "bold", marginTop: "6px" }}>
+                          {item.isSensitive ? "⚠ 민감 정보 포함" : item.title}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* 페이징 */}
+                  <div style={{
+                    marginTop: "16px",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    gap: "10px"
+                  }}>
+                    <button
+                      disabled={currentPage === 0}
+                      onClick={goPrev}
+                      style={pageBtn(currentPage === 0)}
+                    >
+                      이전
+                    </button>
+
+                    <span style={{
+                      fontSize: "13px",
+                      color: "#666",
+                      minWidth: "60px",
+                      textAlign: "center"
+                    }}>
+                      {currentPage + 1} / {totalPages}
+                    </span>
+
+                    <button
+                      disabled={currentPage + 1 >= totalPages}
+                      onClick={goNext}
+                      style={pageBtn(currentPage + 1 >= totalPages)}
+                    >
+                      다음
+                    </button>
+                  </div>
+
+                  
+                  <div style={{ marginTop: "20px" }}>
+                  <h3>내용</h3>
+
+                  <div style={{
+                    marginTop: "20px",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "10px",
+                    padding: "18px",
+                    background: "#fafafa"
+                  }}>
+                    {selectedRecord ? (
+                      <>
+                        {/* 헤더 */}
+                        <div style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          marginBottom: "12px",
+                          borderBottom: "1px solid #eee",
+                          paddingBottom: "8px"
+                        }}>
+                          <div style={{ fontWeight: "bold" }}>
+                            {selectedRecord.departmentName} / {selectedRecord.doctorName}
+                          </div>
+
+                          <div style={{ fontSize: "13px", color: "#888" }}>
+                            {new Date(selectedRecord.createAt).toLocaleString()}
+                          </div>
+                        </div>
+
+                        {/* 제목 */}
+                        <div style={{
+                          fontSize: "18px",
+                          fontWeight: "bold",
+                          marginBottom: "10px"
+                        }}>
+                          {selectedRecord.title}
+                        </div>
+
+                        {/* 민감 */}
+                        {selectedRecord.isSensitive && (
+                          <div style={{
+                            background: "#fff3cd",
+                            padding: "6px 10px",
+                            borderRadius: "6px",
+                            fontSize: "12px",
+                            marginBottom: "10px"
+                          }}>
+                            ⚠ 민감 정보 포함
+                          </div>
+                        )}
+
+                        {/* 내용 */}
+                        <div style={{
+                          lineHeight: "1.6",
+                          fontSize: "14px",
+                          whiteSpace: "pre-wrap"
+                        }}>
+                          <strong>증상:</strong> {selectedRecord.symptom || '-'} <br /><br />
+                          {selectedRecord.content}
+                        </div>
+                      </>
+                    ) : (
+                      <div style={{ textAlign: "center", color: "#aaa" }}>
+                        기록을 선택하세요
+                      </div>
+                    )}
+                </div>
+              </div>
+          </>
       )}
 
         {aiResult && (
@@ -732,10 +986,152 @@ const MedicalRecordPage = () => {
 
         </div>
       </div>
-
-
-    </div>
   )
 }
+
+const tabBtn = (active) => ({
+  padding: "6px 14px",
+  borderRadius: "8px",
+  border: "none",
+  background: active ? "white" : "transparent",
+  color: active ? "#1976d2" : "#555",
+  fontWeight: active ? "bold" : "normal",
+  cursor: "pointer",
+  boxShadow: active ? "0 1px 4px rgba(0,0,0,0.1)" : "none",
+  transition: "0.2s"
+});
+
+const searchBtn = {
+  padding: "8px 14px",
+  borderRadius: "8px",
+  border: "1px solid #ccc",
+  background: "#f1f3f5",
+  color: "#333",
+  cursor: "pointer",
+  fontWeight: "bold",
+  transition: "0.2s"
+};
+
+const resetBtn = {
+  padding: "8px 14px",
+  borderRadius: "8px",
+  border: "1px solid #ddd",
+  background: "white",
+  color: "#666",
+  cursor: "pointer",
+  fontSize: "13px"
+};
+
+const primaryBtn = {
+  padding: "8px 14px",
+  borderRadius: "8px",
+  border: "none",
+  background: "#1976d2",
+  color: "white",
+  cursor: "pointer",
+  fontWeight: "bold",
+  transition: "0.2s"
+};
+
+const dangerBtn = {
+  ...primaryBtn,
+  background: "#f44336"
+};
+
+const pageBtn = (disabled) => ({
+  padding: "6px 12px",
+  borderRadius: "6px",
+  border: "1px solid #ddd",
+  background: disabled ? "#f5f5f5" : "white",
+  color: disabled ? "#aaa" : "#333",
+  cursor: disabled ? "not-allowed" : "pointer",
+  fontSize: "13px",
+  transition: "0.15s"
+});
+
+const labelStyle = {
+  fontSize: "13px",
+  fontWeight: "bold",
+  marginBottom: "4px",
+  display: "block",
+  color: "#444"
+};
+
+const inputStyle = {
+  width: "100%",
+  padding: "8px 10px",
+  borderRadius: "6px",
+  border: "1px solid #ddd",
+  fontSize: "13px",
+  outline: "none"
+};
+
+const textareaStyle = {
+  width: "100%",
+  padding: "8px 10px",
+  borderRadius: "6px",
+  border: "1px solid #ddd",
+  fontSize: "13px",
+  marginTop: "6px",
+  resize: "vertical",
+  outline: "none"
+};
+
+const aiBtn = {
+  padding: "6px 10px",
+  borderRadius: "6px",
+  border: "none",
+  background: "#ede9fe",
+  color: "#5b21b6",
+  fontSize: "12px",
+  cursor: "pointer"
+};
+
+const saveBtn = {
+  padding: "8px 16px",
+  borderRadius: "8px",
+  border: "none",
+  background: "#1976d2",
+  color: "white",
+  fontWeight: "bold",
+  cursor: "pointer"
+};
+
+const cancelBtn = {
+  padding: "8px 16px",
+  borderRadius: "8px",
+  border: "1px solid #ddd",
+  background: "white",
+  color: "#555",
+  cursor: "pointer"
+};
+
+const InfoItem = ({ label, value, full }) => (
+  <div style={{
+    gridColumn: full ? "span 2" : "span 1",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "8px 10px",
+    border: "1px solid #eee",
+    borderRadius: "6px",
+    background: "white"
+  }}>
+    <span style={{
+      fontSize: "13px",
+      color: "#666"
+    }}>
+      {label}
+    </span>
+
+    <span style={{
+      fontSize: "16px",
+      fontWeight: "600",
+      color: "#222"
+    }}>
+      {value || "-"}
+    </span>
+  </div>
+);
 
 export default MedicalRecordPage
