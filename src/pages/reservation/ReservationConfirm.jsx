@@ -237,9 +237,9 @@ const ReservationConfirm = () => {
 
     const handleRowClick = (item) => {
       setSlotBlocked(false);
+      
       const docId = item.doctorId ?? null;
-
-       isRowClickRef.current = true;
+      isRowClickRef.current = true;
 
       setSelectedDept(item.departmentId);
       setSelectedDoc(docId);
@@ -248,6 +248,22 @@ const ReservationConfirm = () => {
       const date = getDate(item)
         ? dayjs(getDate(item)).format('YYYY-MM-DD')
         : dayjs().format('YYYY-MM-DD');
+
+
+        const event = events.find(e => e.start === date);
+        const isBlocked = event?.extendedProps?.blocked;
+
+          if (isBlocked) {
+            setSlotBlocked(true);
+            setSelectedDate(date);
+            setTimeSlots([]);
+            
+            if (calendarRef.current) {
+              calendarRef.current.getApi().gotoDate(date);
+            }
+            return;
+          }
+
       setSelectedDate(date); // 날짜 상태 업데이트
       setTimeSlots([]); // 슬롯 초기화
 
@@ -266,6 +282,19 @@ const ReservationConfirm = () => {
       jwtAxios.get(url, { params })
         .then(res => {
           const data = res.data.content ?? [];
+
+          
+          const allBlocked = data.length === 0 || data.every(slot => !slot.available);
+
+          if (allBlocked) {
+            setSlotBlocked(true);
+            setTimeSlots([]);
+            return;
+          }
+
+          setSlotBlocked(false);
+
+
           const slotsByHour = [];
           for (let h = 9; h <= 17; h++) {
             if (h === 13) continue;

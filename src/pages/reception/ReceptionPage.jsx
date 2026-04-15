@@ -170,44 +170,70 @@ const ReceptionPage = () => {
         </div>
         
 
-      <div style={{ marginTop: '10px' }}>
+      <div style={paginationWrapper}>
         <button
           disabled={page === 0}
           onClick={() => setPage(p => p - 1)}
+          style={{
+            ...pageBtn,
+            ...(page === 0 ? disabledBtn : {})
+          }}
         >
           이전
         </button>
 
-        <span style={{ margin: '0 10px' }}>
+        <span style={pageInfo}>
           {page + 1} / {totalPages}
         </span>
 
         <button
           disabled={page + 1 >= totalPages}
           onClick={() => setPage(p => p + 1)}
+          style={{
+            ...pageBtn,
+            ...(page + 1 >= totalPages ? disabledBtn : {})
+          }}
         >
           다음
         </button>
       </div>
+
     </div>
     
         </div>
   )
 }
 
-const btn = {
-  marginRight: '10px',
-  padding: '6px 12px',
-  cursor: 'pointer'
+const paginationWrapper = {
+  marginTop: "16px",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  gap: "10px"
 };
 
-const statusBar = {
-  marginBottom: '15px'
+const pageBtn = {
+  padding: "6px 14px",
+  borderRadius: "8px",
+  border: "1px solid #ddd",
+  background: "white",
+  cursor: "pointer",
+  fontSize: "13px",
+  transition: "0.2s",
+  boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
 };
 
-const activeBtn = {
-  background: "#1976d2",
-  color: "white"
+const disabledBtn = {
+  opacity: 0.4,
+  cursor: "not-allowed"
+};
+
+const pageInfo = {
+  fontSize: "13px",
+  fontWeight: 600,
+  color: "#333",
+  minWidth: "60px",
+  textAlign: "center"
 };
 
 const listContainer = {
