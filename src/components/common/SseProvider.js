@@ -3,6 +3,7 @@ import { useDispatch } from "react-redux";
 import { updateAccessToken } from "../../store/authSlice";
 import jwtAxios from "../../api/jwtAxios";
 import { EventSourcePolyfill } from "event-source-polyfill";
+import axios from "axios";
 
 const SseProvider = ({ userId, onMessage }) => {
   const dispatch = useDispatch();
@@ -14,8 +15,7 @@ const SseProvider = ({ userId, onMessage }) => {
 
     const connect = () => {
       const accessToken = sessionStorage.getItem("accessToken");
-
-      console.log("🔥 SSE 연결", userId);
+      console.log("accessToken in sseProvaider",accessToken)
 
       const es = new EventSourcePolyfill(
         `http://localhost:8080/api/sse/subscribe/${userId}`,
@@ -41,8 +41,14 @@ const SseProvider = ({ userId, onMessage }) => {
 
         sessionStorage.setItem("accessToken", data.accessToken);
         sessionStorage.setItem("refreshToken", data.refreshToken);
+        
+        console.log("accessToken in TOKEN_REFRESH",data.accessToken)
+        console.log("refreshToken in TOKEN_REFRESH",data.refreshToken)
 
-        dispatch(updateAccessToken(data.accessToken));
+        dispatch(updateTokens({
+            accessToken: data.accessToken,
+            refreshToken: data.refreshToken
+        }));
 
         es.close();
         connect();
@@ -59,8 +65,8 @@ const SseProvider = ({ userId, onMessage }) => {
           const accessToken = sessionStorage.getItem("accessToken");
           const refreshToken = sessionStorage.getItem("refreshToken");
 
-          const res = await jwtAxios.get(
-            `/jwt/token/refresh?refreshToken=${refreshToken}`,
+          const res = await axios.get(
+            `http://localhost:8080/jwt/token/refresh?refreshToken=${refreshToken}`,
             {
               headers: {
                 Authorization: `Bearer ${accessToken}`,
@@ -68,14 +74,23 @@ const SseProvider = ({ userId, onMessage }) => {
             }
           );
 
+          console.log("res in onerror",res)
+
           sessionStorage.setItem("accessToken", res.data.accessToken);
           sessionStorage.setItem("refreshToken", res.data.refreshToken);
 
-          console.log("✅ 토큰 재발급 성공");
+          console.log("accessToken in onerror",res.data.accessToken)
+          console.log("refreshToken in onerror",res.data.refreshToken)
+
+          if(res.data.accessToken!==null && res.data.refreshToken!==null){
+            console.log("✅ 토큰 재발급 성공");
+          }
+        
 
           es.close();
           connect();
         } catch (e) {
+          console.log("SseProvider error==>",e)
           console.log("❌ 재발급 실패 → 로그인 필요");
           es.close();
         } finally {

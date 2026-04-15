@@ -33,9 +33,14 @@ const authSlice=createSlice({
             sessionStorage.setItem("status", status);
             sessionStorage.setItem("departmentId", departmentId != null ? String(departmentId) : null);
         },
-        updateAccessToken: (state, action) => {
-            state.accessToken = action.payload;
-            sessionStorage.setItem("accessToken", action.payload);
+        updateToken: (state, action) => {
+            const { accessToken, refreshToken } = action.payload;
+
+            state.accessToken = accessToken;
+            state.refreshToken = refreshToken;
+
+            sessionStorage.setItem("accessToken", accessToken);
+            sessionStorage.setItem("refreshToken", refreshToken);
         },
         logout:(state)=>{
             state.userId=null;
