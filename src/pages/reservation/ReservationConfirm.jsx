@@ -12,6 +12,7 @@ import { setDoctorId } from "../../store/sseSlice";
 import './Reservation.css'
 
 const ReservationConfirm = () => {
+  const [slotBlocked, setSlotBlocked] = useState(false);
   const [department, setDepartment] = useState([]);
   const [doctor, setDoctor] = useState([]);
   const [selectedDoc, setSelectedDoc] = useState(null);
@@ -101,7 +102,10 @@ const ReservationConfirm = () => {
             title: slot.available ? `가능 (${slot.totalCapacity}명)` : '불가',
             start: slot.date,
             color: slot.available ? "#69a56b" : "#ccc", // 초록/회색으로 구분
-            allDay: true // 일 단위 표시
+            allDay: true, // 일 단위 표시
+             extendedProps: {
+            blocked: !slot.available
+          }
           }))
           setEvents(slotEvents);
       })
@@ -140,6 +144,18 @@ const ReservationConfirm = () => {
   const totalPages = data?.totalPages ?? 0;
 
   const handleDateClick = (info) => {
+      const event = events.find(e => e.start === info.dateStr);
+    const isBlocked = event?.extendedProps?.blocked; // <- 여기서 서버 기준 or logic 판단
+
+       if (isBlocked) {
+        setSlotBlocked(true);
+        setTimeSlots([]);
+        return;   // 👈 여기서 끝
+      }
+
+      setSlotBlocked(false);
+      setSelectedDate(info.dateStr);
+
     setSelectedDate(info.dateStr);
     const dailyIso = info.dateStr + "T00:00:00";
     const isNextMonthOrLater = dayjs(info.dateStr).isAfter(dayjs().endOf('month'));
@@ -188,6 +204,7 @@ const ReservationConfirm = () => {
   };
 
     const handleEventClick = (info) => {
+      setSlotBlocked(false);
       const dateStr = dayjs(info.event.start).format('YYYY-MM-DD');
         setSelectedDate(dateStr);
 
@@ -219,6 +236,7 @@ const ReservationConfirm = () => {
     };
 
     const handleRowClick = (item) => {
+      setSlotBlocked(false);
       const docId = item.doctorId ?? null;
 
        isRowClickRef.current = true;
@@ -606,7 +624,14 @@ const ReservationConfirm = () => {
               : '날짜 선택'}
           </div>
 
-        {timeSlots.map((slot, idx) => {
+{slotBlocked ? (
+  <div style={blockedBox}>
+  <div style={blockedIcon}>⛔</div>
+  <div style={blockedText}>해당 날짜는 예약 불가입니다</div>
+</div>
+) : (timeSlots.map((slot, idx) => {
+           if (slot.hour === 13) return null; 
+
           const disabled = !slot.available || slot.capacity === 0;
 
           return (
@@ -630,7 +655,7 @@ const ReservationConfirm = () => {
                   {disabled ? '불가' : `가능 (${slot.capacity}명)`}
                 </div>
               </div>
-              
+
                {slot.hour === 12 && (
                 <div style={dividerLine}>
                   <div style={line}></div>
@@ -641,8 +666,10 @@ const ReservationConfirm = () => {
 
             </React.Fragment>
           );
-        })}
-        </div>
+        })
+      )}
+    </div>
+
       </div>
     </div>
   )
@@ -675,12 +702,6 @@ const btn = {
   fontWeight: 500,
 };
 
-const activeBtn = {
-  ...btn,
-  background: "#1976d2",
-  color: "white",
-  border: "1px solid #1976d2",
-};
 
 const filterBox = {
 marginBottom: "20px",
@@ -693,12 +714,6 @@ marginBottom: "20px",
   gap: "12px",
 };
 
-const filterTitle = {
-  fontSize: "14px",
-  fontWeight: "600",
-  color: "#333",
-  marginBottom: "4px",
-};
 
 const filterRow = {
   display: "flex",
@@ -727,17 +742,6 @@ const select = {
   fontSize: "13px",
 };
 
-const doctorBox = {
-  display: 'flex',
-  gap: '10px',
-  flexWrap: 'wrap'
-};
-
-const radioLabel = {
-  display: 'flex',
-  gap: '5px'
-};
-
 const main = {
   display: "flex",
   gap: "16px",
@@ -762,41 +766,6 @@ const calendarBox = {
   border: "1px solid #eee",
   height: "85%",
   minHeight: "600px",
-};
-
-const table = {
-  width: "100%",
-  borderCollapse: "separate",
-  borderSpacing: "0 6px",
-};
-
-const th = {
-  textAlign: "center",
-  fontSize: "13px",
-  color: "#666",
-  padding: "10px",
-};
-
-const td = {
-  padding: "10px",
-  textAlign: "center",
-  fontSize: "13px",
-  background: "#fafafa",
-};
-
-const slotGrid = {
-   display: "grid",
-  flexDirection: "column",
-  gap: "8px",
-  width: "250px",
-};
-
-const slotBtn = {
-  padding: "10px",
-  borderRadius: "10px",
-  border: "1px solid #ddd",
-  fontSize: "13px",
-  fontWeight: 500,
 };
 
 const radioGroup = {
@@ -964,12 +933,6 @@ const statusText = {
   fontSize: "13px",
 };
 
-const lunchBox = {
-  textAlign: "center",
-  fontSize: "12px",
-  color: "#888",
-  margin: "8px 0",
-};
 const dividerLine = {
   display: "flex",
   alignItems: "center",
@@ -986,4 +949,23 @@ const dividerText = {
   margin: "0 8px",
   fontSize: "12px",
   color: "#999",
+};
+
+const blockedBox = {
+  padding: "20px",
+  textAlign: "center",
+  background: "#fff5f5",
+  border: "1px solid #ffd6d6",
+  borderRadius: "12px",
+  color: "#d32f2f",
+  fontWeight: "600",
+};
+
+const blockedIcon = {
+  fontSize: "20px",
+  marginBottom: "6px",
+};
+
+const blockedText = {
+  fontSize: "13px",
 };
