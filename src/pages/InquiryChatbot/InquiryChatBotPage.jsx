@@ -35,32 +35,36 @@ const InquiryChatBotPage = () => {
       const formData=new FormData();
       formData.append("file", selectedPdf);
 
-      const res=await fetch(`${API_BASE_URL}/inquiry/chatbot/upload`, {
+      const res=await fetch(`${API_BASE_URL}/chatbot/upload`, {
         method:'POST',
         body:formData
       });
 
+      const data=await res.json();
+
       if(!res.ok){
-        throw new Error("PDF 업로드 실패!");
+        throw new Error(data?.detail || "PDF 업로드 실패!");
       }
 
-      const data=await res.json();
-      if(data.result === 'success'){
-        alert("pdf 파일 수정 성공!");
+      if(data.success){
+        alert(data.message || "PDF 업로드 성공!");
         setSelectedPdf(null);
         setOpenPdfModal(false);
       } else {
-        alert("pdf 파일 수정 실패");
+        alert(data.message || "PDF 업로드 실패");
       }
     }catch(error){
       console.log(error);
+      alert(error.message || "PDF 업로드 중 오류가 발생했습니다.");
     }finally{
       setUploadLoading(false);
     }
   }
 
   const ask=async()=>{
-    if(!question.trim()) {
+    const trimmedQuestion=question.trim();
+
+    if(!trimmedQuestion) {
       alert("질문을 입력하세요.");
       return;
     }
@@ -70,7 +74,7 @@ const InquiryChatBotPage = () => {
 
     const userMessage={
       role:'USER',
-      content:question.trim()
+      content:trimmedQuestion
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -78,39 +82,44 @@ const InquiryChatBotPage = () => {
     setQuestion("");
 
     try{
-      const formData=new FormData();
-      formData.append("question", question.trim());
-      
-      const res=await fetch(`${API_BASE_URL}/inquiry/chatbot/ask`, {
+      const res=await fetch(`${API_BASE_URL}/chatbot/chat`, {
         method:'POST',
-        body:formData
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          question: trimmedQuestion
+        })
       });
-
-      if(!res.ok){
-        throw new Error("문의 요청 실패!");
-      }
 
       const data=await res.json();
 
+      if(!res.ok){
+        throw new Error(data?.detail || "문의 요청 실패!");
+      }
+
+      const aiText=data?.answer || data?.block_reason || data?.error || "답변을 가져오지 못했습니다.";
 
       const aiMessage={
         role:'AI',
-        content:data.answer
+        content:aiText
       };
 
       setMessages(prev => [...prev, aiMessage]);
 
     }catch(error){
       console.log(error);
+
       const errorMessage={
         role:'AI',
-        content:'오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
-      }
+        content: error.message || "오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+      };
+
       setMessages(prev => [...prev, errorMessage]);
     }finally{
       setAskLoading(false);
     }
-  }
+  };
 
   return (
     <div className='inquiry-chatbot-wrap'>

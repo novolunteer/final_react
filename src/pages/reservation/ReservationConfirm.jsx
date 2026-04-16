@@ -751,7 +751,7 @@ const ReservationConfirm = () => {
 export default ReservationConfirm;
 
 const container = {
-  padding: "20px",
+   padding: "20px",
   fontFamily: "Pretendard, sans-serif",
   background: "#f4f6fb",
   minHeight: "100vh",
@@ -772,8 +772,9 @@ const btn = {
   fontWeight: 500,
 };
 
+
 const filterBox = {
-  marginBottom: "20px",
+marginBottom: "20px",
   padding: "14px",
   background: "white",
   borderRadius: "12px",
@@ -782,6 +783,7 @@ const filterBox = {
   flexDirection: "column",
   gap: "12px",
 };
+
 
 const filterRow = {
   display: "flex",
@@ -865,7 +867,7 @@ const searchInput = {
 };
 
 const cancelBtn = {
-  padding: "4px 10px",
+padding: "4px 10px",
   borderRadius: "6px",
   border: "none",
   background: "#ffebee",
@@ -895,7 +897,6 @@ const pageText = {
   fontSize: "13px",
   color: "#555",
 };
-
 const listContainer = {
   display: "flex",
   flexDirection: "column",
@@ -981,8 +982,11 @@ const slotRow = {
 };
 
 const activeRow = {
-  background: "#e8f5e9",
+ background: "#e8f5e9",
   color: "#2e7d32",
+  ':hover': {
+    background: "#c8e6c9"
+  }
 };
 
 const disabledRow = {
