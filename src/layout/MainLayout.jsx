@@ -3,7 +3,7 @@ import { Outlet } from "react-router-dom";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import "./layout.css";
-import SseProvider from "../components/common/SseProvider";
+// import SseProvider from "../components/common/SseProvider";
 import { useSelector } from "react-redux";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -24,7 +24,7 @@ const MainLayout = () => {
 
   return (
     <div className="layout-container">
-      <SseProvider userId={userId} onMessage={handleSse} />
+      {/* <SseProvider userId={userId} onMessage={handleSse} /> */}
 
       <Sidebar />
 
