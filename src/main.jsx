@@ -11,10 +11,10 @@ const queryClient = new QueryClient();
 
 createRoot(document.getElementById('root')).render(
   <Provider store={store}>
-    <StrictMode>
+
     <QueryClientProvider client={queryClient}>
       <App />
     </QueryClientProvider>
-  </StrictMode>
+
   </Provider>
 )

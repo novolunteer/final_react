@@ -55,7 +55,7 @@ const SseProvider = ({ userId, onMessage }) => {
       });
 
       // ✅ 에러 처리
-      es.onerror = () => {
+es.onerror = () => {
     console.log("❌ SSE 에러 발생 - 재연결");
     if (isRefreshingRef.current) return;
     isRefreshingRef.current = true;
@@ -66,9 +66,13 @@ const SseProvider = ({ userId, onMessage }) => {
         if (token) {
             connect();
         } else {
-            console.log("토큰 없음 - 재연결 중단");
+            // 토큰 없으면 잠깐 더 기다렸다가 재시도
+            setTimeout(() => {
+                const retryToken = sessionStorage.getItem("accessToken");
+                if (retryToken) connect();
+            }, 2000);
         }
-    }, 3000);
+    }, 1000);
 };
       // es.onerror = async () => {
       //   console.log("❌ SSE 에러 발생 - 재연결");
