@@ -81,6 +81,7 @@ const NaverJoin = () => {
 
     if(!rrnChecked){
       setRrnCheckResult("주민등록번호를 조회하세요.");
+      return;
     }
 
     naverLoginMutation.mutate({

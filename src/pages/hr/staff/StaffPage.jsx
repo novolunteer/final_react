@@ -10,6 +10,7 @@ import {
   updateStaff,
 } from "../../../api/hr/staffApi";
 import { getDepartmentList } from "../../../api/hr/departmentApi";
+import StaffBulkUpload from "../../../components/hr/StaffBulkUpload";
 
 const StaffPage = () => {
   const [staffList, setStaffList] = useState([]);
@@ -18,6 +19,7 @@ const StaffPage = () => {
 
   const [open, setOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
@@ -291,9 +293,12 @@ const StaffPage = () => {
     <div style={styles.container}>
       <div style={styles.header}>
         <h2>직원 관리</h2>
-        <RegisterButton onClick={handleOpen} />
+        <button type="button" onClick={() => setBulkOpen(true)}>
+        일괄등록
+      </button>
+      <RegisterButton onClick={handleOpen} />
       </div>
-
+      
       <div style={styles.topBar}>
         <SearchBar
           value={searchKeyword}
@@ -331,6 +336,13 @@ const StaffPage = () => {
           staffList={originalStaffList}
         />
       </CommonModal>
+      
+      {/* 일괄등록 모달 */}
+      <StaffBulkUpload
+      open={bulkOpen}
+      onClose={()=>setBulkOpen(false)}
+      onSuccess={loadStaffList}
+      ></StaffBulkUpload>
 
       {/* 동명이인 선택 모달 */}
       <CommonModal

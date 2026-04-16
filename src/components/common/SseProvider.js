@@ -1,100 +1,137 @@
 import { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
-import { updateAccessToken } from "../../store/authSlice";
-import jwtAxios from "../../api/jwtAxios";
+import { updateToken, logout } from "../../store/authSlice";
 import { EventSourcePolyfill } from "event-source-polyfill";
 import axios from "axios";
+
+const SSE_URL = "http://localhost:8080/api/sse/subscribe";
+const REFRESH_URL = "http://localhost:8080/jwt/token/refresh";
 
 const SseProvider = ({ userId, onMessage }) => {
   const dispatch = useDispatch();
   const eventSourceRef = useRef(null);
   const isRefreshingRef = useRef(false);
+  const reconnectTimerRef = useRef(null);
+  const unmountedRef = useRef(false);
 
   useEffect(() => {
     if (!userId) return;
 
-    const connect = () => {
-      const accessToken = sessionStorage.getItem("accessToken");
-      console.log("accessToken in sseProvaider",accessToken)
+    const clearReconnectTimer = () => {
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+    };
 
-      const es = new EventSourcePolyfill(
-        `http://localhost:8080/api/sse/subscribe/${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+    const closeExistingConnection = () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+    };
+
+    const connect = () => {
+      if (unmountedRef.current) return;
+
+      const accessToken = sessionStorage.getItem("accessToken");
+      if (!accessToken) {
+        console.log("❌ accessToken 없음 - SSE 연결 중단");
+        return;
+      }
+
+      console.log("🔌 SSE 연결 시도");
+
+      closeExistingConnection();
+
+      const es = new EventSourcePolyfill(`${SSE_URL}/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        // refresh API는 쿠키 기반이라 여기 옵션이 꼭 필요하진 않지만,
+        // 서버/CORS 설정에 따라 같이 두는 편이 안전할 수 있음
+        withCredentials: true,
+        heartbeatTimeout: 60 * 1000,
+      });
 
       eventSourceRef.current = es;
 
-      // ✅ 정상 데이터
+      es.onopen = () => {
+        console.log("✅ SSE 연결 성공");
+      };
+
       es.addEventListener("newReservation", (event) => {
-        const data = JSON.parse(event.data);
-        console.log("🔥 새 예약:", data);
-        onMessage?.(data);
+        try {
+          const data = JSON.parse(event.data);
+          console.log("🔥 새 예약:", data);
+          onMessage?.(data);
+        } catch (err) {
+          console.log("newReservation 파싱 실패", err);
+        }
       });
 
-      // ✅ 서버에서 토큰 갱신 보내줄 때
-      es.addEventListener("TOKEN_REFRESH", (event) => {
-        const data = JSON.parse(event.data);
+      // 서버가 일반 message 이벤트로 보낼 수도 있어서 보조로 둠
+      es.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log("📩 기본 메시지 수신:", data);
+        } catch {
+          // 텍스트 heartbeat 등은 조용히 무시
+        }
+      };
 
-        sessionStorage.setItem("accessToken", data.accessToken);
-        sessionStorage.setItem("refreshToken", data.refreshToken);
-        
-        console.log("accessToken in TOKEN_REFRESH",data.accessToken)
-        console.log("refreshToken in TOKEN_REFRESH",data.refreshToken)
+      es.onerror = async (error) => {
+        console.log("❌ SSE 에러 발생", error);
 
-        dispatch(updateTokens({
-            accessToken: data.accessToken,
-            refreshToken: data.refreshToken
-        }));
+        closeExistingConnection();
 
-        es.close();
-        connect();
-      });
-
-      // ✅ 에러 처리
-      es.onerror = async () => {
-        console.log("❌ SSE 에러 발생");
-
+        if (unmountedRef.current) return;
         if (isRefreshingRef.current) return;
+
         isRefreshingRef.current = true;
 
         try {
-          const accessToken = sessionStorage.getItem("accessToken");
-          const refreshToken = sessionStorage.getItem("refreshToken");
-
-          const res = await axios.get(
-            `http://localhost:8080/jwt/token/refresh?refreshToken=${refreshToken}`,
+          // refreshToken은 쿠키에만 있고,
+          // withCredentials: true 로 쿠키를 같이 보냄
+          const res = await axios.post(
+            REFRESH_URL,
+            {},
             {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
+              withCredentials: true,
             }
           );
 
-          console.log("res in onerror",res)
+          const newAccessToken = res?.data?.accessToken;
 
-          sessionStorage.setItem("accessToken", res.data.accessToken);
-          sessionStorage.setItem("refreshToken", res.data.refreshToken);
-
-          console.log("accessToken in onerror",res.data.accessToken)
-          console.log("refreshToken in onerror",res.data.refreshToken)
-
-          if(res.data.accessToken!==null && res.data.refreshToken!==null){
-            console.log("✅ 토큰 재발급 성공");
+          if (!newAccessToken) {
+            throw new Error("재발급 응답에 accessToken 없음");
           }
-        
 
-          es.close();
-          connect();
-        } catch (e) {
-          console.log("SseProvider error==>",e)
-          console.log("❌ 재발급 실패 → 로그인 필요");
-          es.close();
+          sessionStorage.setItem("accessToken", newAccessToken);
+
+          dispatch(
+            updateToken({
+              accessToken: newAccessToken,
+            })
+          );
+
+          console.log("✅ accessToken 재발급 성공");
+
+          clearReconnectTimer();
+          reconnectTimerRef.current = setTimeout(() => {
+            isRefreshingRef.current = false;
+            connect();
+          }, 500);
+        } catch (refreshError) {
+          console.log("❌ 토큰 재발급 실패", refreshError);
+
+          sessionStorage.removeItem("accessToken");
+          clearReconnectTimer();
+          dispatch(logout?.());
         } finally {
-          isRefreshingRef.current = false;
+          if (reconnectTimerRef.current === null) {
+            isRefreshingRef.current = false;
+          }
         }
       };
     };
@@ -102,9 +139,12 @@ const SseProvider = ({ userId, onMessage }) => {
     connect();
 
     return () => {
-      eventSourceRef.current?.close();
+      unmountedRef.current = true;
+      clearReconnectTimer();
+      closeExistingConnection();
+      isRefreshingRef.current = false;
     };
-  }, [userId]);
+  }, [userId, dispatch, onMessage]);
 
   return null;
 };
