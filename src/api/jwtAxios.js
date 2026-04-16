@@ -5,18 +5,28 @@ const jwtAxios=axios.create({
     baseURL: API_BASE_URL,
 });
 
+const getValidToken = (key) => {
+    const value = sessionStorage.getItem(key);
+
+    if(!value || value === "undefinded" || value === "null"){
+        return null;
+    }
+    return value;
+}
+
 const beforeRequest=(config)=>{
     const accessToken=sessionStorage.getItem("accessToken");
     if(!accessToken){ //로그인 안 했을 때
         return Promise.reject({ //에러 정보를 갖는 response 객체
             response:{
+              status:401,
                 data:{
                     error:'REQUIRED_LOGIN'
                 }
             }
         })
     } 
-
+    config.headers = config.headers ?? {};
     config.headers.Authorization=`Bearer ${accessToken}`;
 
     //리턴된 config에 설정된 값들이 request 객체에 사용됨

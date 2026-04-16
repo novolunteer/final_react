@@ -145,6 +145,11 @@ const StaffForm = ({
   const departmentCategory = selectedDepartment?.departmentCategory || "";
   const positionOptions = positionOptionsMap[departmentCategory] || [];
 
+  console.log("form.departmentId:", form.departmentId);
+  console.log("selectedDepartment:", selectedDepartment);
+  console.log("departmentCategory:", departmentCategory);
+  console.log("positionOptions:", positionOptions);
+
   const handleSubmit = (e) => {
     e.preventDefault();
 

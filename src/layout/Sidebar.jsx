@@ -2,17 +2,51 @@ import { NavLink } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 
 const Sidebar = () => {
-  const token = sessionStorage.getItem("accessToken");
+  const rawToken = sessionStorage.getItem("accessToken");
+
+  // Bearer 제거 + 잘못 저장된 문자열 방어
+  const token =
+    rawToken &&
+    rawToken !== "null" &&
+    rawToken !== "undefined"
+      ? rawToken.startsWith("Bearer ")
+        ? rawToken.substring(7)
+        : rawToken
+      : null;
+
+    const normalizeRoles = (rawRoles) => {
+    if (Array.isArray(rawRoles)) return rawRoles;
+    if (typeof rawRoles === "string") return [rawRoles];
+    return [];
+  };
+
   let roles = [];
 
   if (token) {
-    try {
+   try {
+    // JWT 형식 체크 (이거 중요)
+    if (token.split(".").length === 3) {
       const decoded = jwtDecode(token);
       roles = decoded.roles || [];
-    } catch (e) {
-      console.error("토큰 디코딩 실패", e);
+      console.log("decoded:", decoded);
+        console.log("roles:", roles);
+    } else {
+      console.warn("JWT 형식 아님:", token);
     }
+  } catch (e) {
+    console.error("토큰 디코딩 실패", e);
   }
+}else{
+  console.log("accessToken 없음");
+}
+  // if (token) {
+  //   try {
+  //     const decoded = jwtDecode(token);
+  //     roles = decoded.roles || [];
+  //   } catch (e) {
+  //     console.error("토큰 디코딩 실패", e);
+  //   }
+  // }
 
   const hasAccess = (itemRoles) => {
     if (!itemRoles) return true; // roles 없으면 누구나 접근 가능
@@ -25,9 +59,9 @@ const Sidebar = () => {
     { path: "/", label: "대시보드" },
     { path: "/reservation", label: "예약", roles: ["DOCTOR","PATIENT","HEAD_NURSE"] },
     { path: "/medical", label: "진료 관리", roles: ["DOCTOR","HEAD_NURSE"] },
-    { path: "/reservationconfirm", label: "예약 확인", roles: ["DOCTOR", "ADMINISTRATIVE_STAFF","HEAD_NURSE"]},
-    { path: "/reception", label: "접수", roles: ["DOCTOR","ADMINISTRATIVE_STAFF","HEAD_NURSE"]},
-    { path: "/billing", label: "수납", roles: ["ADMINISTRATIVE_STAFF"]},
+    { path: "/reservationconfirm", label: "예약 확인", roles: ["DOCTOR", "ADMIN","HEAD_NURSE"]},
+    { path: "/reception", label: "접수", roles: ["DOCTOR","ADMIN","HEAD_NURSE"]},
+    { path: "/billing", label: "수납", roles: ["ADMIN"]},
 
     {
       label: "인사관리",
