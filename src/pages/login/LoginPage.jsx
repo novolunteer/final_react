@@ -67,8 +67,7 @@ const LoginPage = () => {
     try{
         const data=await loginPost({"email":email, "password":password});
         alert("로그인 성공!");
-        dispatch(loginSuccess(data));
-        console.log("session ==> ", sessionStorage.getItem("userId"));
+        dispatch(loginSuccess(data));    
         setEmail("")
         setPassword("")
         navigate("/", {replace:true})

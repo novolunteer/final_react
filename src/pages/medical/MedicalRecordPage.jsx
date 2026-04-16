@@ -604,7 +604,6 @@ const MedicalRecordPage = () => {
 
             {/* 내용 */}
             <div style={{ marginBottom: "14px" }}>
-              <label style={labelStyle}>내용</label>
               <textarea
                 value={newRecord.content}
                 onChange={(e) =>

@@ -7,6 +7,7 @@ const jwtAxios=axios.create({
 
 const beforeRequest=(config)=>{
     const accessToken=sessionStorage.getItem("accessToken");
+    console.log("beforeRequest===>", accessToken)
     if(!accessToken){ //로그인 안 했을 때
         return Promise.reject({ //에러 정보를 갖는 response 객체
             response:{
@@ -24,8 +25,11 @@ const beforeRequest=(config)=>{
 }
 
 const refreshJWT=async(accessToken, refreshToken)=>{
+    console.log("jwtAxios accessToken=========>", accessToken)
+    console.log("jwtAxios refreshToken=========>", refreshToken)
+
     const header={headers:{"Authorization":`Bearer ${accessToken}`}};
-    const res=await axios.get(`${API_BASE_URL}/jwt/token/refresh?refreshToken=${refreshToken}`,
+    const res=await axios.get(`http://localhost:8080/jwt/token/refresh?refreshToken=${refreshToken}`,
         header
     );
     console.log("refresh => ", res)
@@ -43,8 +47,6 @@ const requestFail=(error)=>{
 const responseFail=async(error)=>{
     const errorRes=error.response;
 
-    console.log("인터셉터 실행됨");
-
     if(errorRes && errorRes.status === 401){
         const data=errorRes.data;
 
@@ -52,10 +54,14 @@ const responseFail=async(error)=>{
             //리프레쉬 토큰 보내서 새로운 액세스 토큰 얻기
             let accessToken=sessionStorage.getItem("accessToken");
             let refreshToken=sessionStorage.getItem("refreshToken");
+
+            console.log("jwtAxios before refresh===>",accessToken,refreshToken);
+
             const result=await refreshJWT(accessToken, refreshToken);
             accessToken=result.accessToken;
             refreshToken=result.refreshToken;
 
+            console.log("jwtAxios after refresh===>",accessToken,refreshToken);
             //변경된 정보 세션 스토리지에 다시 저장
             sessionStorage.setItem("accessToken",accessToken);
             sessionStorage.setItem("refreshToken",refreshToken);
