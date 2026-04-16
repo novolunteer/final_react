@@ -53,7 +53,7 @@ const Sidebar = () => {
       ],
     },
     { path: "/chat", label: "채팅" },
-    { path: "/inquiry/chatbot", label: "AI 문의하기", roles: ["PATIENT"]},
+    { path: "/inquiry/chatbot", label: "AI 문의하기", roles: ["PATIENT", "ADMIN"]},
   ];
 
   return (
