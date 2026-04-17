@@ -15,6 +15,7 @@ const SseProvider = ({ userId, onMessage }) => {
   const unmountedRef = useRef(false);
 
   useEffect(() => {
+     console.log("userId 확인:", userId);
     if (!userId) return;
 
     const clearReconnectTimer = () => {

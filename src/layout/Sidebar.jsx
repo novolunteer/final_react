@@ -26,7 +26,6 @@ const Sidebar = () => {
   const menuItems = [
     { path: "/communication", label: "공지사항" },
 
-    { path: "/", label: "대시보드" },
     { path: "/reservation", label: "예약", roles: ["DOCTOR","PATIENT","HEAD_NURSE"] },
     { path: "/medical", label: "진료 관리", roles: ["DOCTOR"] },
     { path: "/reservationconfirm", label: "예약 확인", roles: ["DOCTOR", "ADMINISTRATIVE_STAFF","HEAD_NURSE"]},
@@ -56,8 +55,8 @@ const Sidebar = () => {
         { path: "/admin/log", label: "로그 관리", roles: ["ADMIN"] },
       ],
     },
-    { path: "/chat", label: "채팅" },
-    { path: "/inquiry/chatbot", label: "AI 문의하기", roles: ["PATIENT", "ADMIN"]},
+    { path: "/chat", label: "채팅", roles: ["ADMIN","DOCTOR","NURSE","MANAGER","STAFF"] },
+    { path: "/inquiry/chatbot", label: "AI 문의하기"},
   ];
 
   return (

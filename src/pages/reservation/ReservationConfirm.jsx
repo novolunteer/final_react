@@ -77,6 +77,7 @@ const ReservationConfirm = () => {
 
   useEffect(() => {
     if (!currentMonth) return;
+    if (!selectedDept) return;
 
     let url;
     let params;
@@ -530,7 +531,7 @@ const ReservationConfirm = () => {
                 onChange={(e) => setSelectedDept(e.target.value)}
                 style={select}
               >
-                <option value="">전체</option>
+                <option value="">과를 선택하세요.</option>
                 {department.map(dep => (
                   <option key={dep.departmentId} value={dep.departmentId}>
                     {dep.departmentName}
