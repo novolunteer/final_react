@@ -24,11 +24,11 @@ const NaverJoin = () => {
     mutationFn: rrnCheck,
     onSuccess: (result) => {
       if(result === 'REGISTERED_USER'){
-            setRrnCheckResult("로컬 계정이 존재합니다. 기존 계정에 소셜 로그인 정보가 연동됩니다.");
-            setRrnChecked(true);
-        } else if(result === 'SOCIAL_USER'){
-          setRrnCheckResult("기존 소셜 로그인 정보가 존재합니다. 기존 계정에 새로운 소셜 로그인 정보가 추가됩니다.");
+          setRrnCheckResult("로컬 계정이 존재합니다. 기존 계정에 소셜 로그인 정보가 연동됩니다.");
           setRrnChecked(true);
+        } else if(result === 'SOCIAL_USER'){
+            setRrnCheckResult("기존 소셜 로그인 정보가 존재합니다. 기존 계정에 새로운 소셜 로그인 정보가 추가됩니다.");
+            setRrnChecked(true);
         } else if(result === 'UNREGISTERED_USER'){
             setRrnCheckResult("환자 정보가 존재합니다. 소셜 로그인 계정 생성 후 환자 정보가 연동됩니다.");
             setRrnChecked(true);

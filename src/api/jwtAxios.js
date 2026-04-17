@@ -3,6 +3,7 @@ export const API_BASE_URL = import.meta.env.VITE_SPRING_API_BASE_URL;
 
 const jwtAxios=axios.create({
     baseURL: API_BASE_URL,
+    withCredentials: true,
 });
 
 const beforeRequest=(config)=>{
@@ -24,15 +25,14 @@ const beforeRequest=(config)=>{
     return config;
 }
 
-const refreshJWT=async(accessToken, refreshToken)=>{
+const refreshJWT=async(accessToken)=>{
     console.log("jwtAxios accessToken=========>", accessToken)
-    console.log("jwtAxios refreshToken=========>", refreshToken)
 
     const header={headers:{"Authorization":`Bearer ${accessToken}`}};
-    const res=await axios.get(`http://localhost:8080/jwt/token/refresh?refreshToken=${refreshToken}`,
+    const res=await axios.get(`http://localhost:8080/jwt/token`,
         header
     );
-    console.log("refresh => ", res)
+    
     return res.data;
 }
 
@@ -53,18 +53,15 @@ const responseFail=async(error)=>{
         if(data && data.error === "ERROR_ACCESS_TOKEN"){ //토큰이 유효하지 않을 때
             //리프레쉬 토큰 보내서 새로운 액세스 토큰 얻기
             let accessToken=sessionStorage.getItem("accessToken");
-            let refreshToken=sessionStorage.getItem("refreshToken");
 
-            console.log("jwtAxios before refresh===>",accessToken,refreshToken);
+            console.log("jwtAxios before refresh===>",accessToken);
 
-            const result=await refreshJWT(accessToken, refreshToken);
+            const result=await refreshJWT(accessToken);
             accessToken=result.accessToken;
-            refreshToken=result.refreshToken;
 
-            console.log("jwtAxios after refresh===>",accessToken,refreshToken);
+            console.log("jwtAxios after refresh===>",accessToken);
             //변경된 정보 세션 스토리지에 다시 저장
             sessionStorage.setItem("accessToken",accessToken);
-            sessionStorage.setItem("refreshToken",refreshToken);
 
             //원래 요청했던 url 정보 얻어오기(토큰 새로 받아왔으니까 다시 요청하려고)
             const originalRequest=error.config;
