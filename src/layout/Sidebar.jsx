@@ -23,29 +23,36 @@ const Sidebar = () => {
     return itemRoles.some((role) => roles.includes(role));
   };
 
+  const DOCTORS = ["INTERN", "RESIDENT", "FELLOW", "SPECIALIST", "PROFESSOR", "HEAD_DOCTOR"];
+  const NURSES = ["NURSE", "CHARGE_NURSE", "HEAD_NURSE", "DIRECTOR_NURSE"];
+  const ADMIN_STAFF = ["STAFF","MANAGER", "ADMIN"];
+
+  const MEDICAL_ROLES = ["DOCTOR", ...DOCTORS, "NURSE", ...NURSES];
+
   const menuItems = [
+    { path: "/my-schedule", label: "내 스케줄", roles: MEDICAL_ROLES },
     { path: "/communication", label: "공지사항" },
 
-    { path: "/reservation", label: "예약", roles: ["DOCTOR","PATIENT","HEAD_NURSE"] },
-    { path: "/medical", label: "진료 관리", roles: ["DOCTOR"] },
-    { path: "/reservationconfirm", label: "예약 확인", roles: ["DOCTOR", "ADMINISTRATIVE_STAFF","HEAD_NURSE"]},
-    { path: "/reception", label: "접수", roles: ["DOCTOR","ADMINISTRATIVE_STAFF"]},
-    { path: "/billing", label: "수납", roles: ["ADMINISTRATIVE_STAFF"]},
+    { path: "/reservation", label: "예약", roles: [...DOCTORS, "PATIENT", ...NURSES, ...ADMIN_STAFF] },
+    { path: "/medical", label: "진료 관리", roles: [...DOCTORS] },
+    { path: "/reservationconfirm", label: "예약 확인", roles: [...DOCTORS, ...NURSES, ...ADMIN_STAFF] },
+    { path: "/reception", label: "접수", roles: [...DOCTORS, ...ADMIN_STAFF] },
+    { path: "/billing", label: "수납", roles: [...ADMIN_STAFF] },
 
     {
       label: "인사관리",
       children: [
-        { path: "/staff", label: "직원관리", roles: ["ADMIN","HEAD_NURSE"]},
-        { path: "/department", label: "부서관리", roles: ["ADMIN","HEAD_NURSE"] },
-        { path: "/staff_schedule", label: "근무스케줄 관리", roles: ["ADMIN","HEAD_NURSE"] },
-        { path: "/surgery", label: "수술 스케줄 관리" , roles:["HEAD_NURSE"]},
+        { path: "/staff", label: "직원관리", roles: [...ADMIN_STAFF] },
+        { path: "/department", label: "부서관리", roles: [...ADMIN_STAFF] },
+        { path: "/staff_schedule", label: "근무스케줄 관리", roles: ["HEAD_NURSE", "PROFESSOR", "ADMIN","MANAGER"] },
+        { path: "/surgery", label: "수술 스케줄 관리", roles: ["HEAD_NURSE", "PROFESSOR"] },
       ],
     },
     {
       label: "운영관리",
       children: [
-        { path: "/operation/schedule_policy", label: "스케줄 운영설정", roles: ["ADMIN","HEAD_NURSE"] },
-        { path: "/operation/dept_schedule_policy", label: "부서별 스케줄 정책", roles: ["ADMIN","HEAD_NURSE"] },
+        { path: "/operation/schedule_policy", label: "스케줄 운영설정", roles: ["ADMIN"] },
+        { path: "/operation/dept_schedule_policy", label: "부서별 스케줄 정책", roles: ["ADMIN"] },
       ],
     },
     {

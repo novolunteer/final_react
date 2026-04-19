@@ -40,6 +40,7 @@ const DepartmentPage = () => {
           <div style={{ display: "flex", gap: "6px" }}>
             <button
               type="button"
+              className="btn btn-edit"
               disabled={item.status === "N"}
               onClick={() => handleEdit(item)}
             >
@@ -48,6 +49,7 @@ const DepartmentPage = () => {
 
             <button
               type="button"
+              className="btn btn-danger"
               disabled={item.status === "N"}
               onClick={() => handleDelete(item.departmentId)}
             >
@@ -161,7 +163,7 @@ const DepartmentPage = () => {
           onSearch={handleSearch}
           placeholder="부서명을 입력하세요"
         />
-        <button type="button" onClick={handleResetSearch}>
+        <button type="button" className="btn btn-secondary" onClick={handleResetSearch}>
           전체보기
         </button>
       </div>

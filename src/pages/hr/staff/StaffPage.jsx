@@ -114,13 +114,18 @@ const StaffPage = () => {
           <div style={{ display: "flex", gap: "6px" }}>
             <button
               type="button"
+              className="btn btn-edit"
               disabled={item.isActive === "N"}
               onClick={() => handleEdit(item)}
             >
               수정
             </button>
 
-            <button type="button" onClick={() => handleToggleActive(item)}>
+            <button
+              type="button"
+              className={item.isActive === "Y" ? "btn btn-danger" : "btn btn-success"}
+              onClick={() => handleToggleActive(item)}
+            >
               {item.isActive === "Y" ? "비활성(퇴사)" : "활성"}
             </button>
           </div>
@@ -138,7 +143,7 @@ const StaffPage = () => {
   const loadDepartmentList = async () => {
     try {
       const data = await getDepartmentList();
-      setDepartmentList(data || []);
+      setDepartmentList((data || []).filter(d => d.status !== "N"));
     } catch (error) {
       console.error("부서 목록 조회 실패", error);
     }
@@ -293,12 +298,14 @@ const StaffPage = () => {
     <div style={styles.container}>
       <div style={styles.header}>
         <h2>직원 관리</h2>
-        <button type="button" onClick={() => setBulkOpen(true)}>
-        일괄등록
-      </button>
-      <RegisterButton onClick={handleOpen} />
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button type="button" className="btn btn-secondary" onClick={() => setBulkOpen(true)}>
+            일괄등록
+          </button>
+          <RegisterButton onClick={handleOpen} />
+        </div>
       </div>
-      
+
       <div style={styles.topBar}>
         <SearchBar
           value={searchKeyword}
@@ -319,7 +326,7 @@ const StaffPage = () => {
           ))}
         </select>
 
-        <button type="button" onClick={handleResetSearch}>
+        <button type="button" className="btn btn-secondary" onClick={handleResetSearch}>
           전체보기
         </button>
       </div>

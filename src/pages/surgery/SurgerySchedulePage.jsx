@@ -8,7 +8,7 @@ import {
   cancelSurgery,
 } from "../../api/surgeryApi";
 import { getStaffList } from "../../api/hr/staffApi";
-import { getDepartmentList } from "../../api/hr/departmentApi";
+import { getDoctorDepartmentList } from "../../api/hr/departmentApi";
 import { getScheduleList } from "../../api/hr/staffScheduleApi";
 
 
@@ -339,7 +339,7 @@ const SurgerySchedulePage = () => {
       const [surgeries, staffs, depts, schedules] = await Promise.all([
         getSurgeryList(),
         getStaffList(),
-        getDepartmentList(),
+        getDoctorDepartmentList(),
         getScheduleList(),
       ]);
       setSurgeryList(surgeries);

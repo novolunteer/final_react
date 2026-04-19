@@ -14,8 +14,8 @@ const ReservationPage = () => {
   const [slotsLoading, setSlotsLoading] = useState(false);
 
   useEffect(()=>{
-      jwtAxios.get('http://localhost:8080/api/department').then((res) => {
-          setDepartment(res.data.content)
+      jwtAxios.get('http://localhost:8080/api/department/by-category?category=DOCTOR').then((res) => {
+          setDepartment(res.data.content ?? res.data ?? []);
         })
         .catch((err) => {
           console.error(err)
@@ -56,14 +56,20 @@ const ReservationPage = () => {
     jwtAxios.get(url, { params })
       .then(res => {
         const data = res.data.content ?? [];
+
+        if (data.length === 0 || data.every(s => !s.available)) {
+          setTimeSlots([]);
+          return;
+        }
+
         const slotsByHour = [];
         for (let h = 9; h <= 17; h++) {
           if (h === 13) continue;
           const slot = data.find(s => new Date(s.startTime).getHours() === h);
           slotsByHour.push({
             hour: h,
-            capacity: slot ? slot.capacity : 3,
-            available: slot ? slot.available : true,
+            capacity: slot ? slot.capacity : 0,
+            available: slot ? slot.available : false,
           });
         }
         setTimeSlots(slotsByHour);

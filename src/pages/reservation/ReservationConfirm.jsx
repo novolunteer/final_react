@@ -44,8 +44,11 @@ const ReservationConfirm = () => {
   }, [name]);
 
   useEffect(() => {
-    jwtAxios.get('http://localhost:8080/api/department')
-      .then(res => setDepartment(res.data.content ?? []))
+    jwtAxios.get('http://localhost:8080/api/department/by-category?category=DOCTOR')
+      .then(res => {
+        console.log("부서 응답:", res.data);
+        setDepartment(res.data.content ?? res.data ?? []);
+      })
       .catch(console.error);
   }, []);
 
@@ -184,17 +187,15 @@ const ReservationConfirm = () => {
     jwtAxios.get(url, { params })
       .then(res => {
         const data = res.data.content ?? [];
+        console.log("슬롯 응답 raw:", res.data);
+        console.log("슬롯 data:", data);
 
-        // 수정:
-        // 의사 선택 상태에서 슬롯이 전부 불가거나 없으면 차단 메시지
-        if (!isNextMonthOrLater) {
-          const allBlocked = data.length === 0 || data.every(slot => !slot.available);
-          if (allBlocked) {
-            setSlotBlocked(true);
-            setBlockMessage("해당 의사는 선택한 날짜에 예약이 불가합니다.");
-            setTimeSlots([]);
-            return;
-          }
+        const allBlocked = data.length === 0 || data.every(slot => !slot.available);
+        if (allBlocked) {
+          setSlotBlocked(true);
+          setBlockMessage("해당 날짜는 예약이 불가합니다.");
+          setTimeSlots([]);
+          return;
         }
 
         const slotsByHour = [];
@@ -203,8 +204,8 @@ const ReservationConfirm = () => {
           const slot = data.find(s => new Date(s.startTime).getHours() === h);
           slotsByHour.push({
             hour: h,
-            capacity: slot ? slot.capacity : 3,
-            available: slot ? slot.available : true
+            capacity: slot ? slot.capacity : 0,
+            available: slot ? slot.available : false
           });
         }
 

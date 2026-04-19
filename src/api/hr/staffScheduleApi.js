@@ -57,3 +57,12 @@ export const confirmAutoSchedule = async (assignments) => {
     return res.data;
 };
 
+// 내 스케줄 조회 (DOCTOR, NURSE 전용)
+export const getMySchedule = async ({ startDate, endDate, page = 0, size = 30 } = {}) => {
+    const params = { page, size };
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    const res = await jwtAxios.get(`${host}/my`, { params });
+    return res.data;
+};
+
