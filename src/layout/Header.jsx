@@ -7,7 +7,7 @@ import jwtAxios from "../api/jwtAxios";
 
 const Header = () => {
   const userId=useSelector(state => state.auth.userId);
-  const userName = "관리자"; // 나중에 로그인 정보로 교체
+  const userName =useSelector(state => state.auth.name);
 
   const dispatch=useDispatch();
   const navigate=useNavigate();
@@ -36,7 +36,7 @@ const Header = () => {
       </div>
 
       <div className="header-right">
-        <span className="header-user">{userName}님</span>
+        <span className="header-user">{userName ? userName : ""}</span>
         <button className="logout-btn" onClick={handleLogInAndOut}>
           {
             userId ? '로그아웃' : '로그인'

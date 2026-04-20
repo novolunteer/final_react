@@ -82,7 +82,6 @@ const Sidebar = () => {
 
             return (
               <div key={item.label} className="sidebar-group">
-
                 <div className="sidebar-link sidebar-group-title">
                   {item.label}
                 </div>

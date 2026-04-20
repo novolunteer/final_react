@@ -28,28 +28,31 @@ const beforeRequest = (config) => {
   config.headers.Authorization = `Bearer ${accessToken}`;
 
   return config;
-};
+}
+const refreshJWT=async(accessToken)=>{
+    console.log("jwtAxios accessToken=========>", accessToken)
 
-const refreshJWT = async () => {
-  const res = await axios.post(
-    `${API_BASE_URL}/jwt/token/refresh`,
-    {},
-    {
-      withCredentials: true,
-    }
-  );
+    const res=await axios.post(`${API_BASE_URL}/jwt/token/refresh`,
+        {},
+        {
+          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        }
+    );
+    
+    console.log("refresh => ", res);
+    return res.data;
+}
 
-  console.log("refresh => ", res);
-  return res.data;
-};
+const beforeResponse=async(res)=>{
+    return res;
+}
 
-const beforeResponse = async (res) => {
-  return res;
-};
-
-const requestFail = (error) => {
-  return Promise.reject(error);
-};
+const requestFail=(error)=>{
+    return Promise.reject(error);
+}
 
 let isRefreshing = false;
 let refreshSubscribers = [];
@@ -64,7 +67,7 @@ const onRefreshFailed = (error) => {
   refreshSubscribers = [];
 };
 
-const responseFail = async (error) => {
+const responseFail=async(error)=>{
   const errorRes = error.response;
   console.log("responseFail 진입 ===>", errorRes?.status, errorRes?.data);
 
@@ -81,6 +84,7 @@ const responseFail = async (error) => {
               return;
             }
 
+            error.config.headers = error.config.headers ?? {};
             error.config.headers.Authorization = `Bearer ${accessToken}`;
             resolve(jwtAxios(error.config));
           });
@@ -90,12 +94,13 @@ const responseFail = async (error) => {
       isRefreshing = true;
 
       try {
-        console.log("jwtAxios before refresh ===>", sessionStorage.getItem("accessToken"));
+        let accessToken=sessionStorage.getItem("accessToken");
+        console.log("jwtAxios before refresh ===>", accessToken);
 
-        const result = await refreshJWT();
+        const result = await refreshJWT(accessToken);
         console.log("refresh result ===>", result);
 
-        const accessToken = result.accessToken;
+        accessToken = result.accessToken;
 
         if (!accessToken) {
           throw new Error("재발급 응답에 accessToken 없음");
@@ -116,10 +121,13 @@ const responseFail = async (error) => {
       } catch (refreshError) {
         console.log("refresh 실패 ===>", refreshError);
 
-        sessionStorage.removeItem("accessToken");
         store.dispatch(logout());
 
         onRefreshFailed(refreshError);
+
+        alert("refresh token이 만료되어 로그아웃 됩니다.");
+
+        window.location.href = "/login";
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

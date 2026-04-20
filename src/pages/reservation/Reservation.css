@@ -1,6 +1,7 @@
 .selected-day {
   background-color: #ffdad3 !important;
   color: #000000 !important;
+
 }
 
 /* 스케줄 없음 / OFF 날짜 */
@@ -17,4 +18,5 @@
 
 .unavailable-day .fc-daygrid-day-events {
   pointer-events: none;
+
 }

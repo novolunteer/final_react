@@ -15,7 +15,9 @@ const SseProvider = ({ userId, onMessage }) => {
   const unmountedRef = useRef(false);
 
   useEffect(() => {
-     console.log("userId 확인:", userId);
+    unmountedRef.current = false;
+
+    console.log("userId 확인:", userId);
     if (!userId) return;
 
     const clearReconnectTimer = () => {
@@ -98,6 +100,8 @@ const SseProvider = ({ userId, onMessage }) => {
         isRefreshingRef.current = true;
 
         try {
+          const accessToken = sessionStorage.getItem("accessToken");
+
           // refreshToken은 쿠키에만 있고,
           // withCredentials: true 로 쿠키를 같이 보냄
           const res = await axios.post(
@@ -105,6 +109,9 @@ const SseProvider = ({ userId, onMessage }) => {
             {},
             {
               withCredentials: true,
+              headers: {
+                Authorization : `Bearer ${accessToken}`
+              }
             }
           );
 
