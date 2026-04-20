@@ -580,6 +580,10 @@ const StaffSchedulePage = () => {
         <div style={{ display: "flex", gap: "6px" }}>
           <button
             type="button"
+<<<<<<< HEAD
+=======
+            className="btn btn-edit"
+>>>>>>> 347736c (commit)
             disabled={item.status === "CONFIRMED"}
             onClick={() => handleEdit(item)}
           >
@@ -588,6 +592,10 @@ const StaffSchedulePage = () => {
 
           <button
             type="button"
+<<<<<<< HEAD
+=======
+            className="btn btn-danger"
+>>>>>>> 347736c (commit)
             disabled={item.status === "CONFIRMED"}
             onClick={() => handleDelete(item)}
           >
@@ -595,7 +603,15 @@ const StaffSchedulePage = () => {
           </button>
 
           {item.status === "TEMP" && (
+<<<<<<< HEAD
             <button type="button" onClick={() => handleConfirm(item.scheduleId)}>
+=======
+            <button
+              type="button"
+              className="btn btn-confirm"
+              onClick={() => handleConfirm(item.scheduleId)}
+            >
+>>>>>>> 347736c (commit)
               확정
             </button>
           )}
@@ -609,6 +625,7 @@ const StaffSchedulePage = () => {
     <div style={styles.container}>
       <div style={styles.header}>
         <h2>직원 스케줄 관리</h2>
+<<<<<<< HEAD
         <RegisterButton onClick={handleOpen}>개별등록</RegisterButton>
         <button onClick={handleBulkOpen}>일괄등록</button>
         <button onClick={handleAutoOpen}>자동스케줄 조건등록</button>
@@ -618,6 +635,20 @@ const StaffSchedulePage = () => {
         >
           선택확정
         </button>
+=======
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          <RegisterButton onClick={handleOpen}>개별등록</RegisterButton>
+          <button className="btn btn-secondary" onClick={handleBulkOpen}>일괄등록</button>
+          <button className="btn btn-secondary" onClick={handleAutoOpen}>자동스케줄 조건등록</button>
+          <button
+            className="btn btn-confirm"
+            onClick={handleBulkConfirm}
+            disabled={viewMode === "week" || selectedIds.length === 0}
+          >
+            선택확정
+          </button>
+        </div>
+>>>>>>> 347736c (commit)
       </div>
 
       <div style={styles.topBar}>
@@ -664,12 +695,21 @@ const StaffSchedulePage = () => {
          </select>
 
         
+<<<<<<< HEAD
         <button type="button" onClick={handleResetAll}>
           전체 초기화
         </button>
 
         <button onClick={handleMonthView}>달력형</button>
         <button onClick={handleWeekView}>주간형</button>
+=======
+        <button type="button" className="btn btn-secondary" onClick={handleResetAll}>
+          전체 초기화
+        </button>
+
+        <button className="btn btn-secondary" onClick={handleMonthView}>달력형</button>
+        <button className="btn btn-secondary" onClick={handleWeekView}>주간형</button>
+>>>>>>> 347736c (commit)
       </div>
 
       <div style={styles.content}>

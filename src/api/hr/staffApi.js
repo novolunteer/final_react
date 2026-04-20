@@ -3,8 +3,8 @@ import jwtAxios from "../jwtAxios";
 const host = "http://localhost:8080/api/staff";
 
 export const getStaffList = async() => {
-    const res = await jwtAxios.get(`${host}/list`);
-    return res.data;
+    const res = await jwtAxios.get(`${host}/list?size=1000`);
+    return res.data?.content ?? res.data;
 };
 
 export const getStaffOne = async(staffId) => {

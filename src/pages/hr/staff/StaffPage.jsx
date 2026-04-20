@@ -10,6 +10,10 @@ import {
   updateStaff,
 } from "../../../api/hr/staffApi";
 import { getDepartmentList } from "../../../api/hr/departmentApi";
+<<<<<<< HEAD
+=======
+import StaffBulkUpload from "../../../components/hr/StaffBulkUpload";
+>>>>>>> 347736c (commit)
 
 const StaffPage = () => {
   const [staffList, setStaffList] = useState([]);
@@ -18,6 +22,10 @@ const StaffPage = () => {
 
   const [open, setOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
+<<<<<<< HEAD
+=======
+  const [bulkOpen, setBulkOpen] = useState(false);
+>>>>>>> 347736c (commit)
 
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
@@ -112,13 +120,25 @@ const StaffPage = () => {
           <div style={{ display: "flex", gap: "6px" }}>
             <button
               type="button"
+<<<<<<< HEAD
+=======
+              className="btn btn-edit"
+>>>>>>> 347736c (commit)
               disabled={item.isActive === "N"}
               onClick={() => handleEdit(item)}
             >
               수정
             </button>
 
+<<<<<<< HEAD
             <button type="button" onClick={() => handleToggleActive(item)}>
+=======
+            <button
+              type="button"
+              className={item.isActive === "Y" ? "btn btn-danger" : "btn btn-success"}
+              onClick={() => handleToggleActive(item)}
+            >
+>>>>>>> 347736c (commit)
               {item.isActive === "Y" ? "비활성(퇴사)" : "활성"}
             </button>
           </div>
@@ -136,7 +156,11 @@ const StaffPage = () => {
   const loadDepartmentList = async () => {
     try {
       const data = await getDepartmentList();
+<<<<<<< HEAD
       setDepartmentList(data || []);
+=======
+      setDepartmentList((data || []).filter(d => d.status !== "N"));
+>>>>>>> 347736c (commit)
     } catch (error) {
       console.error("부서 목록 조회 실패", error);
     }
@@ -291,7 +315,16 @@ const StaffPage = () => {
     <div style={styles.container}>
       <div style={styles.header}>
         <h2>직원 관리</h2>
+<<<<<<< HEAD
         <RegisterButton onClick={handleOpen} />
+=======
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button type="button" className="btn btn-secondary" onClick={() => setBulkOpen(true)}>
+            일괄등록
+          </button>
+          <RegisterButton onClick={handleOpen} />
+        </div>
+>>>>>>> 347736c (commit)
       </div>
 
       <div style={styles.topBar}>
@@ -314,7 +347,11 @@ const StaffPage = () => {
           ))}
         </select>
 
+<<<<<<< HEAD
         <button type="button" onClick={handleResetSearch}>
+=======
+        <button type="button" className="btn btn-secondary" onClick={handleResetSearch}>
+>>>>>>> 347736c (commit)
           전체보기
         </button>
       </div>
@@ -331,6 +368,16 @@ const StaffPage = () => {
           staffList={originalStaffList}
         />
       </CommonModal>
+<<<<<<< HEAD
+=======
+      
+      {/* 일괄등록 모달 */}
+      <StaffBulkUpload
+      open={bulkOpen}
+      onClose={()=>setBulkOpen(false)}
+      onSuccess={loadStaffList}
+      ></StaffBulkUpload>
+>>>>>>> 347736c (commit)
 
       {/* 동명이인 선택 모달 */}
       <CommonModal

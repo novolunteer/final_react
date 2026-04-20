@@ -1,12 +1,10 @@
-import React, { useState } from 'react'
+import React from 'react'
 
-const RegisterButton = ({
-    type="button",
-    onClick,
-}) => {
-
+const RegisterButton = ({ type = "button", onClick, children = "등록" }) => {
   return (
-        <button type={type} onClick={onClick}>등록</button>
+    <button type={type} onClick={onClick} className="btn btn-primary">
+      {children}
+    </button>
   )
 }
 

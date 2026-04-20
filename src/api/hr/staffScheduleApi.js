@@ -4,8 +4,8 @@ import { data } from "react-router-dom";
 const host="http://localhost:8080/api/staff_schedule";
 
 export const getScheduleList=async()=>{
-    const res=await jwtAxios.get(`${host}/list`);
-    return res.data;
+    const res=await jwtAxios.get(`${host}/list?size=1000`);
+    return res.data?.content ?? res.data;
 };
 
 export const getSchedule = async(scheduleId)=>{
@@ -55,6 +55,15 @@ export const generateAutoSchedule = async (conditionData) => {
 // AI 생성 스케줄 확정 저장
 export const confirmAutoSchedule = async (assignments) => {
     const res = await jwtAxios.post("/api/auto-schedule/confirm", { assignments });
+    return res.data;
+};
+
+// 내 스케줄 조회 (DOCTOR, NURSE 전용)
+export const getMySchedule = async ({ startDate, endDate, page = 0, size = 30 } = {}) => {
+    const params = { page, size };
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    const res = await jwtAxios.get(`${host}/my`, { params });
     return res.data;
 };
 

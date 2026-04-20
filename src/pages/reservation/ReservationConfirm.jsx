@@ -1,5 +1,8 @@
 import FullCalendar from '@fullcalendar/react';
+<<<<<<< HEAD
 import axios from 'axios';
+=======
+>>>>>>> 347736c (commit)
 import React, { useEffect, useRef, useState } from 'react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -8,11 +11,22 @@ import { useQuery } from '@tanstack/react-query';
 import { useQueryClient } from '@tanstack/react-query';
 import jwtAxios from '../../api/jwtAxios';
 import { useDispatch } from 'react-redux';
+<<<<<<< HEAD
 import { setDoctorId } from "../../store/sseSlice";
 import './Reservation.css'
 
 const ReservationConfirm = () => {
   const [slotBlocked, setSlotBlocked] = useState(false);
+=======
+
+import { setDoctorId } from "../../store/sseSlice";
+import './Reservation.css';
+
+const ReservationConfirm = () => {
+  const [slotBlocked, setSlotBlocked] = useState(false); // 수정
+  const [blockMessage, setBlockMessage] = useState(""); // 수정
+
+>>>>>>> 347736c (commit)
   const [department, setDepartment] = useState([]);
   const [doctor, setDoctor] = useState([]);
   const [selectedDoc, setSelectedDoc] = useState(null);
@@ -32,7 +46,10 @@ const ReservationConfirm = () => {
   const isRowClickRef = useRef(false);
   const dispatch = useDispatch();
 
+<<<<<<< HEAD
   /* ================= API ================= */
+=======
+>>>>>>> 347736c (commit)
   useEffect(() => {
     setPage(0);
   }, [debouncedName, selectedDept, status]);
@@ -43,6 +60,7 @@ const ReservationConfirm = () => {
   }, [name]);
 
   useEffect(() => {
+<<<<<<< HEAD
     jwtAxios.get('http://localhost:8080/api/department')
       .then(res => setDepartment(res.data.content ?? []))
       .catch(console.error);
@@ -51,6 +69,20 @@ const ReservationConfirm = () => {
   // 과, 의사, 선택 행 변화 시 슬롯 초기화
   useEffect(() => {
     setTimeSlots([]);
+=======
+    jwtAxios.get('http://localhost:8080/api/department/by-category?category=DOCTOR')
+      .then(res => {
+        console.log("부서 응답:", res.data);
+        setDepartment(res.data.content ?? res.data ?? []);
+      })
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    setTimeSlots([]);
+    setSlotBlocked(false); // 수정
+    setBlockMessage(""); // 수정
+>>>>>>> 347736c (commit)
   }, [selectedDept, selectedDoc]);
 
   useEffect(() => {
@@ -64,7 +96,11 @@ const ReservationConfirm = () => {
         setDoctor(res.data.content ?? []);
 
         if (isRowClickRef.current) {
+<<<<<<< HEAD
           isRowClickRef.current = false; 
+=======
+          isRowClickRef.current = false;
+>>>>>>> 347736c (commit)
           return;
         }
 
@@ -75,25 +111,45 @@ const ReservationConfirm = () => {
 
   useEffect(() => {
     if (!currentMonth) return;
+<<<<<<< HEAD
+=======
+    if (!selectedDept) return;
+>>>>>>> 347736c (commit)
 
     let url;
     let params;
 
+<<<<<<< HEAD
     const isNextMonthOrLater =
       dayjs(currentMonth).isAfter(dayjs().endOf('month'));
+=======
+    const isNextMonthOrLater = dayjs(currentMonth).isAfter(dayjs().endOf('month'));
+>>>>>>> 347736c (commit)
 
     if (isNextMonthOrLater) {
       url = "http://localhost:8080/api/slot/department";
       params = { monthly: currentMonth, departmentId: selectedDept };
     } else {
+<<<<<<< HEAD
       url = selectedDoc
         ? "http://localhost:8080/api/slot/doctor"
         : "http://localhost:8080/api/slot/department";
+=======
+      // 수정:
+      // 이번 달은 의사가 선택된 경우만 의사 기준 조회
+      // 선택 안 된 경우에도 달력은 부서 기준으로 그릴 수는 있지만,
+      // 실제 슬롯 확인은 handleDateClick에서 막는다.
+      url = selectedDoc
+        ? "http://localhost:8080/api/slot/doctor"
+        : "http://localhost:8080/api/slot/department";
+
+>>>>>>> 347736c (commit)
       params = selectedDoc
         ? { monthly: currentMonth, doctorId: selectedDoc }
         : { monthly: currentMonth, departmentId: selectedDept };
     }
 
+<<<<<<< HEAD
     jwtAxios.get(url, {params})
       .then(res => {
         const data = res.data.content ?? [];
@@ -108,11 +164,35 @@ const ReservationConfirm = () => {
           }
           }))
           setEvents(slotEvents);
+=======
+    jwtAxios.get(url, { params })
+      .then(res => {
+        const data = res.data.content ?? [];
+
+        const slotEvents = data.map(slot => ({
+          title: slot.available
+            ? `가능 (${slot.totalCapacity}명)`
+            : (slot.scheduleType || 'OFF'),
+          start: slot.date,
+          color: slot.available ? "#69a56b" : "#e5e7eb",
+          textColor: slot.available ? "#fff" : "#9ca3af",
+          allDay: true,
+          extendedProps: {
+            available: slot.available,
+            blocked: !slot.available, // 수정
+          }
+        }));
+
+        setEvents(slotEvents);
+>>>>>>> 347736c (commit)
       })
       .catch(console.error);
   }, [selectedDoc, currentMonth, selectedDept]);
 
+<<<<<<< HEAD
   /* ================= 핸들러 ================= */
+=======
+>>>>>>> 347736c (commit)
   const fetchReservationList = ({ status, dept, name, page }) => {
     let url = "http://localhost:8080/api/reservation";
 
@@ -144,6 +224,7 @@ const ReservationConfirm = () => {
   const totalPages = data?.totalPages ?? 0;
 
   const handleDateClick = (info) => {
+<<<<<<< HEAD
       const event = events.find(e => e.start === info.dateStr);
     const isBlocked = event?.extendedProps?.blocked; // <- 여기서 서버 기준 or logic 판단
 
@@ -188,12 +269,73 @@ const ReservationConfirm = () => {
         setTimeSlots(slotsByHour);
       })
     .catch(console.error);
+=======
+    const clickedDate = info.dateStr;
+    const dailyIso = clickedDate + "T00:00:00";
+    const isNextMonthOrLater = dayjs(clickedDate).isAfter(dayjs().endOf('month'));
+
+    setSelectedDate(clickedDate);
+
+    // 수정:
+    // 이번 달은 의사 선택 없으면 아예 슬롯 조회하지 않음
+    if (!isNextMonthOrLater && !selectedDoc) {
+      setSlotBlocked(true);
+      setBlockMessage("의사를 선택해야 예약 가능 시간을 확인할 수 있습니다.");
+      setTimeSlots([]);
+      return;
+    }
+
+    setSlotBlocked(false);
+    setBlockMessage("");
+
+    const url = isNextMonthOrLater
+      ? `http://localhost:8080/api/slot/daily/department`
+      : `http://localhost:8080/api/slot/daily/doctor`;
+
+    const params = isNextMonthOrLater
+      ? { daily: dailyIso, departmentId: selectedDept }
+      : { daily: dailyIso, doctorId: selectedDoc };
+
+    jwtAxios.get(url, { params })
+      .then(res => {
+        const data = res.data.content ?? [];
+        console.log("슬롯 응답 raw:", res.data);
+        console.log("슬롯 data:", data);
+
+        const allBlocked = data.length === 0 || data.every(slot => !slot.available);
+        if (allBlocked) {
+          setSlotBlocked(true);
+          setBlockMessage("해당 날짜는 예약이 불가합니다.");
+          setTimeSlots([]);
+          return;
+        }
+
+        const slotsByHour = [];
+        for (let h = 9; h <= 17; h++) {
+          if (h === 13) continue;
+          const slot = data.find(s => new Date(s.startTime).getHours() === h);
+          slotsByHour.push({
+            hour: h,
+            capacity: slot ? slot.capacity : 0,
+            available: slot ? slot.available : false
+          });
+        }
+
+        setSlotBlocked(false);
+        setBlockMessage("");
+        setTimeSlots(slotsByHour);
+      })
+      .catch(console.error);
+>>>>>>> 347736c (commit)
   };
 
   const handleDatesSet = (info) => {
     const d = info.view.currentStart;
     const realMonth = dayjs(d);
+<<<<<<< HEAD
 
+=======
+>>>>>>> 347736c (commit)
     const formatted = realMonth.format('YYYY-MM-01T00:00:00');
 
     setCurrentMonth(prev => prev === formatted ? prev : formatted);
@@ -203,6 +345,7 @@ const ReservationConfirm = () => {
     }
   };
 
+<<<<<<< HEAD
     const handleEventClick = (info) => {
       setSlotBlocked(false);
       const dateStr = dayjs(info.event.start).format('YYYY-MM-DD');
@@ -442,6 +585,281 @@ const ReservationConfirm = () => {
         setTimeSlots([]);
 
         // 2. 리스트 다시 가져오기
+=======
+  const handleEventClick = (info) => {
+    const dateStr = dayjs(info.event.start).format('YYYY-MM-DD');
+    const dailyIso = dateStr + "T00:00:00";
+    const isNextMonthOrLater = dayjs(dateStr).isAfter(dayjs().endOf('month'));
+
+    setSelectedDate(dateStr);
+
+    // 수정:
+    // 이번 달 의사 미선택이면 여기서도 막기
+    if (!isNextMonthOrLater && !selectedDoc) {
+      setSlotBlocked(true);
+      setBlockMessage("의사를 선택해야 예약 가능 시간을 확인할 수 있습니다.");
+      setTimeSlots([]);
+      return;
+    }
+
+    setSlotBlocked(false);
+    setBlockMessage("");
+
+    const url = isNextMonthOrLater
+      ? `http://localhost:8080/api/slot/daily/department`
+      : `http://localhost:8080/api/slot/daily/doctor`;
+
+    const params = isNextMonthOrLater
+      ? { daily: dailyIso, departmentId: selectedDept }
+      : { daily: dailyIso, doctorId: selectedDoc };
+
+    jwtAxios.get(url, { params })
+      .then(res => {
+        const data = res.data.content ?? [];
+
+        if (!isNextMonthOrLater) {
+          const allBlocked = data.length === 0 || data.every(slot => !slot.available);
+          if (allBlocked) {
+            setSlotBlocked(true);
+            setBlockMessage("해당 의사는 선택한 날짜에 예약이 불가합니다.");
+            setTimeSlots([]);
+            return;
+          }
+        }
+
+        const slotsByHour = [];
+        for (let h = 9; h <= 17; h++) {
+          if (h === 13) continue;
+          const slot = data.find(s => new Date(s.startTime).getHours() === h);
+          slotsByHour.push({
+            hour: h,
+            capacity: slot ? slot.capacity : 3,
+            available: slot ? slot.available : true
+          });
+        }
+
+        setSlotBlocked(false);
+        setBlockMessage("");
+        setTimeSlots(slotsByHour);
+      })
+      .catch(console.error);
+  };
+
+  const handleRowClick = (item) => {
+    const docId = item.doctorId ?? null;
+    isRowClickRef.current = true;
+
+    setSelectedDept(item.departmentId);
+    setSelectedDoc(docId);
+    setSelectedRow(item.reservationId);
+
+    const date = getDate(item)
+      ? dayjs(getDate(item)).format('YYYY-MM-DD')
+      : dayjs().format('YYYY-MM-DD');
+
+    setSelectedDate(date);
+    setTimeSlots([]);
+    setSlotBlocked(false); // 수정
+    setBlockMessage(""); // 수정
+
+    if (calendarRef.current) {
+      calendarRef.current.getApi().gotoDate(date);
+    }
+
+    const dailyIso = date + "T00:00:00";
+    const url = docId
+      ? `http://localhost:8080/api/slot/daily/doctor`
+      : `http://localhost:8080/api/slot/daily/department`;
+
+    const params = docId
+      ? { daily: dailyIso, doctorId: docId }
+      : { daily: dailyIso, departmentId: item.departmentId };
+
+    jwtAxios.get(url, { params })
+      .then(res => {
+        const data = res.data.content ?? [];
+
+        const allBlocked = data.length === 0 || data.every(slot => !slot.available);
+
+        if (allBlocked) {
+          setSlotBlocked(true);
+          setBlockMessage(
+            docId
+              ? "해당 의사는 선택한 날짜에 예약이 불가합니다."
+              : "해당 날짜는 예약이 불가합니다."
+          );
+          setTimeSlots([]);
+          return;
+        }
+
+        const slotsByHour = [];
+        for (let h = 9; h <= 17; h++) {
+          if (h === 13) continue;
+          const slot = data.find(s => new Date(s.startTime).getHours() === h);
+          slotsByHour.push({
+            hour: h,
+            capacity: slot ? slot.capacity : 3,
+            available: slot ? slot.available : true
+          });
+        }
+
+        setSlotBlocked(false);
+        setBlockMessage("");
+        setTimeSlots(slotsByHour);
+      })
+      .catch(console.error);
+  };
+
+  const handleSlotClick = (hour) => {
+    if (!selectedRow) return alert("예약할 행을 선택하세요!");
+
+    const isNextMonthOrLater = dayjs(currentMonth).isAfter(dayjs().endOf('month'));
+
+    if (!isNextMonthOrLater && !selectedDoc) {
+      return alert("이번 달 예약은 의사를 선택해야 합니다.");
+    }
+
+    const dateTime = `${selectedDate}T${hour}:00`;
+
+    const payload = {
+      reservationId: selectedRow,
+      reservationDate: dateTime,
+      doctorId: selectedDoc || null,
+      departmentId: selectedDept
+    };
+
+    const request =
+      status === "CONFIRMED"
+        ? jwtAxios.put('http://localhost:8080/api/reservation', payload)
+        : jwtAxios.post('http://localhost:8080/api/reservation/confirm', payload);
+
+    request
+      .then(() => {
+        alert(status === "CONFIRMED" ? "예약 수정 완료!" : "예약 완료!");
+        setSelectedRow(null);
+
+        refreshSlots();
+        queryClient.invalidateQueries({
+          queryKey: ['reservationList']
+        });
+        refreshCalendar();
+
+        if (selectedDoc) {
+          dispatch(setDoctorId(selectedDoc));
+        }
+      })
+      .catch(console.error);
+  };
+
+  const refreshCalendar = () => {
+    if (!currentMonth) return;
+
+    let url;
+    let params;
+
+    const isNextMonthOrLater = dayjs(currentMonth).isAfter(dayjs().endOf('month'));
+
+    if (isNextMonthOrLater) {
+      url = "http://localhost:8080/api/slot/department";
+      params = { monthly: currentMonth, departmentId: selectedDept };
+    } else {
+      url = selectedDoc
+        ? "http://localhost:8080/api/slot/doctor"
+        : "http://localhost:8080/api/slot/department";
+
+      params = selectedDoc
+        ? { monthly: currentMonth, doctorId: selectedDoc }
+        : { monthly: currentMonth, departmentId: selectedDept };
+    }
+
+    jwtAxios.get(url, { params })
+      .then(res => {
+        const data = res.data.content ?? [];
+
+        const slotEvents = data.map(slot => ({
+          title: slot.available
+            ? `가능 (${slot.totalCapacity}명)`
+            : (slot.scheduleType || 'OFF'),
+          start: slot.date,
+          color: slot.available ? "#69a56b" : "#e5e7eb",
+          textColor: slot.available ? "#fff" : "#9ca3af",
+          allDay: true,
+          extendedProps: {
+            available: slot.available,
+            blocked: !slot.available
+          }
+        }));
+
+        setEvents(slotEvents);
+      })
+      .catch(console.error);
+  };
+
+  const refreshSlots = () => {
+    if (!selectedDate) return;
+
+    const dailyIso = selectedDate + "T00:00:00";
+    const isNextMonthOrLater = dayjs(selectedDate).isAfter(dayjs().endOf('month'));
+
+    // 수정:
+    // 이번 달 의사 미선택이면 새로고침 슬롯도 막음
+    if (!isNextMonthOrLater && !selectedDoc) {
+      setSlotBlocked(true);
+      setBlockMessage("의사를 선택해야 예약 가능 시간을 확인할 수 있습니다.");
+      setTimeSlots([]);
+      return;
+    }
+
+    const url = isNextMonthOrLater
+      ? `http://localhost:8080/api/slot/daily/department`
+      : `http://localhost:8080/api/slot/daily/doctor`;
+
+    const params = isNextMonthOrLater
+      ? { daily: dailyIso, departmentId: selectedDept }
+      : { daily: dailyIso, doctorId: selectedDoc };
+
+    jwtAxios.get(url, { params })
+      .then(res => {
+        const data = res.data.content ?? [];
+
+        if (!isNextMonthOrLater) {
+          const allBlocked = data.length === 0 || data.every(slot => !slot.available);
+          if (allBlocked) {
+            setSlotBlocked(true);
+            setBlockMessage("해당 의사는 선택한 날짜에 예약이 불가합니다.");
+            setTimeSlots([]);
+            return;
+          }
+        }
+
+        const slotsByHour = [];
+        for (let h = 9; h <= 17; h++) {
+          if (h === 13) continue;
+
+          const slot = data.find(s => new Date(s.startTime).getHours() === h);
+
+          slotsByHour.push({
+            hour: h,
+            capacity: slot ? slot.capacity : 3,
+            available: slot ? slot.available : true
+          });
+        }
+
+        setSlotBlocked(false);
+        setBlockMessage("");
+        setTimeSlots(slotsByHour);
+      })
+      .catch(console.error);
+  };
+
+  const handleCancel = (reservationId) => {
+    jwtAxios.get(`http://localhost:8080/api/reservation/delete?reservationId=${reservationId}`)
+      .then(() => {
+        alert("예약 취소 완료");
+        setSelectedRow(null);
+        setTimeSlots([]);
+
+>>>>>>> 347736c (commit)
         let url = "http://localhost:8080/api/reservation";
         if (status === "PENDING") url += "/pending";
         if (status === "CONFIRMED") url += "/confirmed";
@@ -449,17 +867,26 @@ const ReservationConfirm = () => {
         jwtAxios.get(url, {
           params: selectedDept ? { department: selectedDept } : {}
         })
+<<<<<<< HEAD
         .then(res => setList(res.data.content ?? []))
         .catch(console.error);
     })
     .catch(console.error);
   }
+=======
+          .then(() => {})
+          .catch(console.error);
+      })
+      .catch(console.error);
+  };
+>>>>>>> 347736c (commit)
 
   const getDate = (item) => {
     if (status === "RECEIVED") return item.preferredDate;
     return item.reservationDate;
   };
 
+<<<<<<< HEAD
 
   /* ================= UI ================= */
 
@@ -565,6 +992,105 @@ const ReservationConfirm = () => {
                       }}
                     >
                       <div style={rowTop}>
+=======
+  return (
+    <div style={container}>
+      <div style={main}>
+        <div style={card}>
+          <div style={filterBox}>
+            <div style={filterRow}>
+              <span style={label}>진료과</span>
+
+              <select
+                value={selectedDept}
+                onChange={(e) => setSelectedDept(e.target.value)}
+                style={select}
+              >
+                <option value="">과를 선택하세요.</option>
+                {department.map(dep => (
+                  <option key={dep.departmentId} value={dep.departmentId}>
+                    {dep.departmentName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {dayjs(currentMonth).isSame(dayjs(), 'month') && (
+              <div style={filterRowCol}>
+                <div style={radioGroup}>
+                  <label
+                    style={{
+                      ...radioPill,
+                      backgroundColor: selectedDoc === null ? "#1976d2" : "#f1f3f5",
+                      color: selectedDoc === null ? "white" : "#333",
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      checked={selectedDoc === null}
+                      onChange={() => setSelectedDoc(null)}
+                      style={{ display: "none" }}
+                    />
+                    전체
+                  </label>
+
+                  {doctor.map(doc => (
+                    <label
+                      key={doc.staffId}
+                      style={{
+                        ...radioPill,
+                        backgroundColor: selectedDoc === doc.staffId ? "#1976d2" : "#f1f3f5",
+                        color: selectedDoc === doc.staffId ? "white" : "#333",
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        checked={selectedDoc === doc.staffId}
+                        onChange={() => setSelectedDoc(doc.staffId)}
+                        style={{ display: "none" }}
+                      />
+                      {doc.name}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div style={statusBar}>
+            <button onClick={() => setStatus("RECEIVED")} style={btn}>신청</button>
+            <button onClick={() => setStatus("PENDING")} style={btn}>가예약</button>
+            <button onClick={() => setStatus("CONFIRMED")} style={btn}>확정</button>
+          </div>
+
+          <div style={searchBar}>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="이름 검색"
+              style={searchInput}
+            />
+          </div>
+
+          {list.length === 0 ? (
+            <p>데이터 없음</p>
+          ) : (
+            <div style={listContainer}>
+              {list.map(item => {
+                const isSelected = selectedRow === item.reservationId;
+
+                return (
+                  <div
+                    key={item.reservationId}
+                    onClick={() => handleRowClick(item)}
+                    style={{
+                      ...listItem,
+                      ...(isSelected ? selectedItem : {})
+                    }}
+                  >
+                    <div style={rowTop}>
+>>>>>>> 347736c (commit)
                       <div>
                         <span style={patientName}>{item.patientName}</span>
                         <span style={deptTag}>{item.departmentName}</span>
@@ -577,6 +1103,7 @@ const ReservationConfirm = () => {
                       </span>
                     </div>
 
+<<<<<<< HEAD
                       <div style={rowMiddle}>
                         👨‍⚕️ {item.doctorName || '희망 의사 없음'}
                       </div>
@@ -599,6 +1126,30 @@ const ReservationConfirm = () => {
                 })}
               </div>
             )}
+=======
+                    <div style={rowMiddle}>
+                      👨‍⚕️ {item.doctorName || '희망 의사 없음'}
+                    </div>
+
+                    <div style={rowBottom}>
+                      <span style={symptom}>{item.symptom}</span>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCancel(item.reservationId);
+                        }}
+                        style={cancelBtn}
+                      >
+                        취소
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+>>>>>>> 347736c (commit)
 
           <div style={pagination}>
             <button
@@ -623,7 +1174,10 @@ const ReservationConfirm = () => {
           </div>
         </div>
 
+<<<<<<< HEAD
         {/* 캘린더 */}
+=======
+>>>>>>> 347736c (commit)
         <div style={calendarBox}>
           <FullCalendar
             plugins={[dayGridPlugin, interactionPlugin]}
@@ -631,21 +1185,36 @@ const ReservationConfirm = () => {
             events={events}
             dateClick={handleDateClick}
             datesSet={handleDatesSet}
+<<<<<<< HEAD
             eventClick={handleEventClick} 
             fixedWeekCount={false}
             ref={calendarRef}
             validRange={{
               start: dayjs().format('YYYY-MM-DD') // 오늘 이후만 선택 가능
+=======
+            eventClick={handleEventClick}
+            fixedWeekCount={false}
+            ref={calendarRef}
+            validRange={{
+              start: dayjs().format('YYYY-MM-DD')
+>>>>>>> 347736c (commit)
             }}
             height="100%"
             dayCellClassNames={(info) => {
               const dateStr = dayjs(info.date).format('YYYY-MM-DD');
               return selectedDate === dateStr ? ['selected-day'] : [];
+<<<<<<< HEAD
               }}
           />
         </div>
 
         {/* 시간 슬롯 */}
+=======
+            }}
+          />
+        </div>
+
+>>>>>>> 347736c (commit)
         <div style={slotContainer}>
           <div style={slotHeader}>
             {selectedDate
@@ -653,6 +1222,7 @@ const ReservationConfirm = () => {
               : '날짜 선택'}
           </div>
 
+<<<<<<< HEAD
 {slotBlocked ? (
   <div style={blockedBox}>
   <div style={blockedIcon}>⛔</div>
@@ -702,13 +1272,65 @@ const ReservationConfirm = () => {
       </div>
     </div>
   )
+=======
+          {slotBlocked ? (
+            <div style={blockedBox}>
+              <div style={blockedIcon}>⛔</div>
+              <div style={blockedText}>{blockMessage || "해당 날짜는 예약 불가입니다."}</div>
+            </div>
+          ) : (
+            timeSlots.map((slot) => {
+              if(slot.hour === 13) return null;
+              const disabled = !slot.available || slot.capacity === 0;
+
+              return (
+                <React.Fragment key={slot.hour}>
+                  <div
+                    onClick={() => {
+                      if (!disabled) {
+                        handleSlotClick(`${String(slot.hour).padStart(2, '0')}:00`);
+                      }
+                    }}
+                    style={{
+                      ...slotRow,
+                      ...(disabled ? disabledRow : activeRow)
+                    }}
+                  >
+                    <div style={timeText}>
+                      {String(slot.hour).padStart(2, '0')}:00
+                    </div>
+
+                    <div style={statusText}>
+                      {disabled ? '불가' : `가능 (${slot.capacity}명)`}
+                    </div>
+                  </div>
+
+                  {slot.hour === 12 && (
+                    <div style={dividerLine}>
+                      <div style={line}></div>
+                      <span style={dividerText}>점심시간</span>
+                      <div style={line}></div>
+                    </div>
+                  )}
+                </React.Fragment>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </div>
+  );
+>>>>>>> 347736c (commit)
 };
 
 export default ReservationConfirm;
 
+<<<<<<< HEAD
 /* ================= 스타일 ================= */
 
 
+=======
+>>>>>>> 347736c (commit)
 const container = {
    padding: "20px",
   fontFamily: "Pretendard, sans-serif",

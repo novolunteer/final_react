@@ -1,38 +1,48 @@
 import axios from "axios";
+import store from "../store/store";
+import { updateToken, logout } from "../store/authSlice";
+
 export const API_BASE_URL = import.meta.env.VITE_SPRING_API_BASE_URL;
 
-const jwtAxios=axios.create({
-    baseURL: API_BASE_URL,
-    withCredentials: true,
+const jwtAxios = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: true,
 });
 
-const beforeRequest=(config)=>{
-    const accessToken=sessionStorage.getItem("accessToken");
-    console.log("beforeRequest===>", accessToken)
-    if(!accessToken){ //로그인 안 했을 때
-        return Promise.reject({ //에러 정보를 갖는 response 객체
-            response:{
-                data:{
-                    error:'REQUIRED_LOGIN'
-                }
-            }
-        })
-    } 
+const beforeRequest = (config) => {
+  const accessToken = sessionStorage.getItem("accessToken");
+  console.log("beforeRequest ===>", accessToken);
 
-    config.headers.Authorization=`Bearer ${accessToken}`;
+  if (!accessToken) {
+    return Promise.reject({
+      response: {
+        status: 401,
+        data: {
+          error: "REQUIRED_LOGIN",
+        },
+      },
+    });
+  }
 
-    //리턴된 config에 설정된 값들이 request 객체에 사용됨
-    return config;
+  config.headers = config.headers ?? {};
+  config.headers.Authorization = `Bearer ${accessToken}`;
+
+  return config;
 }
-
 const refreshJWT=async(accessToken)=>{
     console.log("jwtAxios accessToken=========>", accessToken)
 
-    const header={headers:{"Authorization":`Bearer ${accessToken}`}};
-    const res=await axios.get(`http://localhost:8080/jwt/token`,
-        header
+    const res=await axios.post(`${API_BASE_URL}/jwt/token/refresh`,
+        {},
+        {
+          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        }
     );
     
+    console.log("refresh => ", res);
     return res.data;
 }
 
@@ -44,43 +54,88 @@ const requestFail=(error)=>{
     return Promise.reject(error);
 }
 
+let isRefreshing = false;
+let refreshSubscribers = [];
+
+const onRefreshed = (accessToken) => {
+  refreshSubscribers.forEach((cb) => cb(accessToken));
+  refreshSubscribers = [];
+};
+
+const onRefreshFailed = (error) => {
+  refreshSubscribers.forEach((cb) => cb(null, error));
+  refreshSubscribers = [];
+};
+
 const responseFail=async(error)=>{
-    const errorRes=error.response;
+  const errorRes = error.response;
+  console.log("responseFail 진입 ===>", errorRes?.status, errorRes?.data);
 
-    if(errorRes && errorRes.status === 401){
-        const data=errorRes.data;
+  if (errorRes && errorRes.status === 401) {
+    const data = errorRes.data;
+    console.log("401 data ===>", data);
 
-        if(data && data.error === "ERROR_ACCESS_TOKEN"){ //토큰이 유효하지 않을 때
-            //리프레쉬 토큰 보내서 새로운 액세스 토큰 얻기
-            let accessToken=sessionStorage.getItem("accessToken");
+    if (data && data.error === "ERROR_ACCESS_TOKEN") {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          refreshSubscribers.push((accessToken, refreshError) => {
+            if (refreshError || !accessToken) {
+              reject(refreshError || error);
+              return;
+            }
 
-            console.log("jwtAxios before refresh===>",accessToken);
+            error.config.headers = error.config.headers ?? {};
+            error.config.headers.Authorization = `Bearer ${accessToken}`;
+            resolve(jwtAxios(error.config));
+          });
+        });
+      }
 
-            const result=await refreshJWT(accessToken);
-            accessToken=result.accessToken;
+      isRefreshing = true;
 
-            console.log("jwtAxios after refresh===>",accessToken);
-            //변경된 정보 세션 스토리지에 다시 저장
-            sessionStorage.setItem("accessToken",accessToken);
+      try {
+        let accessToken=sessionStorage.getItem("accessToken");
+        console.log("jwtAxios before refresh ===>", accessToken);
 
-            //원래 요청했던 url 정보 얻어오기(토큰 새로 받아왔으니까 다시 요청하려고)
-            const originalRequest=error.config;
-            originalRequest.headers.Authorization=`Bearer ${accessToken}`;
+        const result = await refreshJWT(accessToken);
+        console.log("refresh result ===>", result);
 
-            //재요청
-            return await jwtAxios(originalRequest);
+        accessToken = result.accessToken;
+
+        if (!accessToken) {
+          throw new Error("재발급 응답에 accessToken 없음");
         }
+
+        console.log("jwtAxios after refresh ===>", accessToken);
+
+        sessionStorage.setItem("accessToken", accessToken);
+        store.dispatch(updateToken({ accessToken }));
+
+        onRefreshed(accessToken);
+
+        const originalRequest = error.config;
+        originalRequest.headers = originalRequest.headers ?? {};
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+
+        return jwtAxios(originalRequest);
+      } catch (refreshError) {
+        console.log("refresh 실패 ===>", refreshError);
+
+        sessionStorage.removeItem("accessToken");
+        store.dispatch(logout());
+
+        onRefreshFailed(refreshError);
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
     }
+  }
 
-    return Promise.reject(error);
-}
+  return Promise.reject(error);
+};
 
-//서버에 요청하기 전에 beforeReq 함수가 호출되고
-// 요청이 실패하면 requestFail 함수가 호출된다
-jwtAxios.interceptors.request.use(beforeRequest,requestFail);
-
-//서버에서 온 데이터를 응답하기 전에 beforeRes 함수가 호출되고
-// 응답이 실패하면 responseFail 함수가 호출된다
-jwtAxios.interceptors.response.use(beforeResponse,responseFail);
+jwtAxios.interceptors.request.use(beforeRequest, requestFail);
+jwtAxios.interceptors.response.use(beforeResponse, responseFail);
 
 export default jwtAxios;

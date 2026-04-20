@@ -30,10 +30,8 @@ const positionOptionsMap = {
   ],
   ADMIN: [
     { value: "STAFF", label: "사원" },
-    { value: "SENIOR", label: "주임" },
-    { value: "ASSISTANT_MANAGER", label: "대리" },
     { value: "MANAGER", label: "팀장" },
-    { value: "DIRECTOR", label: "부장" },
+    { value: "ADMIN", label: "총관리자" },
   ],
 };
 
@@ -144,6 +142,11 @@ const StaffForm = ({
 
   const departmentCategory = selectedDepartment?.departmentCategory || "";
   const positionOptions = positionOptionsMap[departmentCategory] || [];
+
+  console.log("form.departmentId:", form.departmentId);
+  console.log("selectedDepartment:", selectedDepartment);
+  console.log("departmentCategory:", departmentCategory);
+  console.log("positionOptions:", positionOptions);
 
   const handleSubmit = (e) => {
     e.preventDefault();
