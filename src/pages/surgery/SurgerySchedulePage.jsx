@@ -8,12 +8,8 @@ import {
   cancelSurgery,
 } from "../../api/surgeryApi";
 import { getStaffList } from "../../api/hr/staffApi";
-<<<<<<< HEAD
-import { getDepartmentList } from "../../api/hr/departmentApi";
-=======
 import { getDoctorDepartmentList } from "../../api/hr/departmentApi";
 import { getScheduleList } from "../../api/hr/staffScheduleApi";
->>>>>>> 347736c (commit)
 
 
 const getTodayString = () => {
@@ -83,10 +79,7 @@ const SurgeryForm = ({
   isEmergency,
   staffList,
   departmentList,
-<<<<<<< HEAD
-=======
   scheduleList,
->>>>>>> 347736c (commit)
 }) => {
   const [filterDeptId, setFilterDeptId] = useState("");
 
@@ -97,8 +90,6 @@ const SurgeryForm = ({
     );
   }, [staffList, filterDeptId]);
 
-<<<<<<< HEAD
-=======
   // 선택된 의사+날짜의 직원 스케줄 확인
   const scheduleWarning = useMemo(() => {
     if (!formData.doctorId || !formData.startTime) return null;
@@ -116,7 +107,6 @@ const SurgeryForm = ({
 
   const isScheduleBlocked = !isEmergency && scheduleWarning?.level === "error";
 
->>>>>>> 347736c (commit)
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -128,13 +118,10 @@ const SurgeryForm = ({
       alert("의사, 환자, 수술 시작 시간, 예상 시간은 필수입니다");
       return;
     }
-<<<<<<< HEAD
-=======
     if (isScheduleBlocked) {
       alert(scheduleWarning.msg);
       return;
     }
->>>>>>> 347736c (commit)
     onSubmit(formData);
   };
 
@@ -215,8 +202,6 @@ const SurgeryForm = ({
         />
       </div>
 
-<<<<<<< HEAD
-=======
       {/* 직원 스케줄 상태 */}
       {scheduleWarning && (
         <div style={{
@@ -242,7 +227,6 @@ const SurgeryForm = ({
         </div>
       )}
 
->>>>>>> 347736c (commit)
       {/* 수술 예상 시간 */}
       <div style={formStyles.field}>
         <label style={formStyles.label}>수술 예상 시간 (시간) *</label>
@@ -295,15 +279,11 @@ const SurgeryForm = ({
         </button>
         <button
           type="submit"
-<<<<<<< HEAD
-          style={isEmergency ? formStyles.emergencyBtn : formStyles.submitBtn}
-=======
           disabled={isScheduleBlocked}
           style={{
             ...(isEmergency ? formStyles.emergencyBtn : formStyles.submitBtn),
             ...(isScheduleBlocked ? { opacity: 0.45, cursor: "not-allowed" } : {}),
           }}
->>>>>>> 347736c (commit)
         >
           {isEmergency ? "응급 등록" : isEdit ? "수정" : "등록"}
         </button>
@@ -330,10 +310,7 @@ const SurgerySchedulePage = () => {
   const [surgeryList, setSurgeryList] = useState([]);
   const [staffList, setStaffList] = useState([]);
   const [departmentList, setDepartmentList] = useState([]);
-<<<<<<< HEAD
-=======
   const [scheduleList, setScheduleList] = useState([]);
->>>>>>> 347736c (commit)
 
 
   const [selectedDeptId, setSelectedDeptId] = useState("");
@@ -359,26 +336,16 @@ const SurgerySchedulePage = () => {
 
   const fetchAll = async () => {
     try {
-<<<<<<< HEAD
-      const [surgeries, staffs, depts] = await Promise.all([
-        getSurgeryList(),
-        getStaffList(),
-        getDepartmentList(),
-=======
       const [surgeries, staffs, depts, schedules] = await Promise.all([
         getSurgeryList(),
         getStaffList(),
         getDoctorDepartmentList(),
         getScheduleList(),
->>>>>>> 347736c (commit)
       ]);
       setSurgeryList(surgeries);
       setStaffList(staffs);
       setDepartmentList(depts);
-<<<<<<< HEAD
-=======
       setScheduleList(Array.isArray(schedules) ? schedules : schedules?.content ?? []);
->>>>>>> 347736c (commit)
     } catch (err) {
       console.error("초기 데이터 로드 실패", err);
       alert("데이터를 불러오는 중 오류가 발생했습니다");
@@ -711,8 +678,6 @@ const SurgerySchedulePage = () => {
                       const surgeries =
                         surgeryMap[doctor.staffId]?.[day.date] || [];
 
-<<<<<<< HEAD
-=======
                       // 해당 의사의 해당 날짜 직원 스케줄 확인
                       const docSchedule = scheduleList.find(
                         (s) =>
@@ -722,17 +687,12 @@ const SurgerySchedulePage = () => {
                       const isOff = docSchedule?.scheduleTypeId === 3;
                       const hasNoSchedule = !docSchedule;
 
->>>>>>> 347736c (commit)
                       return (
                         <td
                           key={day.date}
                           style={{
                             ...styles.surgeryCell,
                             ...(day.isToday ? styles.todayCell : {}),
-<<<<<<< HEAD
-                          }}
-                        >
-=======
                             background: isOff ? "#fef2f2" : hasNoSchedule ? "#f9fafb" : undefined,
                           }}
                         >
@@ -751,7 +711,6 @@ const SurgerySchedulePage = () => {
                           {hasNoSchedule && (
                             <div style={styles.scheduleBadge.none}>스케줄없음</div>
                           )}
->>>>>>> 347736c (commit)
                           {surgeries.map((s) => {
                             const statusStyle =
                               STATUS_COLOR[s.status] || STATUS_COLOR.SCHEDULED;
@@ -874,10 +833,7 @@ const SurgerySchedulePage = () => {
           isEmergency={isEmergency}
           staffList={staffList}
           departmentList={departmentList}
-<<<<<<< HEAD
-=======
           scheduleList={scheduleList}
->>>>>>> 347736c (commit)
         />
       </CommonModal>
     </div>
@@ -1029,8 +985,6 @@ const styles = {
   },
   todayCell: {},
 
-<<<<<<< HEAD
-=======
   // 스케줄 상태 뱃지
   scheduleBadge: {
     off: {
@@ -1073,7 +1027,6 @@ const styles = {
     },
   },
 
->>>>>>> 347736c (commit)
   // 수술 카드
   surgeryCard: {
     borderRadius: "5px",
