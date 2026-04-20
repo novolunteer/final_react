@@ -52,8 +52,8 @@ export const generateAutoSchedule = async (conditionData) => {
 };
 
 // AI 생성 스케줄 확정 저장
-export const confirmAutoSchedule = async (assignments) => {
-    const res = await jwtAxios.post("/api/auto-schedule/confirm", { assignments });
+export const confirmAutoSchedule = async (assignments, departmentId) => {
+    const res = await jwtAxios.post("/api/auto-schedule/confirm", { assignments, departmentId });
     return res.data;
 };
 

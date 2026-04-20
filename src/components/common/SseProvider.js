@@ -71,6 +71,12 @@ const SseProvider = ({ userId, onMessage }) => {
         }
       });
 
+      //스케줄 알림
+      es.addEventListener("scheduleConfirmed", (event)=>{
+        console.log("📅 스케줄 확정 알림:", event.data);
+        onMessage?.({type:"scheduleConfirmed", message: event.data});
+      });
+
       // 서버가 일반 message 이벤트로 보낼 수도 있어서 보조로 둠
       es.onmessage = (event) => {
         try {

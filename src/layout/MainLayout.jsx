@@ -12,6 +12,18 @@ const MainLayout = () => {
   const userId = useSelector(state => state.auth.userId);
   
   const handleSse = (data) => {
+    //스케줄 확정 알림
+    if (data.type === "scheduleConfirmed"){
+      const {startDate, endDate, message} = data.message;
+      const dateText = startDate === endDate
+      ? startDate
+      : `${startDate} ~ ${endDate}`;
+
+      toast.info(`📅 ${dateText} ${message}`,{
+        autoClose : 5000,
+      });
+      return;
+    }
       toast(
         <div style={{ whiteSpace: "pre-line" }}>
           🩺 새 예약

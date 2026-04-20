@@ -10,7 +10,7 @@ import ReservationPage from "../pages/reservation/ReservationPage";
 import ReceptionPage from "../pages/reception/ReceptionPage";
 import MedicalRecordPage from "../pages/medical/MedicalRecordPage";
 import StaffPage from "../pages/hr/staff/StaffPage";
-import StatisticsPage from "../pages/statistics/StatisticsPage";
+// import StatisticsPage from "../pages/statistics/StatisticsPage";
 import NotificationPage from "../pages/notification/NotificationPage";
 import LoginPage from "../pages/login/LoginPage";
 import ChatLayout from "../pages/chat/Layout/ChatLayout";
@@ -70,7 +70,7 @@ const Router = () => {
           <Route path="/staff_schedule" element={<StaffSchedulePage/>}/>
           <Route path="/my-schedule" element={<MySchedulePage/>}/>
           <Route path="/admin" element={<AdminPage />} />
-          <Route path="/statistics" element={<StatisticsPage />} />
+          {/* <Route path="/statistics" element={<StatisticsPage />} /> */}
           <Route path="/communication" element={<CommunicationPage />} />
           <Route path="/notification" element={<NotificationPage />} />
           <Route path="/login" element={<LoginPage/>}/>
