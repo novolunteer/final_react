@@ -3,22 +3,15 @@ import { jwtDecode } from "jwt-decode";
 
 const Sidebar = () => {
   const token = sessionStorage.getItem("accessToken");
-  let roles = [];
-  
-  if (token) {
-    try {
-      const decoded = jwtDecode(token);
-      console.log("decoded :", decoded);
-      
-      if(Array.isArray(decoded.roles)){
-        roles = decoded.roles;
-      } else if(typeof decoded.roles==="string"){
-        roles = [decoded.roles];
-      } else {
-        roles = [];
-      }
 
-      // roles = decoded.roles || [];
+  let roles = [];
+
+  if (token) {
+   try {
+   
+      const decoded = jwtDecode(token);
+
+      roles = decoded.roles || [];
       console.log("user roles:", roles);
     } catch (e) {
       console.error("토큰 디코딩 실패", e);
@@ -29,24 +22,30 @@ const Sidebar = () => {
     if (!itemRoles) return true; // roles 없으면 누구나 접근 가능
     return itemRoles.some((role) => roles.includes(role));
   };
-//HEAD_NURSE 테스트하려고 임시로 넣은거임
+
+  const DOCTORS = ["INTERN", "RESIDENT", "FELLOW", "SPECIALIST", "PROFESSOR", "HEAD_DOCTOR"];
+  const NURSES = ["NURSE", "CHARGE_NURSE", "HEAD_NURSE", "DIRECTOR_NURSE"];
+  const ADMIN_STAFF = ["STAFF","MANAGER", "ADMIN"];
+
+  const MEDICAL_ROLES = ["DOCTOR", ...DOCTORS, "NURSE", ...NURSES];
+
   const menuItems = [
+    { path: "/my-schedule", label: "내 스케줄", roles: MEDICAL_ROLES },
     { path: "/communication", label: "공지사항" },
 
-    { path: "/", label: "대시보드" },
-    { path: "/reservation", label: "예약", roles: ["DOCTOR","PATIENT","HEAD_NURSE"] },
-    { path: "/medical", label: "진료 관리", roles: ["DOCTOR"] },
-    { path: "/reservationconfirm", label: "예약 확인", roles: ["DOCTOR", "ADMINISTRATIVE_STAFF","HEAD_NURSE"]},
-    { path: "/reception", label: "접수", roles: ["DOCTOR","ADMINISTRATIVE_STAFF"]},
-    { path: "/billing", label: "수납", roles: ["ADMINISTRATIVE_STAFF"]},
+    { path: "/reservation", label: "예약", roles: [...DOCTORS, "PATIENT", ...NURSES, ...ADMIN_STAFF] },
+    { path: "/medical", label: "진료 관리", roles: [...DOCTORS] },
+    { path: "/reservationconfirm", label: "예약 확인", roles: [...DOCTORS, ...NURSES, ...ADMIN_STAFF] },
+    { path: "/reception", label: "접수", roles: [...DOCTORS, ...ADMIN_STAFF] },
+    { path: "/billing", label: "수납", roles: [...ADMIN_STAFF] },
 
     {
       label: "인사관리",
       children: [
-        { path: "/staff", label: "직원관리", roles: ["ADMIN","HEAD_NURSE"]},
-        { path: "/department", label: "부서관리", roles: ["ADMIN","HEAD_NURSE"] },
-        { path: "/staff_schedule", label: "근무스케줄 관리", roles: ["ADMIN","HEAD_NURSE"] },
-        { path: "/surgery", label: "수술 스케줄 관리" , roles:["HEAD_NURSE"]},
+        { path: "/staff", label: "직원관리", roles: [...ADMIN_STAFF] },
+        { path: "/department", label: "부서관리", roles: [...ADMIN_STAFF] },
+        { path: "/staff_schedule", label: "근무스케줄 관리", roles: ["HEAD_NURSE", "PROFESSOR", "ADMIN","MANAGER"] },
+        { path: "/surgery", label: "수술 스케줄 관리", roles: ["HEAD_NURSE", "PROFESSOR"] },
       ],
     },
     {
@@ -63,8 +62,8 @@ const Sidebar = () => {
         { path: "/admin/log", label: "로그 관리", roles: ["ADMIN"] },
       ],
     },
-    { path: "/chat", label: "채팅" },
-    { path: "/inquiry/chatbot", label: "AI 문의하기", roles: ["PATIENT"]},
+    { path: "/chat", label: "채팅", roles: ["ADMIN","DOCTOR","NURSE","MANAGER","STAFF"] },
+    { path: "/inquiry/chatbot", label: "AI 문의하기"},
   ];
 
   return (
@@ -83,7 +82,6 @@ const Sidebar = () => {
 
             return (
               <div key={item.label} className="sidebar-group">
-   
                 <div className="sidebar-link sidebar-group-title">
                   {item.label}
                 </div>

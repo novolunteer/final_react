@@ -7,6 +7,11 @@ export const getDepartmentList= async()=>{
     return res.data;
 };
 
+export const getDoctorDepartmentList = async () => {
+    const res = await jwtAxios.get(`${host}/by-category?category=DOCTOR`);
+    return res.data.content ?? res.data ?? [];
+};
+
 export const getDepartmentOne = async(departmentId)=>{
     const res=await jwtAxios.get(`${host}/${departmentId}`);
     return res.data;
