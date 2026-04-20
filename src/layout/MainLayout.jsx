@@ -14,12 +14,15 @@ const MainLayout = () => {
   const handleSse = (data) => {
     //스케줄 확정 알림
     if (data.type === "scheduleConfirmed"){
-      const {startDate, endDate, message} = data.message;
-      const dateText = startDate === endDate
-      ? startDate
-      : `${startDate} ~ ${endDate}`;
+      const msg = typeof data.message === "string"
+      ? JSON.parse(data.message)
+      : data.message;
+      
+      const dateText = msg.startDate && msg.endDate
+      ? (msg.startDate === msg.endDate ? msg.startDate : `${msg.startDate} ~ ${msg.endDate}`)
+      : msg.data;
 
-      toast.info(`📅 ${dateText} ${message}`,{
+      toast.info(`📅 ${dateText} ${msg.message}`,{
         autoClose : 5000,
       });
       return;
