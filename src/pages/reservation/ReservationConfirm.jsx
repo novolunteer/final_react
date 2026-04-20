@@ -1,8 +1,4 @@
 import FullCalendar from '@fullcalendar/react';
-<<<<<<< HEAD
-import axios from 'axios';
-=======
->>>>>>> 347736c (commit)
 import React, { useEffect, useRef, useState } from 'react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
