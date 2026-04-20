@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-import axios from 'axios';
-=======
->>>>>>> 347736c (commit)
 import React, { useEffect, useState } from 'react'
 import jwtAxios from '../../api/jwtAxios';
 import styles from './ReservationPage.module.css';
@@ -14,19 +10,12 @@ const ReservationPage = () => {
   const [selectedDate,setSelectedDate]=useState("");
   const [symptom, setSymptom] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
-<<<<<<< HEAD
-
-  useEffect(()=>{
-      jwtAxios.get('http://localhost:8080/api/department').then((res) => {
-          setDepartment(res.data.content)
-=======
   const [timeSlots, setTimeSlots] = useState([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
 
   useEffect(()=>{
       jwtAxios.get('http://localhost:8080/api/department/by-category?category=DOCTOR').then((res) => {
           setDepartment(res.data.content ?? res.data ?? []);
->>>>>>> 347736c (commit)
         })
         .catch((err) => {
           console.error(err)
@@ -48,8 +37,6 @@ const ReservationPage = () => {
       .catch((err) => console.error(err));
   },[selectedDept])
 
-<<<<<<< HEAD
-=======
   // 날짜 or 의사/부서 변경 시 시간 슬롯 로드
   useEffect(() => {
     setSelectedTime("");
@@ -91,7 +78,6 @@ const ReservationPage = () => {
       .finally(() => setSlotsLoading(false));
   }, [selectedDate, selectedDoc, selectedDept]);
 
->>>>>>> 347736c (commit)
   const submitHandler = () => {
     const reservationData = {
       doctorId: selectedDoc || null, 
@@ -110,10 +96,7 @@ const ReservationPage = () => {
         setSelectedDate("");
         setSelectedTime("");
         setSymptom("");
-<<<<<<< HEAD
-=======
         setTimeSlots([]);
->>>>>>> 347736c (commit)
       })
       .catch(err => {
         console.error('예약 실패:', err);
@@ -164,29 +147,16 @@ const ReservationPage = () => {
               className={styles.input}
               type="date"
               value={selectedDate}
-<<<<<<< HEAD
-              onChange={(e) => setSelectedDate(e.target.value)}
-=======
               min={new Date().toISOString().slice(0, 10)}
               onChange={(e) => {
                 setSelectedDate(e.target.value);
                 setSelectedTime("");
               }}
->>>>>>> 347736c (commit)
             />
           </div>
 
           <div className={styles.formGroup}>
             <label className={styles.label}>희망 시간</label>
-<<<<<<< HEAD
-            <input
-              className={styles.input}
-              type="time"
-              step="3600"
-              value={selectedTime}
-              onChange={(e) => setSelectedTime(e.target.value)}
-            />
-=======
             {!selectedDate || !selectedDept ? (
               <p style={{ fontSize: "13px", color: "#9ca3af", margin: "4px 0" }}>
                 진료과와 날짜를 선택하면 예약 가능한 시간이 표시됩니다.
@@ -232,7 +202,6 @@ const ReservationPage = () => {
                 })}
               </div>
             )}
->>>>>>> 347736c (commit)
           </div>
 
           <div className={styles.formGroup}>
