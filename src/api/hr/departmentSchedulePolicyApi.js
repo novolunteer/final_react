@@ -1,6 +1,6 @@
 import jwtAxios from "../jwtAxios";
 
-const host = "http://localhost:8080/api/schedule-policy";
+const host = "/api/schedule-policy";
 
 export const getDepartmentSchedulePolicyList = async () => {
   const res = await jwtAxios.get(`${host}/list`);

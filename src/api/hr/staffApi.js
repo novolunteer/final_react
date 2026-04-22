@@ -1,6 +1,6 @@
 import jwtAxios from "../jwtAxios";
 
-const host = "http://localhost:8080/api/staff";
+const host = "/api/staff";
 
 export const getStaffList = async() => {
     const res = await jwtAxios.get(`${host}/list?size=1000`);

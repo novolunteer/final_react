@@ -1,6 +1,6 @@
 import jwtAxios from "../jwtAxios";
 
-const host="http://localhost:8080/api/staff_schedule";
+const host="/api/staff_schedule";
 
 export const getScheduleList=async()=>{
     const res=await jwtAxios.get(`${host}/list?size=1000`);

@@ -14,7 +14,7 @@ const ReservationPage = () => {
   const [slotsLoading, setSlotsLoading] = useState(false);
 
   useEffect(()=>{
-      jwtAxios.get('http://localhost:8080/api/department/by-category?category=DOCTOR').then((res) => {
+      jwtAxios.get('/api/department/by-category?category=DOCTOR').then((res) => {
           setDepartment(res.data.content ?? res.data ?? []);
         })
         .catch((err) => {
@@ -29,7 +29,7 @@ const ReservationPage = () => {
       return;
     }
 
-    jwtAxios.get(`http://localhost:8080/api/staff/doctor?departmentId=${selectedDept}`)
+    jwtAxios.get(`/api/staff/doctor?departmentId=${selectedDept}`)
       .then((res) => {
         setDoctor(res.data.content)
         console.log(res.data.content)
@@ -46,8 +46,8 @@ const ReservationPage = () => {
 
     const dailyIso = selectedDate + "T00:00:00";
     const url = selectedDoc
-      ? "http://localhost:8080/api/slot/daily/doctor"
-      : "http://localhost:8080/api/slot/daily/department";
+      ? "/api/slot/daily/doctor"
+      : "/api/slot/daily/department";
     const params = selectedDoc
       ? { daily: dailyIso, doctorId: selectedDoc }
       : { daily: dailyIso, departmentId: selectedDept };
@@ -88,7 +88,7 @@ const ReservationPage = () => {
       symptom: symptom
     };
 
-    jwtAxios.post('http://localhost:8080/api/reservation', reservationData)
+    jwtAxios.post('/api/reservation', reservationData)
       .then(res => {
         alert('예약이 완료되었습니다. 예약번호: '+res.data.reservationId);
         setSelectedDept("");

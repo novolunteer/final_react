@@ -4,8 +4,9 @@ import { updateToken, logout } from "../../store/authSlice";
 import { EventSourcePolyfill } from "event-source-polyfill";
 import axios from "axios";
 
-const SSE_URL = "http://localhost:8080/api/sse/subscribe";
-const REFRESH_URL = "http://localhost:8080/jwt/token/refresh";
+export const API_BASE_URL = import.meta.env.VITE_SPRING_API_BASE_URL;
+const SSE_URL = "/api/sse/subscribe";
+const REFRESH_URL = `${API_BASE_URL}/jwt/token/refresh`;
 
 const SseProvider = ({ userId, onMessage }) => {
   const dispatch = useDispatch();
@@ -47,7 +48,7 @@ const SseProvider = ({ userId, onMessage }) => {
 
       closeExistingConnection();
 
-      const es = new EventSourcePolyfill(`${SSE_URL}/${userId}`, {
+      const es = new EventSourcePolyfill(`${API_BASE_URL}${SSE_URL}/${userId}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },

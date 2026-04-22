@@ -18,7 +18,7 @@ const Header = () => {
     } else {
       try{
          console.log("🔥 버튼 클릭됨");
-        await jwtAxios.post("http://localhost:8080/logout");
+        await jwtAxios.post("/logout");
         dispatch(logout())
         alert("로그아웃 성공!");
         navigate("/", {replace:true});

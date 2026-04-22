@@ -24,7 +24,7 @@ const ReceptionPage = () => {
     }, [name]);
 
     const confirmedHandler=async(receptionId)=>{
-        await jwtAxios.get(`http://localhost:8080/api/administration/recieved?receptionId=${receptionId}`).then((res) => {
+        await jwtAxios.get(`/api/administration/recieved?receptionId=${receptionId}`).then((res) => {
             alert("접수 완료")
             queryClient.invalidateQueries({ queryKey: ['receptionList'] });
         })
@@ -34,7 +34,7 @@ const ReceptionPage = () => {
     }
 
     const cancelHandler=async (reservationId)=>{
-      await jwtAxios.get(`http://localhost:8080/api/reception/cancel?reservationId=${reservationId}`).then((res) => {
+      await jwtAxios.get(`/api/reception/cancel?reservationId=${reservationId}`).then((res) => {
             alert("취소 완료")
             queryClient.invalidateQueries({ queryKey: ['receptionList'] });
         })
@@ -44,7 +44,7 @@ const ReceptionPage = () => {
     }
 
     const fetchReceptionList = async ({ status, name, page }) => {
-      const res = await jwtAxios.get('http://localhost:8080/api/reception', {
+      const res = await jwtAxios.get('/api/reception', {
         params: {
           status: status || undefined,
           name: name,

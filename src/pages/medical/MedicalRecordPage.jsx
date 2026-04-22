@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query';
 import jwtAxios from '../../api/jwtAxios';
 
+export const API_BASE_URL = import.meta.env.VITE_CHATBOT_API_BASE_URL;
+
 const MedicalRecordPage = () => {
       const queryClient = useQueryClient();
       const [selectedPat,setSelectedPat]=useState("");
@@ -40,7 +42,7 @@ const MedicalRecordPage = () => {
         if (!searchKeyword || !selectedPat) return;
 
         const res = await jwtAxios.post(
-          "http://localhost:8080/api/elastic/search",
+          "/api/elastic/search",
           {
             patientId: selectedPat,
             keyword: searchKeyword,
@@ -64,7 +66,7 @@ const MedicalRecordPage = () => {
     const {data: waitingData} = useQuery({
       queryKey: ["medicalRecords", waitingStatus, waitingPage, waitingSize],
       queryFn: async () =>{
-        const res = await jwtAxios.get("http://localhost:8080/api/waitingList",{
+        const res = await jwtAxios.get("/api/waitingList",{
           params:{
             page: waitingPage,
             size: waitingSize,
@@ -80,7 +82,7 @@ const MedicalRecordPage = () => {
     const { data: patientData } = useQuery({
       queryKey: ["patientInfo", selectedPat],
       queryFn: async () => {
-        const res = await jwtAxios.get("http://localhost:8080/api/medicalrecord/patientInfo",
+        const res = await jwtAxios.get("/api/medicalrecord/patientInfo",
           {
             params: { patientId: selectedPat },
           }
@@ -96,7 +98,7 @@ const MedicalRecordPage = () => {
     } = useQuery({
       queryKey: ["medicalRecord", selectedPat, status, page],
       queryFn: async () => {
-        const res = await jwtAxios.get("http://localhost:8080/api/medicalrecord/record", {
+        const res = await jwtAxios.get("/api/medicalrecord/record", {
           params: {
             patientId: selectedPat,
             status: status,
@@ -116,7 +118,7 @@ const MedicalRecordPage = () => {
   : recordList;
 
     const saveRecord = async () => {
-      await jwtAxios.post("http://localhost:8080/api/medicalrecord", {
+      await jwtAxios.post("/api/medicalrecord", {
         patientId: selectedPat,
         medicalRecordStatus: status,
         title: newRecord.title,
@@ -145,7 +147,7 @@ const MedicalRecordPage = () => {
       try {
         if (pendingReceptionId) {
           await jwtAxios.patch(
-            "http://localhost:8080/api/reception/status",
+            "/api/reception/status",
             null,{
               params: {
                 receptionId: pendingReceptionId,
@@ -175,7 +177,7 @@ const MedicalRecordPage = () => {
           }
 
           const res = await jwtAxios.get(
-            "http://localhost:8080/api/medicalrecord/record/detail", {
+            "/api/medicalrecord/record/detail", {
               params: {
                 recordId: item.medicalRecordId,
                 reason: null
@@ -192,7 +194,7 @@ const MedicalRecordPage = () => {
       const handleSubmitReason = async () => {
         try {
           const res = await jwtAxios.get(
-              "http://localhost:8080/api/medicalrecord/record/detail", {
+              "/api/medicalrecord/record/detail", {
                 params: {
                   recordId: pendingRecord.medicalRecordId,
                   reason: reason
@@ -211,7 +213,7 @@ const MedicalRecordPage = () => {
 
       const handleChangeToInProgress = async () => {
         try {
-          await jwtAxios.patch("http://localhost:8080/api/reception/status", null, {
+          await jwtAxios.patch("/api/reception/status", null, {
             params: {
               receptionId: pendingReceptionId,
               status: "CONSULTING",
@@ -243,7 +245,7 @@ const MedicalRecordPage = () => {
             symptom: newRecord.symptom,
           };
 
-          const res = await jwtAxios.post("http://localhost:8000/diagnose", payload, {
+          const res = await jwtAxios.post(`${API_BASE_URL}/diagnose`, payload, {
                                           headers: { "Content-Type": "application/json" }
                                         });
           const data = res.data;

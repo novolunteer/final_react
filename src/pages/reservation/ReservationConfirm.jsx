@@ -44,7 +44,7 @@ const ReservationConfirm = () => {
   }, [name]);
 
   useEffect(() => {
-    jwtAxios.get('http://localhost:8080/api/department/by-category?category=DOCTOR')
+    jwtAxios.get('/api/department/by-category?category=DOCTOR')
       .then(res => {
         console.log("부서 응답:", res.data);
         setDepartment(res.data.content ?? res.data ?? []);
@@ -64,7 +64,7 @@ const ReservationConfirm = () => {
       return;
     }
 
-    jwtAxios.get(`http://localhost:8080/api/staff/doctor?departmentId=${selectedDept}`)
+    jwtAxios.get(`/api/staff/doctor?departmentId=${selectedDept}`)
       .then(res => {
         setDoctor(res.data.content ?? []);
 
@@ -88,7 +88,7 @@ const ReservationConfirm = () => {
     const isNextMonthOrLater = dayjs(currentMonth).isAfter(dayjs().endOf('month'));
 
     if (isNextMonthOrLater) {
-      url = "http://localhost:8080/api/slot/department";
+      url = "/api/slot/department";
       params = { monthly: currentMonth, departmentId: selectedDept };
     } else {
       // 수정:
@@ -96,8 +96,8 @@ const ReservationConfirm = () => {
       // 선택 안 된 경우에도 달력은 부서 기준으로 그릴 수는 있지만,
       // 실제 슬롯 확인은 handleDateClick에서 막는다.
       url = selectedDoc
-        ? "http://localhost:8080/api/slot/doctor"
-        : "http://localhost:8080/api/slot/department";
+        ? "/api/slot/doctor"
+        : "/api/slot/department";
 
       params = selectedDoc
         ? { monthly: currentMonth, doctorId: selectedDoc }
@@ -128,7 +128,7 @@ const ReservationConfirm = () => {
   }, [selectedDoc, currentMonth, selectedDept]);
 
   const fetchReservationList = ({ status, dept, name, page }) => {
-    let url = "http://localhost:8080/api/reservation";
+    let url = "/api/reservation";
 
     if (status === "PENDING") url += "/pending";
     if (status === "CONFIRMED") url += "/confirmed";
@@ -177,8 +177,8 @@ const ReservationConfirm = () => {
     setBlockMessage("");
 
     const url = isNextMonthOrLater
-      ? `http://localhost:8080/api/slot/daily/department`
-      : `http://localhost:8080/api/slot/daily/doctor`;
+      ? `/api/slot/daily/department`
+      : `/api/slot/daily/doctor`;
 
     const params = isNextMonthOrLater
       ? { daily: dailyIso, departmentId: selectedDept }
@@ -248,8 +248,8 @@ const ReservationConfirm = () => {
     setBlockMessage("");
 
     const url = isNextMonthOrLater
-      ? `http://localhost:8080/api/slot/daily/department`
-      : `http://localhost:8080/api/slot/daily/doctor`;
+      ? `/api/slot/daily/department`
+      : `/api/slot/daily/doctor`;
 
     const params = isNextMonthOrLater
       ? { daily: dailyIso, departmentId: selectedDept }
@@ -310,8 +310,8 @@ const ReservationConfirm = () => {
 
     const dailyIso = date + "T00:00:00";
     const url = docId
-      ? `http://localhost:8080/api/slot/daily/doctor`
-      : `http://localhost:8080/api/slot/daily/department`;
+      ? `/api/slot/daily/doctor`
+      : `/api/slot/daily/department`;
 
     const params = docId
       ? { daily: dailyIso, doctorId: docId }
@@ -372,8 +372,8 @@ const ReservationConfirm = () => {
 
     const request =
       status === "CONFIRMED"
-        ? jwtAxios.put('http://localhost:8080/api/reservation', payload)
-        : jwtAxios.post('http://localhost:8080/api/reservation/confirm', payload);
+        ? jwtAxios.put('/api/reservation', payload)
+        : jwtAxios.post('/api/reservation/confirm', payload);
 
     request
       .then(() => {
@@ -402,12 +402,12 @@ const ReservationConfirm = () => {
     const isNextMonthOrLater = dayjs(currentMonth).isAfter(dayjs().endOf('month'));
 
     if (isNextMonthOrLater) {
-      url = "http://localhost:8080/api/slot/department";
+      url = "/api/slot/department";
       params = { monthly: currentMonth, departmentId: selectedDept };
     } else {
       url = selectedDoc
-        ? "http://localhost:8080/api/slot/doctor"
-        : "http://localhost:8080/api/slot/department";
+        ? "/api/slot/doctor"
+        : "/api/slot/department";
 
       params = selectedDoc
         ? { monthly: currentMonth, doctorId: selectedDoc }
@@ -453,8 +453,8 @@ const ReservationConfirm = () => {
     }
 
     const url = isNextMonthOrLater
-      ? `http://localhost:8080/api/slot/daily/department`
-      : `http://localhost:8080/api/slot/daily/doctor`;
+      ? `/api/slot/daily/department`
+      : `/api/slot/daily/doctor`;
 
     const params = isNextMonthOrLater
       ? { daily: dailyIso, departmentId: selectedDept }
@@ -495,13 +495,13 @@ const ReservationConfirm = () => {
   };
 
   const handleCancel = (reservationId) => {
-    jwtAxios.get(`http://localhost:8080/api/reservation/delete?reservationId=${reservationId}`)
+    jwtAxios.get(`/api/reservation/delete?reservationId=${reservationId}`)
       .then(() => {
         alert("예약 취소 완료");
         setSelectedRow(null);
         setTimeSlots([]);
 
-        let url = "http://localhost:8080/api/reservation";
+        let url = "/api/reservation";
         if (status === "PENDING") url += "/pending";
         if (status === "CONFIRMED") url += "/confirmed";
 
