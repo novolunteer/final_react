@@ -14,7 +14,7 @@ const InquiryChatBotPage = () => {
   const messageAreaRef=useRef(null);
 
   const roles=sessionStorage.getItem("roles") || "";
-  const isAdmin=roles.includes("ADMIN");
+  const isAdmin=roles.includes("ADMIN") && roles.includes("ADMINISTRATION"); 
 
   useEffect(()=>{
     if(messageAreaRef.current){
