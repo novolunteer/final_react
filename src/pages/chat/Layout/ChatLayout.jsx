@@ -70,7 +70,7 @@ const ChatLayout = () => {
       if(!accessToken) return;
   
       const client=new Client({
-          brokerURL: 'ws://52.78.116.164/ws',
+          brokerURL: 'ws://43.202.201.195/ws',
           connectHeaders:{
               Authorization:`Bearer ${accessToken}`
           },
