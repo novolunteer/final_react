@@ -876,13 +876,6 @@ const MedicalRecordPage = () => {
             }}>
               {aiResult.ai_diagnosis}
             </div>
-
-            <h4 style={{ marginTop: "15px" }}>📌 추천 진료과</h4>
-            <ul>
-              {aiResult.agent_response.map((id) => (
-                <li key={id}>진료과 ID: {id}</li>
-              ))}
-            </ul>
           </div>
         )}
         </div>
