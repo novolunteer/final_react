@@ -121,11 +121,11 @@ const responseFail=async(error)=>{
       } catch (refreshError) {
         console.log("refresh 실패 ===>", refreshError);
 
+        alert("refresh token이 만료되어 로그아웃 됩니다.");
+
         store.dispatch(logout());
 
         onRefreshFailed(refreshError);
-
-        alert("refresh token이 만료되어 로그아웃 됩니다.");
 
         window.location.href = "/login";
         return Promise.reject(refreshError);
