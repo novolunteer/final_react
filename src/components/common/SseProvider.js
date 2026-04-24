@@ -4,8 +4,8 @@ import { updateToken, logout } from "../../store/authSlice";
 import { EventSourcePolyfill } from "event-source-polyfill";
 import axios from "axios";
 
-const SSE_URL = "http://localhost:8080/api/sse/subscribe";
-const REFRESH_URL = "http://localhost:8080/jwt/token/refresh";
+const SSE_URL = `{API_BASE_URL}/sse/subscribe`;
+const REFRESH_URL =`{API_BASE_URL}/jwt/token/refresh`;
 
 const SseProvider = ({ userId, onMessage }) => {
   const dispatch = useDispatch();

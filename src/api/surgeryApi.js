@@ -1,6 +1,6 @@
-import jwtAxios from "./jwtAxios";
+import jwtAxios , {API_BASE_URL} from "./jwtAxios";
 
-const host = "http://localhost:8080/api/surgery";
+const host = `${API_BASE_URL}/surgery``;
 
 export const getSurgeryList = async () => {
   const res = await jwtAxios.get(host);
