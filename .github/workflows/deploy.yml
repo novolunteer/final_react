@@ -49,6 +49,9 @@ jobs:
             docker run -d \
               --name nginx \
               -p 80:80 \
-              -p 8080:8080 \
-              -p 8000:8000 \
+              -p 443:443 \
+              -v /home/ubuntu/nginx.conf:/etc/nginx/nginx.conf \
+              -v /home/ubuntu/default.conf:/etc/nginx/conf.d/default.conf \
+              -v /home/ubuntu/fullchain.crt:/etc/ssl/mycert/fullchain.crt \
+              -v /home/ubuntu/private.key:/etc/ssl/mycert/private.key \
               143555787778.dkr.ecr.ap-northeast-2.amazonaws.com/my-project-nginx:latest
