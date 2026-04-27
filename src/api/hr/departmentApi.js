@@ -1,11 +1,6 @@
 import jwtAxios, { API_BASE_URL } from "../jwtAxios";
 
-<<<<<<< HEAD
 const host="/api/department";
-=======
-
-const host=`${API_BASE_URL}/department`;
->>>>>>> 9a1f610be75b450ca0528488807f139d64137260
 
 export const getDepartmentList= async()=>{
     const res=await jwtAxios.get(`${host}/list`);
