@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
+import usePagination from "../../../hooks/usePagination";
+import Pagination from "../../../components/common/Pagination";
 import StaffForm from "../../../components/form/StaffForm";
 import CommonModal from "../../../components/common/CommonModal";
 import CommonTable from "../../../components/common/CommonTable";
@@ -22,6 +24,7 @@ const StaffPage = () => {
   const [bulkOpen, setBulkOpen] = useState(false);
 
   const [searchKeyword, setSearchKeyword] = useState("");
+  const { pagedData: pagedStaffList, page, setPage, totalPages } = usePagination(staffList);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
 
   const [searchModalOpen, setSearchModalOpen] = useState(false);
@@ -174,14 +177,17 @@ const StaffPage = () => {
     try {
       if (selectedStaff) {
         await updateStaff(staffData);
+        alert("직원 정보가 수정되었습니다.");
       } else {
         await registerStaff(staffData);
+        alert("직원 등록이 완료되었습니다.");
       }
 
       await loadStaffList();
       handleClose();
     } catch (error) {
       console.error("직원 저장 실패", error);
+      alert("저장 중 오류가 발생했습니다.");
     }
   };
 
@@ -331,7 +337,8 @@ const StaffPage = () => {
         </button>
       </div>
 
-      <CommonTable columns={columns} data={staffList} />
+      <CommonTable columns={columns} data={pagedStaffList} />
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       {/* 직원 등록/수정 모달 */}
       <CommonModal open={open} onClose={handleClose}>
@@ -349,7 +356,8 @@ const StaffPage = () => {
       open={bulkOpen}
       onClose={()=>setBulkOpen(false)}
       onSuccess={loadStaffList}
-      ></StaffBulkUpload>
+      departmentList={departmentList}
+      />
 
       {/* 동명이인 선택 모달 */}
       <CommonModal
