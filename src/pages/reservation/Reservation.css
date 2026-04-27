@@ -20,3 +20,9 @@
   pointer-events: none;
 
 }
+
+.sunday-disabled {
+  background-color: #f5f5f5 !important;
+  color: #ccc !important;
+  pointer-events: none;
+}

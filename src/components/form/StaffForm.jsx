@@ -3,7 +3,8 @@ import CommonModal from "../common/CommonModal";
 
 const initState = {
   staffId: "",
-  userId: "",
+  email: "",
+  password: "",
   departmentId: "",
   managerId: "",
   position: "",
@@ -53,7 +54,8 @@ const StaffForm = ({
     if (initialData) {
       setForm({
         staffId: initialData.staffId || "",
-        userId: initialData.userId || "",
+        email: "",
+        password: "",
         departmentId: initialData.departmentId || "",
         managerId: initialData.managerId || "",
         position: initialData.position || "",
@@ -153,7 +155,8 @@ const StaffForm = ({
 
     const requestData = {
       staffId: form.staffId ? Number(form.staffId) : null,
-      userId: form.userId ? Number(form.userId) : null,
+      email: form.email || null,
+      password: form.password || null,
       departmentId: form.departmentId ? Number(form.departmentId) : null,
       managerId: form.managerId ? Number(form.managerId) : null,
       position: form.position,
@@ -177,17 +180,30 @@ const StaffForm = ({
         <h3>직원등록</h3>
 
         <div style={styles.formGrid}>
-          <div>
-            <label>사용자ID</label>
-            <input
-              type="number"
-              name="userId"
-              value={form.userId}
-              onChange={handleChange}
-              placeholder="사용자ID 입력"
-              disabled={!!initialData}
-            />
-          </div>
+          {!initialData && (
+            <>
+              <div>
+                <label>이메일</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  placeholder="이메일 입력"
+                />
+              </div>
+              <div>
+                <label>비밀번호</label>
+                <input
+                  type="password"
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="비밀번호 입력"
+                />
+              </div>
+            </>
+          )}
 
           <div>
             <label>부서명</label>

@@ -1,6 +1,11 @@
-import jwtAxios from "../jwtAxios";
+import jwtAxios, { API_BASE_URL } from "../jwtAxios";
 
+<<<<<<< HEAD
 const host="/api/staff_schedule";
+=======
+
+const host=`${API_BASE_URL}/staff_schedule`;
+>>>>>>> 9a1f610be75b450ca0528488807f139d64137260
 
 export const getScheduleList=async()=>{
     const res=await jwtAxios.get(`${host}/list?size=1000`);
