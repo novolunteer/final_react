@@ -7,11 +7,13 @@ import RegisterButton from "../../../components/common/RegisterButton";
 import SearchBar from "../../../components/common/SearchBar";
 import CommonTable from "../../../components/common/CommonTable";
 import CommonModal from "../../../components/common/CommonModal";
+import Pagination from "../../../components/common/Pagination";
 import StaffScheduleForm from "../../../components/form/StaffScheduleForm";
 import BulkScheduleForm from "../../../components/form/BulkScheduleForm";
 import AutoScheduleConditionForm from "../../../components/form/AutoScheduleConditionForm";
 import AutoScheduleResultView from "../../../components/schedule/AutoScheduleResultView";
 import WeekScheduleTable from "../../../components/schedule/WeekScheduleTable";
+import usePagination from "../../../hooks/usePagination";
 
 import {
   bulkConfirmSchedule,
@@ -54,6 +56,18 @@ const getTodayString = () => {
   const month = String(today.getMonth() + 1).padStart(2, "0");
   const date = String(today.getDate()).padStart(2, "0");
   return `${year}-${month}-${date}`;
+};
+
+// 부서별 직원 목록 (5명씩 페이징)
+const DepartmentScheduleGroup = ({ departmentName, items, columns, deptTableData }) => {
+  const { pagedData, page, setPage, totalPages } = usePagination(items, 5);
+  return (
+    <div>
+      <h3>{departmentName}</h3>
+      <CommonTable columns={columns} data={deptTableData(pagedData)} />
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} variant="sub" />
+    </div>
+  );
 };
 
 const StaffSchedulePage = () => {
@@ -134,19 +148,28 @@ const StaffSchedulePage = () => {
     return result;
   }, [scheduleList, searchKeyword, selectedDate, selectedDepartmentId, selectedScheduleTypeId]);
 
-  // 달력형 우측 목록을 부서별로 묶기
-  const groupedScheduleList = useMemo(() => {
+  // 달력형 우측 목록 - 전체 부서별 그룹화
+  const allGroupedScheduleList = useMemo(() => {
     return filteredScheduleList.reduce((acc, item) => {
       const departmentName = item.departmentName || "미지정 부서";
-
-      if (!acc[departmentName]) {
-        acc[departmentName] = [];
-      }
-
+      if (!acc[departmentName]) acc[departmentName] = [];
       acc[departmentName].push(item);
       return acc;
     }, {});
   }, [filteredScheduleList]);
+
+  // 부서명 목록 페이징 (2개씩)
+  const departmentNames = useMemo(() => Object.keys(allGroupedScheduleList), [allGroupedScheduleList]);
+  const { pagedData: pagedDeptNames, page: schedulePage, setPage: setSchedulePage, totalPages: scheduleTotalPages } =
+    usePagination(departmentNames, 2);
+
+  // 페이징된 부서만 추려서 표시
+  const groupedScheduleList = useMemo(() => {
+    return pagedDeptNames.reduce((acc, deptName) => {
+      acc[deptName] = allGroupedScheduleList[deptName];
+      return acc;
+    }, {});
+  }, [pagedDeptNames, allGroupedScheduleList]);
   
   // 주간형 직원검색
     const filteredWeekStaffList= useMemo(()=>{
@@ -206,22 +229,36 @@ const StaffSchedulePage = () => {
 
   // 달력에 날짜별 총 근무자 수 표시용 이벤트
   const events = useMemo(() => {
-    return Object.values(
-      scheduleList.reduce((acc, item) => {
+    const dateMap = scheduleList.reduce((acc, item) => {
         const date = item.workDate;
 
         if (!acc[date]) {
-          acc[date] = { date, count: 0 };
+          acc[date] = { date, workCount: 0, offCount: 0 };
         }
-
-        acc[date].count += 1;
+        
+        if(!item.startTime){
+        acc[date].offCount += 1;
+        }else {
+          acc[date].workCount += 1;
+        }
         return acc;
-      }, {})
-    ).map((item) => ({
-      title: `총 ${item.count}명 근무`,
+      }, {});
+      
+    return Object.values(dateMap).flatMap((item) => [
+    {
+      title: `근무 ${item.workCount}명`,
       date: item.date,
-    }));
-  }, [scheduleList]);
+      backgroundColor: "#3b82f6",  // 파란색
+      borderColor: "#3b82f6",
+    },
+    {
+      title: `휴무 ${item.offCount}명`,
+      date: item.date,
+      backgroundColor: "#f87171",  // 빨간색
+      borderColor: "#f87171",
+    },
+  ]);
+}, [scheduleList]);
 
   // 테이블 컬럼
   const columns = [
@@ -716,14 +753,16 @@ const StaffSchedulePage = () => {
             <div style={styles.list}>
               <h2>{selectedDate || getTodayString()} 스케줄</h2>
 
-              {Object.entries(groupedScheduleList).map(
-                ([departmentName, items]) => (
-                  <div key={departmentName}>
-                    <h3>{departmentName}</h3>
-                    <CommonTable columns={columns} data={deptTableData(items)} />
-                  </div>
-                )
-              )}
+              {Object.entries(groupedScheduleList).map(([departmentName, items]) => (
+                <DepartmentScheduleGroup
+                  key={departmentName}
+                  departmentName={departmentName}
+                  items={items}
+                  columns={columns}
+                  deptTableData={deptTableData}
+                />
+              ))}
+              <Pagination page={schedulePage} totalPages={scheduleTotalPages} onPageChange={setSchedulePage} />
             </div>
           </>
         ) : (

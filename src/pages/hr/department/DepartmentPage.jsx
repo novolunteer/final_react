@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import usePagination from "../../../hooks/usePagination";
+import Pagination from "../../../components/common/Pagination";
 import RegisterButton from "../../../components/common/RegisterButton";
 import SearchBar from "../../../components/common/SearchBar";
 import CommonTable from "../../../components/common/CommonTable";
@@ -17,6 +19,7 @@ const DepartmentPage = () => {
   const [open, setOpen] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [searchKeyword, setSearchKeyword] = useState("");
+  const { pagedData: pagedDeptList, page, setPage, totalPages } = usePagination(departmentList);
 
 
   useEffect(() => {
@@ -168,7 +171,8 @@ const DepartmentPage = () => {
         </button>
       </div>
 
-      <CommonTable columns={columns} data={departmentList} />
+      <CommonTable columns={columns} data={pagedDeptList} />
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       <CommonModal open={open} onClose={handleClose}>
         <DepartmentForm

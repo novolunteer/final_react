@@ -108,7 +108,19 @@ const ReservationConfirm = () => {
       .then(res => {
         const data = res.data.content ?? [];
 
-        const slotEvents = data.map(slot => ({
+        const slotEvents = data
+        .filter(slot => {
+          const dow = dayjs(slot.date).day();
+          return dow !== 0; // 일요일 이벤트 아예 제거
+        })
+        .map(slot => {
+          const dow = dayjs(slot.date).day();
+          // 토요일이면 오전(9~12시, 4시간)만 표시
+          const displayCapacity = dow === 6
+            ? Math.round(slot.totalCapacity * (4 / 8)) // 전체 8시간 중 4시간
+            : slot.totalCapacity;
+
+            return {
           title: slot.available
             ? `가능 (${slot.totalCapacity}명)`
             : (slot.scheduleType || 'OFF'),
@@ -120,7 +132,8 @@ const ReservationConfirm = () => {
             available: slot.available,
             blocked: !slot.available, // 수정
           }
-        }));
+        };
+      });
 
         setEvents(slotEvents);
       })
@@ -159,8 +172,17 @@ const ReservationConfirm = () => {
 
   const handleDateClick = (info) => {
     const clickedDate = info.dateStr;
+    const dayOfWeek = dayjs(clickedDate).day();
     const dailyIso = clickedDate + "T00:00:00";
     const isNextMonthOrLater = dayjs(clickedDate).isAfter(dayjs().endOf('month'));
+
+    if (dayOfWeek === 0) {
+      setSlotBlocked(true);
+      setBlockMessage("일요일은 예약이 불가합니다.");
+      setTimeSlots([]);
+      setSelectedDate(clickedDate);
+      return;
+    }
 
     setSelectedDate(clickedDate);
 
@@ -201,6 +223,7 @@ const ReservationConfirm = () => {
         const slotsByHour = [];
         for (let h = 9; h <= 17; h++) {
           if (h === 13) continue;
+          if (dayOfWeek === 6 && h >= 13) continue;
           const slot = data.find(s => new Date(s.startTime).getHours() === h);
           slotsByHour.push({
             hour: h,
@@ -230,8 +253,17 @@ const ReservationConfirm = () => {
 
   const handleEventClick = (info) => {
     const dateStr = dayjs(info.event.start).format('YYYY-MM-DD');
+    const dayOfWeek = dayjs(dateStr).day();
     const dailyIso = dateStr + "T00:00:00";
     const isNextMonthOrLater = dayjs(dateStr).isAfter(dayjs().endOf('month'));
+
+     if (dayOfWeek === 0) {
+      setSlotBlocked(true);
+      setBlockMessage("일요일은 예약이 불가합니다.");
+      setTimeSlots([]);
+      setSelectedDate(dateStr);
+      return;
+    }
 
     setSelectedDate(dateStr);
 
@@ -272,6 +304,7 @@ const ReservationConfirm = () => {
         const slotsByHour = [];
         for (let h = 9; h <= 17; h++) {
           if (h === 13) continue;
+          if (dayOfWeek === 6 && h >= 13) continue;
           const slot = data.find(s => new Date(s.startTime).getHours() === h);
           slotsByHour.push({
             hour: h,
@@ -299,10 +332,19 @@ const ReservationConfirm = () => {
       ? dayjs(getDate(item)).format('YYYY-MM-DD')
       : dayjs().format('YYYY-MM-DD');
 
+    const dayOfWeek = dayjs(date).day(); 
+
     setSelectedDate(date);
     setTimeSlots([]);
     setSlotBlocked(false); // 수정
     setBlockMessage(""); // 수정
+
+      // 일요일 차단
+    if (dayOfWeek === 0) {
+      setSlotBlocked(true);
+      setBlockMessage("일요일은 예약이 불가합니다.");
+      return;
+    }
 
     if (calendarRef.current) {
       calendarRef.current.getApi().gotoDate(date);
@@ -337,6 +379,7 @@ const ReservationConfirm = () => {
         const slotsByHour = [];
         for (let h = 9; h <= 17; h++) {
           if (h === 13) continue;
+          if (dayOfWeek === 6 && h >= 13) continue; 
           const slot = data.find(s => new Date(s.startTime).getHours() === h);
           slotsByHour.push({
             hour: h,
@@ -395,7 +438,9 @@ const ReservationConfirm = () => {
 
   const refreshCalendar = () => {
     if (!currentMonth) return;
-
+    console.log("refreshCalendar currentMonth:", currentMonth); 
+    console.log("isNextMonthOrLater:", dayjs(currentMonth).isAfter(dayjs().endOf('month'))); // 추가
+    
     let url;
     let params;
 
@@ -418,19 +463,28 @@ const ReservationConfirm = () => {
       .then(res => {
         const data = res.data.content ?? [];
 
-        const slotEvents = data.map(slot => ({
-          title: slot.available
-            ? `가능 (${slot.totalCapacity}명)`
-            : (slot.scheduleType || 'OFF'),
-          start: slot.date,
-          color: slot.available ? "#69a56b" : "#e5e7eb",
-          textColor: slot.available ? "#fff" : "#9ca3af",
-          allDay: true,
-          extendedProps: {
-            available: slot.available,
-            blocked: !slot.available
-          }
-        }));
+        const slotEvents = data
+        .filter(slot => dayjs(slot.date).day() !== 0) 
+        .map(slot => {
+          const dow = dayjs(slot.date).day();
+          const displayCapacity = dow === 6
+            ? Math.round(slot.totalCapacity * (4 / 8))
+            : slot.totalCapacity;
+
+          return {
+            title: slot.available
+              ? `가능 (${slot.totalCapacity}명)`
+              : (slot.scheduleType || 'OFF'),
+            start: slot.date,
+            color: slot.available ? "#69a56b" : "#e5e7eb",
+            textColor: slot.available ? "#fff" : "#9ca3af",
+            allDay: true,
+            extendedProps: {
+              available: slot.available,
+              blocked: !slot.available
+            }
+        };
+      });
 
         setEvents(slotEvents);
       })
@@ -439,6 +493,16 @@ const ReservationConfirm = () => {
 
   const refreshSlots = () => {
     if (!selectedDate) return;
+
+    const dayOfWeek = dayjs(selectedDate).day();
+
+    // 일요일 차단
+    if (dayOfWeek === 0) {
+      setSlotBlocked(true);
+      setBlockMessage("일요일은 예약이 불가합니다.");
+      setTimeSlots([]);
+      return;
+    }
 
     const dailyIso = selectedDate + "T00:00:00";
     const isNextMonthOrLater = dayjs(selectedDate).isAfter(dayjs().endOf('month'));
@@ -477,6 +541,7 @@ const ReservationConfirm = () => {
         const slotsByHour = [];
         for (let h = 9; h <= 17; h++) {
           if (h === 13) continue;
+          if (dayOfWeek === 6 && h >= 13) continue;
 
           const slot = data.find(s => new Date(s.startTime).getHours() === h);
 
@@ -689,8 +754,8 @@ const ReservationConfirm = () => {
             }}
             height="100%"
             dayCellClassNames={(info) => {
-              const dateStr = dayjs(info.date).format('YYYY-MM-DD');
-              return selectedDate === dateStr ? ['selected-day'] : [];
+               const dateStr = dayjs(info.date).format('YYYY-MM-DD');
+               return selectedDate === dateStr ? ['selected-day'] : [];
             }}
           />
         </div>
