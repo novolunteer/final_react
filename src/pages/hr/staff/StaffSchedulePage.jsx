@@ -229,22 +229,36 @@ const StaffSchedulePage = () => {
 
   // 달력에 날짜별 총 근무자 수 표시용 이벤트
   const events = useMemo(() => {
-    return Object.values(
-      scheduleList.reduce((acc, item) => {
+    const dateMap = scheduleList.reduce((acc, item) => {
         const date = item.workDate;
 
         if (!acc[date]) {
-          acc[date] = { date, count: 0 };
+          acc[date] = { date, workCount: 0, offCount: 0 };
         }
-
-        acc[date].count += 1;
+        
+        if(!item.startTime){
+        acc[date].offCount += 1;
+        }else {
+          acc[date].workCount += 1;
+        }
         return acc;
-      }, {})
-    ).map((item) => ({
-      title: `총 ${item.count}명 근무`,
+      }, {});
+      
+    return Object.values(dateMap).flatMap((item) => [
+    {
+      title: `근무 ${item.workCount}명`,
       date: item.date,
-    }));
-  }, [scheduleList]);
+      backgroundColor: "#3b82f6",  // 파란색
+      borderColor: "#3b82f6",
+    },
+    {
+      title: `휴무 ${item.offCount}명`,
+      date: item.date,
+      backgroundColor: "#f87171",  // 빨간색
+      borderColor: "#f87171",
+    },
+  ]);
+}, [scheduleList]);
 
   // 테이블 컬럼
   const columns = [
