@@ -21,10 +21,6 @@ const BillingLayout = () => {
     if(roles.includes("PATIENT")){
         navigate("/", {replace:true});
     }
-
-    if(Number(departmentId) !== 16){
-      navigate("/", {replace:true});
-    }
   },[])
 
   const handleSearch=()=>{
