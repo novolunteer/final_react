@@ -4,14 +4,9 @@ import { updateToken, logout } from "../../store/authSlice";
 import { EventSourcePolyfill } from "event-source-polyfill";
 import axios from "axios";
 
-<<<<<<< HEAD
 export const API_BASE_URL = import.meta.env.VITE_SPRING_API_BASE_URL;
 const SSE_URL = "/api/sse/subscribe";
 const REFRESH_URL = `${API_BASE_URL}/jwt/token/refresh`;
-=======
-const SSE_URL = `{API_BASE_URL}/sse/subscribe`;
-const REFRESH_URL =`{API_BASE_URL}/jwt/token/refresh`;
->>>>>>> 9a1f610be75b450ca0528488807f139d64137260
 
 const SseProvider = ({ userId, onMessage }) => {
   const dispatch = useDispatch();

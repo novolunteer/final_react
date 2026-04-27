@@ -18,11 +18,7 @@ const Header = () => {
     } else {
       try{
          console.log("🔥 버튼 클릭됨");
-<<<<<<< HEAD
         await jwtAxios.post("/logout");
-=======
-        await jwtAxios.post(`{API_BASE_URL}/logout`);
->>>>>>> 9a1f610be75b450ca0528488807f139d64137260
         dispatch(logout())
         alert("로그아웃 성공!");
         navigate("/", {replace:true});
