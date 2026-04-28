@@ -116,7 +116,7 @@ const ChatLayout = () => {
         if(!client || !connected) return;
 
         const roomListSubscription=client.subscribe(
-            '/user/queue/chat/list',
+            '/user/queue/chat.list',
             async (message) => {
                 const payload=JSON.parse(message.body);
 

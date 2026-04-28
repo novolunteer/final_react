@@ -431,7 +431,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
     }
 
     //새 메시지 구독
-    subscriptionRef.current=client.subscribe(`/topic/chat/room/${roomId}`,async (message) => {
+    subscriptionRef.current=client.subscribe(`/topic/chat.room.${roomId}`,async (message) => {
         const newMessage=JSON.parse(message.body);
         const nearBottom=isNearBottom();
         const isMine=Number(newMessage.senderId) === Number(userId);
@@ -463,7 +463,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
 
     //읽음 이벤트 구독
     readSubscriptionRef.current = client.subscribe(
-        `/topic/chat/room/${roomId}/read`,
+        `/topic/chat.room.${roomId}.read`,
         async (message) => {
             const readStatus=JSON.parse(message.body);
 
@@ -514,7 +514,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
 
     //메시지 수정/삭제 구독
     updateSubscriptionRef.current=client.subscribe(
-        `/user/queue/chat/room/${roomId}/message/update`,
+        `/user/queue/chat.room.${roomId}.message.update`,
         async (message) => {
             const payload=JSON.parse(message.body);
 
