@@ -10,8 +10,7 @@ const BillingLayout = () => {
 
   const navigate=useNavigate();
   const accessToken=sessionStorage.getItem('accessToken');
-  const roles = sessionStorage.getItem("roles") || [];
-  const departmentId=sessionStorage.getItem("departmentId");
+  const roles = sessionStorage.getItem("roles");
   
   useEffect(()=>{
     if(!accessToken){
