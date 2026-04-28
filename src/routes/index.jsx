@@ -77,7 +77,6 @@ const Router = () => (
         <Route path="/reservation"     element={<ReservationPage />} />
         <Route path="/reservationconfirm" element={<ReservationConfirm />} />
         <Route path="/inquiry/chatbot" element={<InquiryChatBotPage />} />
-        <Route path="/notification"    element={<NotificationPage />} />
 
         {/* Staff / Medical */}
         <Route path="/dashboard"   element={<DashboardPage />} />
