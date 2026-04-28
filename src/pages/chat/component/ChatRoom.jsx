@@ -410,6 +410,34 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
     firstLoadRef.current=false;
   },[messageSlice.messages]);
 
+  const updateMessageInState= (updateMessage) => {
+    setMessageSlice(prev => ({
+        ...prev,
+        messages:prev.messages.map(msg => {
+            const parent=msg.parentMessage;
+
+            if(msg.messageId === updateMessage.messageId){
+                return {...msg, ...updateMessage};
+            }
+
+            if(parent && parent.parentMessageId === updateMessage.messageId){
+                return {
+                    ...msg,
+                    parentMessage: {
+                        ...parent,
+                        parentMessageContent: updateMessage.deleted
+                            ? null
+                            : updateMessage.content,
+                        parentMessageIsDeleted: !!updateMessage.deleted
+                    }
+                };
+            }
+
+            return msg;
+        })
+    }));
+  };
+
   useEffect(()=>{
     const client=clientRef.current;
 
@@ -771,34 +799,6 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
 
     return true;
   }
-
-  const updateMessageInState= (updateMessage) => {
-    setMessageSlice(prev => ({
-        ...prev,
-        messages:prev.messages.map(msg => {
-            const parent=msg.parentMessage;
-
-            if(msg.messageId === updateMessage.messageId){
-                return {...msg, ...updateMessage};
-            }
-
-            if(parent && parent.parentMessageId === updateMessage.messageId){
-                return {
-                    ...msg,
-                    parentMessage: {
-                        ...parent,
-                        parentMessageContent: updateMessage.deleted
-                            ? null
-                            : updateMessage.content,
-                        parentMessageIsDeleted: !!updateMessage.deleted
-                    }
-                };
-            }
-
-            return msg;
-        })
-    }));
-  };
 
   const handleEditMessage=async(messageId) => {
     try{
