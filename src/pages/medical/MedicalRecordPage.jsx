@@ -17,7 +17,6 @@ const STATUS_TABS = [
   { key: "TEST",         label: "검사" },
   { key: "SURGERY",      label: "수술" },
   { key: "PRESCRIPTION", label: "처방" },
-  { key: "SEARCH",       label: "검색" },
 ];
 
 const WAITING_TABS = [

@@ -124,23 +124,25 @@ const ReceptionPage = () => {
                   {item.reservationDate}
                 </div>
               </div>
-              <div className="flex justify-end gap-2 pt-2 border-t border-zinc-100">
-                <Button
-                  size="sm"
-                  className="h-7 text-xs cursor-pointer"
-                  onClick={() => confirmedHandler(item.receptionId)}
-                >
-                  접수
-                </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  className="h-7 text-xs cursor-pointer"
-                  onClick={() => cancelHandler(item.reservationId)}
-                >
-                  취소
-                </Button>
-              </div>
+              {item.status !== "COMPLETED" && (
+                <div className="flex justify-end gap-2 pt-2 border-t border-zinc-100">
+                  <Button
+                    size="sm"
+                    className="h-7 text-xs cursor-pointer"
+                    onClick={() => confirmedHandler(item.receptionId)}
+                  >
+                    접수
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="h-7 text-xs cursor-pointer"
+                    onClick={() => cancelHandler(item.reservationId)}
+                  >
+                    취소
+                  </Button>
+                </div>
+              )}
             </div>
           ))}
         </div>
