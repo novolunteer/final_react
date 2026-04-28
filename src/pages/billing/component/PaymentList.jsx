@@ -38,12 +38,12 @@ const PaymentList = ({ keyword }) => {
         ) : (
           <Table className="table-fixed w-full">
             <colgroup>
-              <col className="w-12" />
-              <col className="w-24" />
-              <col className="w-20" />
-              <col className="w-24" />
-              <col className="w-20" />
-              <col className="w-36" />
+              <col style={{ width: '48px' }} />
+              <col style={{ width: '96px' }} />
+              <col style={{ width: '80px' }} />
+              <col style={{ width: '96px' }} />
+              <col style={{ width: '80px' }} />
+              <col style={{ width: '144px' }} />
             </colgroup>
             <TableHeader>
               <TableRow className="bg-zinc-50">

@@ -132,12 +132,12 @@ const BillingList = ({ keyword }) => {
         ) : (
           <Table className="table-fixed w-full">
             <colgroup>
-              <col className="w-12" />
-              <col className="w-28" />
-              <col className="w-20" />
-              <col className="w-36" />
-              <col className="w-20" />
-              <col className="w-16" />
+              <col style={{ width: '48px' }} />
+              <col style={{ width: '120px' }} />
+              <col style={{ width: '80px' }} />
+              <col style={{ width: '140px' }} />
+              <col style={{ width: '80px' }} />
+              <col style={{ width: '64px' }} />
             </colgroup>
             <TableHeader>
               <TableRow className="bg-zinc-50">
