@@ -1,3 +1,4 @@
+import jwtAxios from "../jwtAxios";
 
 const host="/api/schedule_type";
 
