@@ -44,7 +44,7 @@ const BillingLayout = () => {
         <Button variant="outline" onClick={handleSearch} className="cursor-pointer">검색</Button>
       </div>
 
-      {/* 청구 + 결제 내역 */}
+      {/* 청구/결제 내역 */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
         <BillingList keyword={keyword} />
         <PaymentList keyword={keyword} />
