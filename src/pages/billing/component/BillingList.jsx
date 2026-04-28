@@ -130,7 +130,15 @@ const BillingList = ({ keyword }) => {
         ) : isError ? (
           <p className="py-12 text-center text-sm text-red-400">목록을 불러오지 못했습니다.</p>
         ) : (
-          <Table>
+          <Table className="table-fixed w-full">
+            <colgroup>
+              <col className="w-12" />
+              <col className="w-28" />
+              <col className="w-20" />
+              <col className="w-36" />
+              <col className="w-20" />
+              <col className="w-16" />
+            </colgroup>
             <TableHeader>
               <TableRow className="bg-zinc-50">
                 <TableHead className="text-xs whitespace-nowrap">번호</TableHead>
@@ -150,7 +158,7 @@ const BillingList = ({ keyword }) => {
                 data?.content?.map((b, i) => (
                   <TableRow key={b.billingId}>
                     <TableCell className="text-sm">{page * 10 + i + 1}</TableCell>
-                    <TableCell className="text-sm">{b.patientName}</TableCell>
+                    <TableCell className="text-sm truncate">{b.patientName}</TableCell>
                     <TableCell className="text-sm">{b.receptionId}</TableCell>
                     <TableCell className="text-sm">
                       {b.totalAmount === null ? (

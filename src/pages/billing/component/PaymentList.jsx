@@ -36,7 +36,15 @@ const PaymentList = ({ keyword }) => {
         ) : isError ? (
           <p className="py-12 text-center text-sm text-red-400">목록을 불러오지 못했습니다.</p>
         ) : (
-          <Table>
+          <Table className="table-fixed w-full">
+            <colgroup>
+              <col className="w-12" />
+              <col className="w-24" />
+              <col className="w-20" />
+              <col className="w-24" />
+              <col className="w-20" />
+              <col className="w-36" />
+            </colgroup>
             <TableHeader>
               <TableRow className="bg-zinc-50">
                 <TableHead className="text-xs whitespace-nowrap">번호</TableHead>
