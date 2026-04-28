@@ -38,6 +38,7 @@ const RoleBasedHome = () => {
   if (token) {
     try {
       const { roles = [] } = jwtDecode(token);
+      if (roles.includes("ADMIN")) return <Navigate to="/communication" replace />;
       if (roles.length > 0 && !roles.every((r) => r === "PATIENT")) return <Navigate to="/my-schedule" replace />;
     } catch {}
   }
