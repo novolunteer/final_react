@@ -1,355 +1,167 @@
-import axios from 'axios';
-import React, { useEffect, useState } from 'react'
-import { useQuery } from '@tanstack/react-query';
-import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import jwtAxios from '../../api/jwtAxios';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ClipboardList, Search, User, Stethoscope, Clock } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const STATUS_TABS = [
+  { key: "",           label: "전체" },
+  { key: "PENDING",    label: "미접수" },
+  { key: "RECEIVED",   label: "접수" },
+  { key: "CONSULTING", label: "진료중" },
+  { key: "COMPLETED",  label: "완료" },
+];
+
+const STATUS_BADGE = {
+  PENDING:    { label: "미접수",  className: "bg-amber-100 text-amber-700 hover:bg-amber-100" },
+  RECEIVED:   { label: "접수",    className: "bg-blue-100 text-blue-700 hover:bg-blue-100" },
+  CONSULTING: { label: "진료중",  className: "bg-indigo-100 text-indigo-700 hover:bg-indigo-100" },
+  COMPLETED:  { label: "완료",    className: "bg-green-100 text-green-700 hover:bg-green-100" },
+};
 
 const ReceptionPage = () => {
-    const [status, setStatus]=useState("");
-    const [name, setName]=useState("");
-    const [debouncedName, setDebouncedName] = useState("");
-    const queryClient = useQueryClient();
-    const [page, setPage] = useState(0);
-    
-    useEffect(() => {
-      setPage(0);
-    }, [status, debouncedName]);
+  const [status, setStatus]           = useState("");
+  const [name, setName]               = useState("");
+  const [debouncedName, setDebouncedName] = useState("");
+  const [page, setPage]               = useState(0);
+  const queryClient = useQueryClient();
 
-    useEffect(() => {
-      const timer = setTimeout(() => {
-        setDebouncedName(name);
-      }, 500);
+  useEffect(() => { setPage(0); }, [status, debouncedName]);
 
-      return () => clearTimeout(timer);
-    }, [name]);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedName(name), 500);
+    return () => clearTimeout(timer);
+  }, [name]);
 
-    const confirmedHandler=async(receptionId)=>{
-        await jwtAxios.get(`/api/administration/recieved?receptionId=${receptionId}`).then((res) => {
-            alert("접수 완료")
-            queryClient.invalidateQueries({ queryKey: ['receptionList'] });
-        })
-        .catch((err) => {
-            console.error(err)
-        })
-    }
+  const confirmedHandler = async (receptionId) => {
+    await jwtAxios.get(`/api/administration/recieved?receptionId=${receptionId}`)
+      .then(() => { alert("접수 완료"); queryClient.invalidateQueries({ queryKey: ['receptionList'] }); })
+      .catch(console.error);
+  };
 
-    const cancelHandler=async (reservationId)=>{
-      await jwtAxios.get(`/api/reception/cancel?reservationId=${reservationId}`).then((res) => {
-            alert("취소 완료")
-            queryClient.invalidateQueries({ queryKey: ['receptionList'] });
-        })
-        .catch((err) => {
-            console.error(err)
-        })
-    }
+  const cancelHandler = async (reservationId) => {
+    await jwtAxios.get(`/api/reception/cancel?reservationId=${reservationId}`)
+      .then(() => { alert("취소 완료"); queryClient.invalidateQueries({ queryKey: ['receptionList'] }); })
+      .catch(console.error);
+  };
 
-    const fetchReceptionList = async ({ status, name, page }) => {
-      const res = await jwtAxios.get('/api/reception', {
-        params: {
-          status: status || undefined,
-          name: name,
-          page: page,
-          size: 3
-        }
-      });
-      return res.data;
-    };
+  const { data, isLoading } = useQuery({
+    queryKey: ['receptionList', status, debouncedName, page],
+    queryFn: () => jwtAxios.get('/api/reception', {
+      params: { status: status || undefined, name: debouncedName, page, size: 10 }
+    }).then(r => r.data),
+    placeholderData: (prev) => prev,
+  });
 
-    const { data , isLoading } = useQuery({
-      queryKey: ['receptionList', status, debouncedName, page],
-      queryFn: () => fetchReceptionList({ status, name: debouncedName, page }),
-      placeholderData: (prev) => prev, 
-    });
+  const list       = data?.content ?? [];
+  const totalPages = data?.totalPages ?? 0;
 
-    const list = data?.content ?? [];
-    const totalPages = data?.totalPages ?? 0;
-
-    const statusBadge = (status) => {
-      const base = {
-        padding: "4px 8px",
-        borderRadius: "8px",
-        fontSize: "12px",
-        fontWeight: 600
-      };
-
-      const map = {
-        PENDING: { background: "#fff3cd", color: "#856404" },
-        RECEIVED: { background: "#d1ecf1", color: "#0c5460" },
-        CONSULTING: { background: "#e2e3ff", color: "#383d7c" },
-        COMPLETED: { background: "#d4edda", color: "#155724" }
-      };
-
-      return { ...base, ...(map[status] || {}) };
-    };
-
-    const statusTabs = [
-      { key: "", label: "전체" },
-      { key: "PENDING", label: "미접수" },
-      { key: "RECEIVED", label: "접수" },
-      { key: "CONSULTING", label: "진료중" },
-      { key: "COMPLETED", label: "완료" }
-    ];
+  const badge = (s) => STATUS_BADGE[s] ?? { label: s, className: '' };
 
   return (
-    <div style={container}>
-        <div style={wrapper}>
-        <h1>접수</h1>
-      {/* 상태 버튼 */}
-      <div style={tabWrapper}>
-        {statusTabs.map(tab => {
-          const active = status === tab.key;
-
-          return (
-            <button
-              key={tab.key}
-              onClick={() => setStatus(tab.key)}
-              style={{
-                ...tabBtn,
-                ...(active ? tabActive : {})
-              }}
-            >
-              {tab.label}
-            </button>
-          );
-        })}
+    <div className="p-6 max-w-2xl mx-auto space-y-5">
+      {/* 헤더 */}
+      <div className="flex items-center gap-2">
+        <ClipboardList size={20} className="text-blue-600" />
+        <h1 className="text-lg font-bold text-zinc-900">접수</h1>
       </div>
 
-        <div style={{ marginBottom: "12px" }}>
-        <input
-          type="text"
+      {/* 탭 */}
+      <div className="flex rounded-xl border border-zinc-200 overflow-hidden bg-white">
+        {STATUS_TABS.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setStatus(tab.key)}
+            className={cn(
+              "flex-1 py-2 text-sm font-medium transition-colors",
+              status === tab.key
+                ? "bg-blue-600 text-white"
+                : "text-zinc-600 hover:bg-zinc-50"
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* 검색 */}
+      <div className="relative">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+        <Input
+          className="pl-8"
+          placeholder="환자 이름 검색"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="환자 이름 검색"
-          style={{
-            width: "100%",
-            padding: "8px 10px",
-            borderRadius: "8px",
-            border: "1px solid #ddd"
-          }}
         />
       </div>
 
-        {isLoading && <p>불러오는 중...</p>}
-        <div style={listContainer}>
-          {list.map(item => (
-            <div key={item.receptionId} style={card}>
-              
-              <div style={cardTop}>
-                <span style={patient}>{item.patientName}</span>
-                <span style={statusBadge(item.status)}>
-                  {item.status}
-                </span>
+      {/* 카드 목록 */}
+      {isLoading ? (
+        <p className="text-center text-sm text-zinc-400 py-8">불러오는 중...</p>
+      ) : list.length === 0 ? (
+        <p className="text-center text-sm text-zinc-400 py-8">접수 내역이 없습니다.</p>
+      ) : (
+        <div className="space-y-3">
+          {list.map((item) => (
+            <div key={item.receptionId} className="bg-white rounded-xl border border-zinc-200 p-4 shadow-sm">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <User size={15} className="text-zinc-400" />
+                  <span className="font-semibold text-zinc-900">{item.patientName}</span>
+                </div>
+                <Badge className={badge(item.status).className}>{badge(item.status).label}</Badge>
               </div>
-
-              <div style={cardMiddle}>
-                👨‍⚕️ {item.doctorName}
+              <div className="space-y-1.5 mb-3">
+                <div className="flex items-center gap-1.5 text-sm text-zinc-500">
+                  <Stethoscope size={13} className="text-zinc-400" />
+                  {item.doctorName}
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+                  <Clock size={12} className="text-zinc-300" />
+                  {item.reservationDate}
+                </div>
               </div>
-
-              <div style={cardBottom}>
-                🕒 {item.reservationDate}
-              </div>
-
-              <div style={btnRow}>
-                <button
+              <div className="flex justify-end gap-2 pt-2 border-t border-zinc-100">
+                <Button
+                  size="sm"
+                  className="h-7 text-xs cursor-pointer"
                   onClick={() => confirmedHandler(item.receptionId)}
-                  style={confirmBtn}
                 >
                   접수
-                </button>
-
-                <button
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="h-7 text-xs cursor-pointer"
                   onClick={() => cancelHandler(item.reservationId)}
-                  style={cancelBtn}
                 >
                   취소
-                </button>
+                </Button>
               </div>
-
             </div>
           ))}
         </div>
-        
+      )}
 
-      <div style={paginationWrapper}>
-        <button
-          disabled={page === 0}
-          onClick={() => setPage(p => p - 1)}
-          style={{
-            ...pageBtn,
-            ...(page === 0 ? disabledBtn : {})
-          }}
-        >
-          이전
-        </button>
-
-        <span style={pageInfo}>
-          {page + 1} / {totalPages}
-        </span>
-
-        <button
-          disabled={page + 1 >= totalPages}
-          onClick={() => setPage(p => p + 1)}
-          style={{
-            ...pageBtn,
-            ...(page + 1 >= totalPages ? disabledBtn : {})
-          }}
-        >
-          다음
-        </button>
-      </div>
-
-    </div>
-    
+      {/* 페이지네이션 */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          <button
+            onClick={() => setPage((p) => p - 1)} disabled={page === 0}
+            className="px-4 h-8 text-sm rounded border border-zinc-200 bg-white hover:bg-zinc-50 disabled:opacity-40 disabled:cursor-not-allowed"
+          >이전</button>
+          <span className="text-sm text-zinc-500">{page + 1} / {totalPages}</span>
+          <button
+            onClick={() => setPage((p) => p + 1)} disabled={page >= totalPages - 1}
+            className="px-4 h-8 text-sm rounded border border-zinc-200 bg-white hover:bg-zinc-50 disabled:opacity-40 disabled:cursor-not-allowed"
+          >다음</button>
         </div>
-  )
-}
-
-const paginationWrapper = {
-  marginTop: "16px",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  gap: "10px"
+      )}
+    </div>
+  );
 };
 
-const pageBtn = {
-  padding: "6px 14px",
-  borderRadius: "8px",
-  border: "1px solid #ddd",
-  background: "white",
-  cursor: "pointer",
-  fontSize: "13px",
-  transition: "0.2s",
-  boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
-};
-
-const disabledBtn = {
-  opacity: 0.4,
-  cursor: "not-allowed"
-};
-
-const pageInfo = {
-  fontSize: "13px",
-  fontWeight: 600,
-  color: "#333",
-  minWidth: "60px",
-  textAlign: "center"
-};
-
-const listContainer = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "12px",
-};
-
-const card = {
-  padding: "14px",
-  borderRadius: "12px",
-  background: "white",
-  border: "1px solid #eee",
-  boxShadow: "0 2px 6px rgba(0,0,0,0.05)"
-};
-
-const cardTop = {
-  display: "flex",
-  justifyContent: "space-between",
-  marginBottom: "6px"
-};
-
-const patient = {
-  fontSize: "15px",
-  fontWeight: 600
-};
-
-const cardMiddle = {
-  fontSize: "13px",
-  marginBottom: "4px"
-};
-
-const cardBottom = {
-  fontSize: "12px",
-  color: "#666",
-  marginBottom: "10px"
-};
-
-const btnRow = {
-  display: "flex",
-  gap: "8px",
-  justifyContent: "flex-end"
-};
-
-const confirmBtn = {
-  padding: "6px 12px",
-  borderRadius: "8px",
-  border: "none",
-  background: "#1976d2",
-  color: "white",
-  cursor: "pointer",
-  fontSize: "12px"
-};
-
-const cancelBtn = {
-  padding: "6px 12px",
-  borderRadius: "8px",
-  border: "none",
-  background: "#ffebee",
-  color: "#d32f2f",
-  cursor: "pointer",
-  fontSize: "12px"
-};
-
-const container = {
-  maxWidth: "800px",   // 핵심
-  margin: "0 auto",    // 가운데 정렬
-  padding: "20px",
-  background: "#f4f6fb",
-  minHeight: "100vh"
-};
-
-const wrapper = {
-  background: "white",
-  borderRadius: "16px",
-  padding: "20px",
-  boxShadow: "0 4px 12px rgba(0,0,0,0.06)"
-};
-
-const title = {
-  marginBottom: "16px"
-};
-
-const searchBox = {
-  marginBottom: "16px"
-};
-
-const pagination = {
-  marginTop: "16px",
-  display: "flex",
-  justifyContent: "center",
-  gap: "10px"
-};
-
-const tabWrapper = {
-  display: "flex",
-  border: "1px solid #ddd",
-  borderRadius: "10px",
-  overflow: "hidden",
-  marginBottom: "12px"
-};
-
-const tabBtn = {
-  flex: 1,
-  padding: "8px 0",
-  border: "none",
-  background: "white",
-  cursor: "pointer",
-  fontSize: "13px",
-  transition: "0.2s"
-};
-
-const tabActive = {
-  background: "#1976d2",
-  color: "white",
-  fontWeight: "600"
-};
-
-export default ReceptionPage
+export default ReceptionPage;
