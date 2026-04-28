@@ -1,83 +1,88 @@
-import React, { useEffect, useState } from 'react'
-import { getPaymentList } from '../../../api/billingApi';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
+import { getPaymentList } from '../../../api/billingApi';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 
 const PaymentList = ({ keyword }) => {
-  const [page, setPage]=useState(0);
-  const [sort, setSort]=useState("paymentDatetime,desc");
+  const [page, setPage] = useState(0);
+  const [sort, setSort] = useState("paymentDatetime,desc");
 
-  useEffect(()=>{
-    setPage(0);
-  }, [keyword])
+  useEffect(() => { setPage(0); }, [keyword]);
 
-  const { data, isLoading, isError }=useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['paymentList', keyword, page, sort],
-    queryFn: () => getPaymentList(page, sort, keyword)
+    queryFn: () => getPaymentList(page, sort, keyword),
   });
 
-  if(isLoading){
-    return <div>결제 목록 불러오는 중...</div>;
-  }
-
-  if(isError){
-    return <div>결제 목록을 불러오지 못했습니다!</div>
-  }
-
   return (
-    <div className='payment-list'>
-        <div className='payment-sort-area'>
-            <div className='payment-sort-box'>
-                <select className='payment-sort-select' value={sort}
-                    onChange={(e)=>setSort(e.target.value)}>
-                        <option value='paymentDatetime,desc'>최신순</option>
-                        <option value='paymentDatetime,asc'>등록순</option>
-                </select>
-            </div>
-        </div>
-        <div className='billing-table-area'>
-            <table className='billing-table'>
-                <thead>
-                    <tr>
-                        <th>번호</th><th>환자</th><th>진료 번호</th>
-                        <th>결제 금액</th><th>결제 방식</th><th>결제일</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {
-                        data?.content?.length === 0 ? (
-                            <tr>
-                                <td colSpan={6}>조회된 결제 내역이 없습니다!</td>
-                            </tr>
-                        ) : (
-                            data?.content?.map((payment, index) => (
-                            <tr key={payment.paymentId}>
-                                <td>{(page * 10) + index + 1}</td>
-                                <td>{payment.patientName}</td><td>{payment.receptionId}</td>
-                                <td>{payment.amount}</td><td>{payment.method}</td>
-                                <td>{dayjs(payment.paymentDatetime).format('YYYY년 M월 D일 H시 m분 s초')}</td>
-                            </tr>
-                            ))
-                        )
-                    }
-                </tbody>
-            </table>
-        </div>
-        <div className='payment-paging-area'>
-            <button type='button' onClick={() => setPage(prev => prev - 1)}
-                disabled={data?.first}>
-                    이전
-            </button>
-            <span>
-                {data?.content ? `${data.number + 1}`:''}
-            </span>
-            <button type='button' onClick={()=>setPage(prev => prev + 1)}
-                disabled={data?.last}>
-                    다음
-            </button>
-        </div>
-    </div>
-  )
-}
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-zinc-700">결제 내역</h2>
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value)}
+          className="h-8 rounded-md border border-zinc-200 bg-white px-2 text-xs text-zinc-700 focus:outline-none"
+        >
+          <option value="paymentDatetime,desc">최신순</option>
+          <option value="paymentDatetime,asc">등록순</option>
+        </select>
+      </div>
 
-export default PaymentList
+      <div className="rounded-xl border border-zinc-200 bg-white overflow-hidden">
+        {isLoading ? (
+          <p className="py-12 text-center text-sm text-zinc-400">불러오는 중...</p>
+        ) : isError ? (
+          <p className="py-12 text-center text-sm text-red-400">목록을 불러오지 못했습니다.</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-zinc-50">
+                <TableHead className="text-xs whitespace-nowrap">번호</TableHead>
+                <TableHead className="text-xs whitespace-nowrap">환자</TableHead>
+                <TableHead className="text-xs whitespace-nowrap">접수번호</TableHead>
+                <TableHead className="text-xs whitespace-nowrap">결제금액</TableHead>
+                <TableHead className="text-xs whitespace-nowrap">방식</TableHead>
+                <TableHead className="text-xs whitespace-nowrap">결제일</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data?.content?.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-10 text-center text-sm text-zinc-400">결제 내역이 없습니다.</TableCell>
+                </TableRow>
+              ) : (
+                data?.content?.map((p, i) => (
+                  <TableRow key={p.paymentId}>
+                    <TableCell className="text-sm">{page * 10 + i + 1}</TableCell>
+                    <TableCell className="text-sm">{p.patientName}</TableCell>
+                    <TableCell className="text-sm">{p.receptionId}</TableCell>
+                    <TableCell className="text-sm font-medium">{Number(p.amount).toLocaleString()}원</TableCell>
+                    <TableCell>
+                      <Badge className="text-xs bg-zinc-100 text-zinc-600 hover:bg-zinc-100">{p.method}</Badge>
+                    </TableCell>
+                    <TableCell className="text-xs text-zinc-500 whitespace-nowrap">
+                      {dayjs(p.paymentDatetime).format('YYYY.MM.DD HH:mm')}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        )}
+      </div>
+
+      {/* 페이지네이션 */}
+      <div className="flex items-center justify-center gap-2">
+        <button onClick={() => setPage((p) => p - 1)} disabled={data?.first}
+          className="px-4 h-8 text-sm rounded border border-zinc-200 bg-white hover:bg-zinc-50 disabled:opacity-40 disabled:cursor-not-allowed">이전</button>
+        <span className="text-sm text-zinc-500">{data?.number != null ? data.number + 1 : ''}</span>
+        <button onClick={() => setPage((p) => p + 1)} disabled={data?.last}
+          className="px-4 h-8 text-sm rounded border border-zinc-200 bg-white hover:bg-zinc-50 disabled:opacity-40 disabled:cursor-not-allowed">다음</button>
+      </div>
+    </div>
+  );
+};
+
+export default PaymentList;
