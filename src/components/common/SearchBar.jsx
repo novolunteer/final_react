@@ -1,56 +1,32 @@
-import React from 'react'
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
 
-const SearchBar = ({
-    value,
-    onChange,
-    onSearch,
-    placeholder,
-    showButton = true,
-}) => {
-
-    const handleKeyDown= (e)=>{
-        if(e.key === "Enter" && onSearch){
-            onSearch();
-        }
-    };
+const SearchBar = ({ value, onChange, onSearch, placeholder, showButton = true }) => {
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && onSearch) onSearch();
+  };
 
   return (
-    <div style={styles.container}>
-        <input type='text'
-        value={value}
-        onChange={onChange}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder}
-        style={styles.input}
+    <div className="flex items-center gap-2">
+      <div className="relative">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+        <Input
+          type="text"
+          value={value}
+          onChange={onChange}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          className="pl-8 w-64"
         />
-
-        {/* 실시간 검색이라면 해당페이지에서 showbutton={false} */}
-        {showButton && (
-        <button type='button' onClick={onSearch} style={styles.button}>검색</button>)}
+      </div>
+      {showButton && (
+        <Button type="button" variant="outline" size="sm" onClick={onSearch} className="cursor-pointer">
+          검색
+        </Button>
+      )}
     </div>
-  )
-}
-
-export default SearchBar
-
-const styles = {
-  container: {
-    display: "flex",
-    gap: "8px",
-    alignItems: "center",
-    marginBottom: "16px",
-  },
-  input: {
-    width: "280px",
-    padding: "10px 12px",
-    border: "1px solid #ccc",
-    borderRadius: "6px",
-    outline: "none",
-  },
-  button: {
-    padding: "10px 14px",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
-  },
+  );
 };
+
+export default SearchBar;

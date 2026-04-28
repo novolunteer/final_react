@@ -1,75 +1,57 @@
-import React from 'react'
-// 공통테이블 규칙
-// | 의미  | 추천 key    |
-// | --- | --------- |
-// | 이름  | name      |
-// | 연락처 | phone     |
-// | 상태  | status    |
-// | 날짜  | createdAt |
-// | ID  | id        |
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
-// 예 )
-// const mappedData = apiData.map(item => ({
-//   id: item.patient_id,
-//   name: item.name,
-//   phone: item.phone
-// }));
-
-const CommonTable = ({columns=[], data=[]}) => {
+const CommonTable = ({ columns = [], data = [], onRowClick }) => {
   return (
-    <div style={styles.wrapper}>
-        <table style={styles.table}>
-            <thead>
-                <tr>{columns.map((column)=>(
-                    <th key={column.key} style={styles.th}>
-                        {column.title}
-                    </th>
+    <div className="rounded-lg border border-zinc-200 overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-zinc-50">
+            {columns.map((col) => (
+              <TableHead
+                key={col.key}
+                className="text-xs font-semibold text-zinc-500 uppercase tracking-wide whitespace-nowrap"
+              >
+                {col.title}
+              </TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {data.length > 0 ? (
+            data.map((item, idx) => (
+              <TableRow
+                key={item.id ?? idx}
+                onClick={() => onRowClick?.(item)}
+                className={onRowClick ? "cursor-pointer hover:bg-blue-50/50" : ""}
+              >
+                {columns.map((col) => (
+                  <TableCell key={col.key} className="text-sm text-zinc-700 py-3">
+                    {item[col.key]}
+                  </TableCell>
                 ))}
-                </tr>
-            </thead>
-
-            <tbody>
-                {data.length >0?(
-                    data.map((item, index)=>(
-                        <tr key={item.id || index}>
-                            {columns.map((column)=>(
-                                <td key={column.key} style={styles.td}>
-                                    {item[column.key]}
-                                </td>
-                            ))}
-                        </tr>
-                    ))
-                ) : (
-                    <tr>
-                        <td colSpan={columns.length}>
-                            데이터가 없습니다.
-                        </td>
-                    </tr>
-                )}
-            </tbody>
-        </table>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell
+                colSpan={columns.length}
+                className="text-center text-sm text-zinc-400 py-12"
+              >
+                데이터가 없습니다.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
 };
 
-export default CommonTable
-
-const styles = {
-    wrapper:{
-        width:"100%",
-        overflowX:"auto",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-  },
-  th: {
-    border: "1px solid #ddd",
-    padding: "8px",
-    backgroundColor: "#f5f5f5",
-  },
-  td: {
-    border: "1px solid #eee",
-    padding: "8px",
-  },
-}
+export default CommonTable;

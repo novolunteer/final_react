@@ -1,19 +1,45 @@
-import React from "react";
+import { cn } from "@/lib/utils";
 
 const Pagination = ({ page, totalPages, onPageChange, variant = "default" }) => {
   if (totalPages <= 1) return null;
 
-  const s = variant === "sub" ? subStyles : styles;
+  const isSub = variant === "sub";
 
   return (
-    <div style={s.wrap}>
-      <button style={s.btn} onClick={() => onPageChange(page - 1)} disabled={page === 0}>
+    <div className={cn(
+      "flex items-center gap-2",
+      isSub ? "justify-end mt-1.5" : "justify-center mt-4"
+    )}>
+      <button
+        onClick={() => onPageChange(page - 1)}
+        disabled={page === 0}
+        className={cn(
+          "rounded border font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed",
+          isSub
+            ? "text-[11px] px-2.5 h-6 border-zinc-200 bg-zinc-50 text-zinc-500 hover:bg-zinc-100"
+            : "text-sm px-4 h-8 border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+        )}
+      >
         이전
       </button>
-      <span style={s.info}>
+
+      <span className={cn(
+        "font-semibold text-zinc-500 min-w-12 text-center",
+        isSub ? "text-[11px]" : "text-sm"
+      )}>
         {page + 1} / {totalPages}
       </span>
-      <button style={s.btn} onClick={() => onPageChange(page + 1)} disabled={page >= totalPages - 1}>
+
+      <button
+        onClick={() => onPageChange(page + 1)}
+        disabled={page >= totalPages - 1}
+        className={cn(
+          "rounded border font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed",
+          isSub
+            ? "text-[11px] px-2.5 h-6 border-zinc-200 bg-zinc-50 text-zinc-500 hover:bg-zinc-100"
+            : "text-sm px-4 h-8 border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+        )}
+      >
         다음
       </button>
     </div>
@@ -21,61 +47,3 @@ const Pagination = ({ page, totalPages, onPageChange, variant = "default" }) => 
 };
 
 export default Pagination;
-
-const styles = {
-  wrap: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: "12px",
-    marginTop: "16px",
-  },
-  btn: {
-    minWidth: "64px",
-    height: "34px",
-    border: "1px solid #cfd8e3",
-    borderRadius: "8px",
-    background: "#fff",
-    color: "#334155",
-    fontSize: "13px",
-    fontWeight: "600",
-    cursor: "pointer",
-  },
-  info: {
-    fontSize: "13px",
-    fontWeight: "700",
-    color: "#334155",
-    minWidth: "52px",
-    textAlign: "center",
-  },
-};
-
-// 부서 내 직원 페이징용 - 작고 회색
-const subStyles = {
-  wrap: {
-    display: "flex",
-    justifyContent: "flex-end",
-    alignItems: "center",
-    gap: "6px",
-    marginTop: "6px",
-    marginBottom: "4px",
-  },
-  btn: {
-    minWidth: "44px",
-    height: "24px",
-    border: "1px solid #e2e8f0",
-    borderRadius: "4px",
-    background: "#f8fafc",
-    color: "#64748b",
-    fontSize: "11px",
-    fontWeight: "500",
-    cursor: "pointer",
-  },
-  info: {
-    fontSize: "11px",
-    fontWeight: "600",
-    color: "#94a3b8",
-    minWidth: "36px",
-    textAlign: "center",
-  },
-};

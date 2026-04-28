@@ -1,11 +1,13 @@
-import React from 'react'
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 const RegisterButton = ({ type = "button", onClick, children = "등록" }) => {
   return (
-    <button type={type} onClick={onClick} className="btn btn-primary">
+    <Button type={type} onClick={onClick} className="cursor-pointer gap-1.5">
+      <Plus size={15} />
       {children}
-    </button>
-  )
-}
+    </Button>
+  );
+};
 
-export default RegisterButton
+export default RegisterButton;
