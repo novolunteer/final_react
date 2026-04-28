@@ -7,10 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar } from "lucide-react";
 
 const TYPE_COLORS = {
-  DAY:     "#3b82f6",
-  NIGHT:   "#6366f1",
-  OFF:     "#9ca3af",
-  EVENING: "#f59e0b",
+  DAY:     "#0ea5e9",
+  NIGHT:   "#8b5cf6",
+  OFF:     "#f43f5e",
+  EVENING: "#f97316",
 };
 
 const TYPE_LABELS = {
@@ -73,7 +73,7 @@ const MySchedulePage = () => {
   const departmentName = scheduleList[0]?.departmentName ?? "";
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-6 max-w-5xl mx-auto space-y-4">
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
