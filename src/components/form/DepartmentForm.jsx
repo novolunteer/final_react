@@ -26,6 +26,7 @@ const DepartmentForm = ({ onSubmit, onClose, initialData }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!form.departmentName.trim()) { alert("부서명을 입력해주세요"); return; }
     onSubmit({
       departmentId:   form.departmentId ? Number(form.departmentId) : null,
       departmentName: form.departmentName,
@@ -41,11 +42,17 @@ const DepartmentForm = ({ onSubmit, onClose, initialData }) => {
         {initialData ? "부서 수정" : "부서 등록"}
       </p>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-1.5 col-span-2">
-          <Label>부서명</Label>
-          <Input type="text" name="departmentName" placeholder="부서명 입력"
+      <div className="space-y-4">
+        <div className="space-y-1.5">
+          <Label>부서명 <span className="text-red-500">*</span></Label>
+          <Input type="text" name="departmentName" placeholder="예) 내과, 외과, 신경외과"
             value={form.departmentName} onChange={handleChange} />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>위치</Label>
+          <Input type="text" name="location" placeholder="예) 본관 2층"
+            value={form.location} onChange={handleChange} />
         </div>
 
         <div className="space-y-1.5">
@@ -54,12 +61,6 @@ const DepartmentForm = ({ onSubmit, onClose, initialData }) => {
             <option value="Y">사용</option>
             <option value="N">비활성</option>
           </select>
-        </div>
-
-        <div className="space-y-1.5 col-span-2">
-          <Label>위치</Label>
-          <Input type="text" name="location" placeholder="부서 위치 입력"
-            value={form.location} onChange={handleChange} />
         </div>
       </div>
 

@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react";
-import usePagination from "../../../hooks/usePagination";
-import Pagination from "../../../components/common/Pagination";
 import RegisterButton from "../../../components/common/RegisterButton";
 import SearchBar from "../../../components/common/SearchBar";
-import CommonTable from "../../../components/common/CommonTable";
 import CommonModal from "../../../components/common/CommonModal";
 import { getDepartmentList, registerDepartment, updateDepartment, deleteDepartment } from "../../../api/hr/departmentApi";
 import DepartmentForm from "../../../components/form/DepartmentForm";
 import { Button } from "@/components/ui/button";
-import { Building2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Building2, MapPin } from "lucide-react";
 
 const DepartmentPage = () => {
   const [departmentList, setDepartmentList]         = useState([]);
@@ -16,30 +14,15 @@ const DepartmentPage = () => {
   const [open, setOpen]                             = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [searchKeyword, setSearchKeyword]           = useState("");
-  const { pagedData: pagedDeptList, page, setPage, totalPages } = usePagination(departmentList);
 
   useEffect(() => { loadDepartmentList(); }, []);
 
   const loadDepartmentList = async () => {
     try {
       const data = await getDepartmentList();
-      const mapped = (Array.isArray(data) ? data : []).map(item => ({
-        departmentId:       item.departmentId,
-        departmentCategory: item.departmentCategory,
-        departmentName:     item.departmentName,
-        location:           item.location,
-        status:             item.status,
-        action: (
-          <div className="flex gap-1.5">
-            <Button size="sm" variant="outline" className="h-7 text-xs cursor-pointer"
-              disabled={item.status === "N"} onClick={() => handleEdit(item)}>수정</Button>
-            <Button size="sm" className="h-7 text-xs cursor-pointer bg-red-500 hover:bg-red-600"
-              disabled={item.status === "N"} onClick={() => handleDelete(item.departmentId)}>삭제</Button>
-          </div>
-        ),
-      }));
-      setDepartmentList(mapped);
-      setOriginalDepartmentList(mapped);
+      const list = Array.isArray(data) ? data : [];
+      setDepartmentList(list);
+      setOriginalDepartmentList(list);
     } catch (err) { console.error("부서 목록 조회 실패", err); setDepartmentList([]); }
   };
 
@@ -65,28 +48,28 @@ const DepartmentPage = () => {
   const handleSearch = () => {
     const kw = searchKeyword.replace(/\s/g,"").toLowerCase();
     if (!kw) { setDepartmentList(originalDepartmentList); return; }
-    const matched = originalDepartmentList.filter(i => (i.departmentName||"").replace(/\s/g,"").toLowerCase().includes(kw));
+    const matched = originalDepartmentList.filter(i =>
+      (i.departmentName||"").replace(/\s/g,"").toLowerCase().includes(kw)
+    );
     if (matched.length === 0) { alert("검색 결과가 없습니다"); setDepartmentList([]); return; }
     setDepartmentList(matched);
   };
 
   const handleResetSearch = () => { setSearchKeyword(""); setDepartmentList(originalDepartmentList); };
 
-  const columns = [
-    { key: "departmentId",   title: "번호" },
-    { key: "departmentName", title: "부서명" },
-    { key: "location",       title: "위치" },
-    { key: "status",         title: "상태" },
-    { key: "action",         title: "관리" },
-  ];
+  const activeList   = departmentList.filter(d => d.status !== "N");
+  const inactiveList = departmentList.filter(d => d.status === "N");
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-6 max-w-3xl mx-auto space-y-6">
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Building2 size={20} className="text-blue-600" />
           <h2 className="text-lg font-bold text-zinc-900">부서 관리</h2>
+          <span className="text-sm text-zinc-400 font-normal">
+            총 {departmentList.length}개
+          </span>
         </div>
         <RegisterButton onClick={handleOpen} />
       </div>
@@ -98,8 +81,75 @@ const DepartmentPage = () => {
         <Button variant="outline" className="cursor-pointer" onClick={handleResetSearch}>전체보기</Button>
       </div>
 
-      <CommonTable columns={columns} data={pagedDeptList} />
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      {/* 사용 중인 부서 */}
+      {activeList.length > 0 && (
+        <div className="space-y-3">
+          <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">사용 중 ({activeList.length})</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {activeList.map(dept => (
+              <div key={dept.departmentId}
+                className="bg-white rounded-xl border border-zinc-200 p-4 flex flex-col gap-3 hover:shadow-sm transition-shadow">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                      <Building2 size={15} className="text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-zinc-900">{dept.departmentName}</p>
+                      {dept.location && (
+                        <p className="text-xs text-zinc-400 flex items-center gap-1 mt-0.5">
+                          <MapPin size={10} /> {dept.location}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100 text-[10px]">사용</Badge>
+                </div>
+                <div className="flex justify-end gap-1.5 pt-2 border-t border-zinc-100">
+                  <Button size="sm" variant="outline" className="h-7 text-xs cursor-pointer"
+                    onClick={() => handleEdit(dept)}>수정</Button>
+                  <Button size="sm" className="h-7 text-xs cursor-pointer bg-red-500 hover:bg-red-600"
+                    onClick={() => handleDelete(dept.departmentId)}>삭제</Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 비활성 부서 */}
+      {inactiveList.length > 0 && (
+        <div className="space-y-3">
+          <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">비활성 ({inactiveList.length})</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {inactiveList.map(dept => (
+              <div key={dept.departmentId}
+                className="bg-zinc-50 rounded-xl border border-zinc-200 p-4 flex flex-col gap-3 opacity-60">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center shrink-0">
+                      <Building2 size={15} className="text-zinc-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-zinc-500 line-through">{dept.departmentName}</p>
+                      {dept.location && (
+                        <p className="text-xs text-zinc-400 flex items-center gap-1 mt-0.5">
+                          <MapPin size={10} /> {dept.location}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <Badge className="bg-zinc-100 text-zinc-400 hover:bg-zinc-100 text-[10px]">비활성</Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {departmentList.length === 0 && (
+        <div className="text-center py-16 text-sm text-zinc-400">부서가 없습니다.</div>
+      )}
 
       <CommonModal open={open} onClose={handleClose} title={selectedDepartment ? "부서 수정" : "부서 등록"}>
         <DepartmentForm onSubmit={handleSubmit} onClose={handleClose} initialData={selectedDepartment} />
