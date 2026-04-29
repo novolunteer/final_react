@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const initState = { departmentId: "", departmentName: "", departmentCategory: "", location: "", status: "Y" };
+const initState = { departmentId: "", departmentName: "", location: "", status: "Y" };
 
 const selectClass = "w-full h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
 
@@ -12,11 +12,10 @@ const DepartmentForm = ({ onSubmit, onClose, initialData }) => {
 
   useEffect(() => {
     setForm(initialData ? {
-      departmentId:       initialData.departmentId || "",
-      departmentName:     initialData.departmentName || "",
-      departmentCategory: initialData.departmentCategory || "",
-      location:           initialData.location || "",
-      status:             initialData.status || "Y",
+      departmentId:   initialData.departmentId || "",
+      departmentName: initialData.departmentName || "",
+      location:       initialData.location || "",
+      status:         initialData.status || "Y",
     } : initState);
   }, [initialData]);
 
@@ -28,11 +27,10 @@ const DepartmentForm = ({ onSubmit, onClose, initialData }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit({
-      departmentId:       form.departmentId ? Number(form.departmentId) : null,
-      departmentName:     form.departmentName,
-      departmentCategory: form.departmentCategory,
-      location:           form.location,
-      status:             form.status,
+      departmentId:   form.departmentId ? Number(form.departmentId) : null,
+      departmentName: form.departmentName,
+      location:       form.location,
+      status:         form.status,
     });
     setForm(initState);
   };
@@ -48,16 +46,6 @@ const DepartmentForm = ({ onSubmit, onClose, initialData }) => {
           <Label>부서명</Label>
           <Input type="text" name="departmentName" placeholder="부서명 입력"
             value={form.departmentName} onChange={handleChange} />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>카테고리</Label>
-          <select name="departmentCategory" value={form.departmentCategory} onChange={handleChange} className={selectClass}>
-            <option value="">카테고리 선택</option>
-            <option value="DOCTOR">의료부서</option>
-            <option value="NURSE">간호부서</option>
-            <option value="ADMIN">행정부서</option>
-          </select>
         </div>
 
         <div className="space-y-1.5">

@@ -73,12 +73,11 @@ const DepartmentPage = () => {
   const handleResetSearch = () => { setSearchKeyword(""); setDepartmentList(originalDepartmentList); };
 
   const columns = [
-    { key: "departmentId",       title: "번호" },
-    { key: "departmentName",     title: "부서명" },
-    { key: "departmentCategory", title: "카테고리" },
-    { key: "location",           title: "위치" },
-    { key: "status",             title: "상태" },
-    { key: "action",             title: "관리" },
+    { key: "departmentId",   title: "번호" },
+    { key: "departmentName", title: "부서명" },
+    { key: "location",       title: "위치" },
+    { key: "status",         title: "상태" },
+    { key: "action",         title: "관리" },
   ];
 
   return (
