@@ -24,6 +24,11 @@ export const confirmPayment=async(param) => {
     return res.data;
 }
 
+export const cashPayment=async(param) => {
+    const res=await jwtAxios.post(`${API_BASE_URL}/payment/cash`, param);
+    return res.data;
+}
+
 export const getPaymentList=async(page, sort, keyword)=>{
     const res=await jwtAxios.get(`${API_BASE_URL}/payment`, {
         params: {

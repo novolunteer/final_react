@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { loadTossPayments } from '@tosspayments/tosspayments-sdk';
-import { confirmPayment, getBillingList, insertTotalAmount, preparePayment } from '../../../api/billingApi';
+import { cashPayment, confirmPayment, getBillingList, insertTotalAmount, preparePayment } from '../../../api/billingApi';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -98,6 +98,32 @@ const BillingList = ({ keyword }) => {
     } catch { alert("결제를 진행할 수 없습니다."); }
     finally { setPaying(false); }
   };
+
+  const handleCashPayment=async()=>{
+    if(paying) return;
+    setPaying(true);
+
+    try{
+      if(!billing) {
+        alert("청구서 정보가 없습니다.");
+        return;
+      }
+
+      const payAmount=Number(amount);
+      if (!payAmount || payAmount <= 0) { alert("결제 금액이 올바르지 않습니다."); return; }
+
+      const res=await cashPayment({billingId: billing.billingId, amount: payAmount});
+      alert("결제가 완료되었습니다.");
+      queryClient.invalidateQueries({ queryKey: ["billingList"] });
+      queryClient.invalidateQueries({ queryKey: ["paymentList"] });
+      navigate("/billing", { replace: true });
+    }catch{
+      alert("현금 결제 실패!");
+      navigate("/billing", { replace: true });
+    } finally {
+      setPaying(false);
+    }
+  }
 
   const closePaymentModal = () => {
     setOpenPaymentModal(false); setBilling(null);
@@ -219,7 +245,7 @@ const BillingList = ({ keyword }) => {
             </div>
           </div>
           <div className="flex gap-2 mt-4">
-            <Button variant="outline" className="flex-1 cursor-pointer" onClick={closePaymentModal}>현금 결제</Button>
+            <Button variant="outline" className="flex-1 cursor-pointer" onClick={handleCashPayment}>현금 결제</Button>
             <Button className="flex-1 cursor-pointer" onClick={handlePayment} disabled={paying}>
               {paying ? '처리 중...' : '전자 결제'}
             </Button>
