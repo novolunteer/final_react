@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSelector } from "react-redux";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -38,11 +39,11 @@ const getMonthRange = (dateStr) => {
 };
 
 const MySchedulePage = () => {
+  const { name: authName } = useSelector((s) => s.auth);
   const [scheduleList, setScheduleList] = useState([]);
   const [selectedDate, setSelectedDate] = useState(getTodayString());
   const [currentMonth, setCurrentMonth] = useState(getTodayString());
   const [loading, setLoading]           = useState(false);
-  const [staffName, setStaffName]       = useState("");
   const [departmentName, setDepartmentName] = useState("");
   const calendarRef = useRef(null);
 
@@ -53,9 +54,8 @@ const MySchedulePage = () => {
       const data = await getMySchedule({ startDate, endDate, size: 100 });
       const content = data.content ?? [];
       setScheduleList(content);
-      if (content.length > 0) {
-        if (!staffName)      setStaffName(content[0].staffName ?? "");
-        if (!departmentName) setDepartmentName(content[0].departmentName ?? "");
+      if (content.length > 0 && !departmentName) {
+        setDepartmentName(content[0].departmentName ?? "");
       }
     } catch (err) { console.error("내 스케줄 조회 실패", err); }
     finally { setLoading(false); }
@@ -84,9 +84,9 @@ const MySchedulePage = () => {
           <Calendar size={20} className="text-blue-600" />
           <div>
             <h1 className="text-lg font-bold text-zinc-900">내 스케줄</h1>
-            {staffName && (
-              <p className="text-xs text-zinc-400">{staffName} · {departmentName}</p>
-            )}
+            <p className="text-xs text-zinc-400 h-4">
+              {authName}{departmentName ? ` · ${departmentName}` : ""}
+            </p>
           </div>
         </div>
         {loading && <span className="text-xs text-zinc-400">불러오는 중...</span>}

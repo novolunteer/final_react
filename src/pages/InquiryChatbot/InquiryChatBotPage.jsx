@@ -67,7 +67,7 @@ const InquiryChatBotPage = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-13rem)]">
+    <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-13rem)] px-6 pt-6">
       {/* 헤더 */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">

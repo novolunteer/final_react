@@ -151,7 +151,7 @@ const ChatLayout = () => {
     }
 
   return (
-    <div className='chatArea'>
+    <div className='chatArea' style={{ paddingTop: '24px' }}>
         <div className='chatRoomListArea'>
             <ChatRoomList rooms={rooms} selectedRoomId={selectedRoomId} 
                 onSelectRoom={setSelectedRoomId} staffList={staffList}
