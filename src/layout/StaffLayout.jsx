@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { useSelector, useDispatch } from "react-redux";
@@ -69,7 +69,7 @@ const StaffLayout = () => {
     navigate("/login", { replace: true });
   };
 
-  const handleSse = (data) => {
+  const handleSse = useCallback((data) => {
     if (data.type === "scheduleConfirmed") {
       const msg = typeof data.message === "string" ? JSON.parse(data.message) : data.message;
       const dateText = msg.startDate && msg.endDate
@@ -83,7 +83,7 @@ const StaffLayout = () => {
         🩺 새 예약{"\n"}예약 번호: {data.reservationId}{"\n"}환자: {data.patientName}{"\n"}날짜: {data.reservationDate}
       </div>
     );
-  };
+  }, []);
 
   const linkClass = ({ isActive }) =>
     cn(
