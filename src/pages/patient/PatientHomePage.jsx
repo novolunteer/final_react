@@ -20,7 +20,7 @@ const FEATURES = [
     path: "/inquiry/chatbot",
     icon: Bot,
     title: "AI 문의",
-    description: "병원 이용 궁금한 점을 AI 챗봇에게 24시간 언제든지 물어보세요.",
+    description: "병원 이용시 궁금한 점을 AI 챗봇에게 물어보세요.",
     color: "text-violet-600",
     bg: "bg-violet-50",
     border: "hover:border-violet-200",
