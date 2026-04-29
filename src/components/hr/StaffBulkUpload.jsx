@@ -164,14 +164,6 @@ const StaffBulkUpload = ({open, onClose, onSuccess, departmentList = []}) => {
   return (
     <CommonModal open={open} onClose={handleClose} title="직원 일괄등록" contentClass="max-w-4xl sm:max-w-4xl">
     <div className='bulk-upload'>
-      <div className='bulk-upload_header'>
-        <h2 className='bulk-upload_title'>
-          {step == "upload" && "직원 일괄등록"}
-          {step == "preview" && "미리보기"}
-          {step == "result" && "등록 완료"}
-        </h2>
-        <button className='bulk-upload_close' onClick={handleClose}>X</button>
-      </div>
 
       {/* 업로드 */}
       {step == "upload" && (
@@ -186,7 +178,7 @@ const StaffBulkUpload = ({open, onClose, onSuccess, departmentList = []}) => {
             <p>엑셀 파일을 클릭하거나 드래그하여 업로드</p>
             <span className='bulk-upload_dropzone-sub'>.xslx, xls지원</span>
           </div>
-          
+
           <input
           ref={fileInputRef}
           type='file'

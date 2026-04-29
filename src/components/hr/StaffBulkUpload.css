@@ -220,6 +220,7 @@
   background: #fff;
   border: 1px solid #ddd;
   color: #333;
+  margin-top: 16px;
 }
 
 .btn--outline:hover {
