@@ -115,9 +115,9 @@ const SurgeryForm = ({ formData, setFormData, onSubmit, onClose, isEdit, isEmerg
       <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 space-y-3">
         <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">의사 선택</p>
         <div className="space-y-1.5">
-          <Label>부서 필터</Label>
+          <Label>담당 부서</Label>
           <select value={filterDeptId} onChange={e => setFilterDeptId(e.target.value)} className={selectClass}>
-            <option value="">전체 부서</option>
+            <option value="">부서 선택</option>
             {departmentList.map(d => <option key={d.departmentId} value={d.departmentId}>{d.departmentName}</option>)}
           </select>
         </div>
