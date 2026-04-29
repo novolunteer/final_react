@@ -76,7 +76,7 @@ const ReservationPage = () => {
   const selectClass = "w-full h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500";
 
   return (
-    <div className="max-w-lg mx-auto space-y-3 px-6 py-2">
+    <div className="max-w-lg mx-auto space-y-3 px-6 py-6">
 
       <div className="flex items-center gap-2">
         <CalendarCheck size={20} className="text-blue-600" />

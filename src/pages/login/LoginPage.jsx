@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { loginPost } from "../../api/userApi";
 import { loginSuccess } from "../../store/authSlice";
@@ -72,8 +72,11 @@ const LoginPage = () => {
 
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-zinc-900">Hospital ERP</h1>
-          <p className="mt-1 text-sm text-zinc-500">계정으로 로그인하세요</p>
+          <Link to="/" className="inline-flex flex-col items-center leading-none mb-3">
+            <span className="text-3xl font-black text-blue-600 tracking-tight">HUH</span>
+            <span className="text-xs font-medium text-zinc-400 tracking-wide mt-0.5">Hansol University Hospital</span>
+          </Link>
+          <p className="text-sm text-zinc-500">계정으로 로그인하세요</p>
         </div>
 
         {/* Card */}
