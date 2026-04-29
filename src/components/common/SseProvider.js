@@ -6,7 +6,7 @@ import axios from "axios";
 
 export const API_BASE_URL = import.meta.env.VITE_SPRING_API_BASE_URL;
 const SSE_URL = "/api/sse/subscribe";
-const REFRESH_URL = `${API_BASE_URL}/jwt/token/refresh`;
+const REFRESH_URL = `${API_BASE_URL}/api/jwt/token/refresh`;
 
 const SseProvider = ({ userId, onMessage }) => {
   const dispatch = useDispatch();

@@ -53,7 +53,7 @@ const ChatLayout = () => {
     if (!token) return;
 
     const client = new Client({
-      brokerURL: 'wss://www.xyzoffer.xyz/ws',
+      brokerURL: 'wss://www.xyzoffer.xyz/api/ws',
       connectHeaders: { Authorization: `Bearer ${token}` },
       reconnectDelay: 5000,
       debug: (str) => console.log(str)

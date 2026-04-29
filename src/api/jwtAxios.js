@@ -32,7 +32,7 @@ const beforeRequest = (config) => {
 const refreshJWT=async(accessToken)=>{
     console.log("jwtAxios accessToken=========>", accessToken)
 
-    const res=await axios.post(`${API_BASE_URL}/jwt/token/refresh`,
+    const res=await axios.post(`${API_BASE_URL}/api/jwt/token/refresh`,
         {},
         {
           withCredentials: true,

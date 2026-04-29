@@ -32,7 +32,7 @@ const InquiryChatBotPage = () => {
     try {
       const formData = new FormData();
       formData.append("file", selectedPdf);
-      const res  = await fetch(`${API_BASE_URL}/chatbot/upload`, { method: 'POST', body: formData });
+      const res  = await fetch(`${API_BASE_URL}/ai/chatbot/upload`, { method: 'POST', body: formData });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.detail || "PDF 업로드 실패!");
       if (data.success) {
@@ -52,7 +52,7 @@ const InquiryChatBotPage = () => {
     setMessages((prev) => [...prev, { role: 'USER', content: trimmed }]);
     setQuestion("");
     try {
-      const res  = await fetch(`${API_BASE_URL}/chatbot/chat`, {
+      const res  = await fetch(`${API_BASE_URL}/ai/chatbot/chat`, {
         method: 'POST',
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: trimmed }),
