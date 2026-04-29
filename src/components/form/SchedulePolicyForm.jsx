@@ -1,165 +1,96 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-    const initState={
-        scheduleTypeId:"",
-        typeCode:"",
-        typeName:"",
-        startTime:"",
-        endTime:"",
-        createdAt:"",
-        isActive:true,
-    };
+const initState = {
+  scheduleTypeId: "", typeCode: "", typeName: "",
+  startTime: "", endTime: "", createdAt: "", isActive: true,
+};
 
-const SchedulePolicyForm = ({onSubmit, onClose, initialData}) => {
-    const [form, setForm] = useState(initState);
+const selectClass = "w-full h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50";
 
-    useEffect(()=>{
-        if(initialData){
-            setForm({
-                scheduleTypeId:initialData.scheduleTypeId || "",
-                typeCode:initialData.typeCode || "",
-                typeName:initialData.typeName || "",
-                startTime:initialData.startTime || "",
-                endTime:initialData.endTime || "",
-                createdAt:initialData.createdAt || "",
-                isActive:initialData.isActive !== null && initialData.isActive !== undefined?
-                initialData.isActive : true,
-            });
-        }else {
-            setForm(initState);
-        }
-    },[initialData]);
+const SchedulePolicyForm = ({ onSubmit, onClose, initialData }) => {
+  const [form, setForm] = useState(initState);
 
-    const handleChange = (e) => {
-        const {name, value} = e.target;
+  useEffect(() => {
+    setForm(initialData ? {
+      scheduleTypeId: initialData.scheduleTypeId || "",
+      typeCode:  initialData.typeCode  || "",
+      typeName:  initialData.typeName  || "",
+      startTime: initialData.startTime || "",
+      endTime:   initialData.endTime   || "",
+      createdAt: initialData.createdAt || "",
+      isActive:  initialData.isActive !== null && initialData.isActive !== undefined ? initialData.isActive : true,
+    } : initState);
+  }, [initialData]);
 
-        if(name =="isActive"){
-            setForm({
-                ...form,
-                isActive:value == "true",
-            });
-            return;
-        }
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "isActive") { setForm(p => ({ ...p, isActive: value === "true" })); return; }
+    if (name === "typeCode")  { setForm(p => ({ ...p, typeCode: value.toUpperCase() })); return; }
+    setForm(p => ({ ...p, [name]: value }));
+  };
 
-        if(name =="typeCode"){
-            setForm({
-                ...form,
-                typeCode:value.toUpperCase(),
-            });
-            return;
-        }
-        setForm({
-            ...form,
-            [name] : value,
-        });
-    };
-
-    const handleSubmit = (e) =>{
-        e.preventDefault();
-
-        if(!form.typeCode.trim()){
-            alert("근무유형 코드를 입력하세요");
-            return;
-        }
-        if(!form.typeName.trim()){
-            alert("근무유형명을 입력하세요");
-            return;
-        }
-        
-        const requestData = {
-            scheduleTypeId: form.scheduleTypeId ? Number(form.scheduleTypeId):null,
-            typeCode: form.typeCode.trim(),
-            typeName: form.typeName.trim(),
-            startTime: form.startTime,
-            endTime: form.endTime,
-            createdAt: form.createdAt,
-            isActive: form.isActive,
-        };
-
-        onSubmit(requestData);
-        setForm(initState);
-    };
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!form.typeCode.trim()) { alert("근무유형 코드를 입력하세요"); return; }
+    if (!form.typeName.trim()) { alert("근무유형명을 입력하세요"); return; }
+    onSubmit({
+      scheduleTypeId: form.scheduleTypeId ? Number(form.scheduleTypeId) : null,
+      typeCode: form.typeCode.trim(), typeName: form.typeName.trim(),
+      startTime: form.startTime, endTime: form.endTime,
+      createdAt: form.createdAt, isActive: form.isActive,
+    });
+    setForm(initState);
+  };
 
   return (
-    <form onSubmit={handleSubmit}>
-        <h3>근무유형 등록</h3>
-        <div style={styles.formGrid}>
-            <div>
-                <label>근무유형 코드</label>
-                <input
-                type='text'
-                name='typeCode'
-                placeholder='예: DAY, NIGHT, OFF'
-                value={form.typeCode}
-                onChange={handleChange}
-                disabled={!!initialData}
-                />
-            </div>
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <p className="text-base font-semibold text-zinc-900">
+        {initialData ? "근무유형 수정" : "근무유형 등록"}
+      </p>
 
-            <div>
-                <label>근무유형명</label>
-                <input
-                type='text'
-                name='typeName'
-                placeholder='예: 주간근무'
-                value={form.typeName}
-                onChange={handleChange}
-                />
-            </div>
-
-            <div>
-                <label>시작시간</label>
-                <input
-                type='time'
-                name='startTime'
-                value={form.startTime}
-                onChange={handleChange}
-                />
-            </div>
-
-            <div>
-                <label>종료시간</label>
-                <input
-                type='time'
-                name='endTime'
-                value={form.endTime}
-                onChange={handleChange}
-                />
-            </div>
-
-            <div>
-                <label>상태</label>
-             <select
-                name="isActive"
-                value={String(form.isActive)}
-                onChange={handleChange}
-                >
-                <option value="true">사용</option>
-                <option value="false">비활성</option>
-            </select>
-            </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label>근무유형 코드 <span className="text-red-500">*</span></Label>
+          <Input name="typeCode" placeholder="예: DAY, NIGHT, OFF"
+            value={form.typeCode} onChange={handleChange} disabled={!!initialData} />
         </div>
 
-            <div style={styles.buttonBox}>
-            <button type="submit">등록</button>
-            <button type="button" onClick={onClose}>
-            취소
-            </button>
-            </div>
+        <div className="space-y-1.5">
+          <Label>근무유형명 <span className="text-red-500">*</span></Label>
+          <Input name="typeName" placeholder="예: 주간근무"
+            value={form.typeName} onChange={handleChange} />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>시작 시간</Label>
+          <input type="time" name="startTime" value={form.startTime}
+            onChange={handleChange} className={selectClass} />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>종료 시간</Label>
+          <input type="time" name="endTime" value={form.endTime}
+            onChange={handleChange} className={selectClass} />
+        </div>
+
+        <div className="space-y-1.5 col-span-2">
+          <Label>상태</Label>
+          <select name="isActive" value={String(form.isActive)} onChange={handleChange} className={selectClass}>
+            <option value="true">사용</option>
+            <option value="false">비활성</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-2 pt-2 border-t border-zinc-100">
+        <Button type="button" variant="outline" className="cursor-pointer" onClick={onClose}>취소</Button>
+        <Button type="submit" className="cursor-pointer">{initialData ? "수정" : "등록"}</Button>
+      </div>
     </form>
-  )
-}
-
-export default SchedulePolicyForm
-
-const styles = {
-  formGrid: {
-    display: "grid",
-    gap: "10px",
-  },
-  buttonBox: {
-    marginTop: "16px",
-    display: "flex",
-    gap: "8px",
-  },
+  );
 };
+
+export default SchedulePolicyForm;
