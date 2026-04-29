@@ -69,7 +69,7 @@ const StaffPage = () => {
           <div className="flex gap-1.5">
             <Button size="sm" variant="outline" className="h-7 text-xs cursor-pointer"
               disabled={item.isActive === "N"} onClick={() => handleEdit(item)}>수정</Button>
-            <Button size="sm" className={`h-7 text-xs cursor-pointer ${item.isActive === "Y" ? "bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"}`}
+            <Button size="sm" className={`h-7 text-xs cursor-pointer min-w-16 ${item.isActive === "Y" ? "bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"}`}
               onClick={() => handleToggleActive(item)}>
               {item.isActive === "Y" ? "비활성" : "활성"}
             </Button>

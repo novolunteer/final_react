@@ -59,6 +59,7 @@ const MedicalRecordPage = () => {
   const [searchData, setSearchData]                 = useState(null);
   const [isSearching, setIsSearching]               = useState(false);
   const [newRecord, setNewRecord]                   = useState({ title: "", symptom: "", content: "", isSensitive: false });
+  const [aiLoading, setAiLoading]                   = useState(false);
 
   const handleSearch = async (newPage = 0) => {
     if (!searchKeyword || !selectedPat) return;
@@ -127,6 +128,7 @@ const MedicalRecordPage = () => {
 
   const aiHandler = async () => {
     if (!newRecord.symptom) { alert("증상을 입력하세요"); return; }
+    setAiLoading(true);
     try {
       const res = await jwtAxios.post(`${API_BASE_URL}/diagnose`, { patientId: parseInt(selectedPat), departmentId: parseInt(selectedDepartmentId), departmentName: selectedDepartmentName, symptom: newRecord.symptom }, { headers: { "Content-Type": "application/json" } });
       const data = res.data;
@@ -134,6 +136,7 @@ const MedicalRecordPage = () => {
       setAiResult(data);
       setNewRecord(prev => ({ ...prev, content: warning + data.ai_diagnosis }));
     } catch (err) { console.error("AI 진단 오류:", err); alert("AI 진단 요청 실패"); }
+    finally { setAiLoading(false); }
   };
 
   const wBadge = (s) => WAITING_BADGE[s] ?? { label: s, className: '' };
@@ -252,7 +255,7 @@ const MedicalRecordPage = () => {
                     className="p-3 rounded-lg border border-zinc-200 cursor-pointer hover:bg-zinc-50 transition-colors">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-xs text-zinc-400">{item.doctorName}</span>
-                      <span className="text-[10px] text-zinc-300">{item.createAt ? new Date(item.createAt).toLocaleDateString() : ""}</span>
+                      <span className="text-[10px] text-zinc-300">{item.createAt ? item.createAt ? new Date(item.createAt).toLocaleString('ko-KR') : "" : ""}</span>
                     </div>
                     <p className="text-sm font-medium text-zinc-800">
                       {item.isSensitive ? <span className="flex items-center gap-1 text-amber-600"><AlertTriangle size={12} /> 민감 정보 포함</span> : item.title}
@@ -283,8 +286,8 @@ const MedicalRecordPage = () => {
                       <div className="space-y-1.5">
                         <div className="flex items-center justify-between">
                           <Label className="text-xs">증상</Label>
-                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1 cursor-pointer border-violet-200 text-violet-600 hover:bg-violet-50" onClick={aiHandler}>
-                            <Bot size={12} /> AI 진단
+                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1 cursor-pointer border-violet-200 text-violet-600 hover:bg-violet-50" onClick={aiHandler} disabled={aiLoading}>
+                            <Bot size={12} /> {aiLoading ? "분석 중..." : "AI 진단"}
                           </Button>
                         </div>
                         <Textarea value={newRecord.symptom} onChange={(e) => setNewRecord({ ...newRecord, symptom: e.target.value })} rows={3} />
@@ -317,7 +320,7 @@ const MedicalRecordPage = () => {
                   <div className="space-y-4">
                     <div className="flex justify-between items-start pb-3 border-b border-zinc-100">
                       <p className="text-sm font-bold text-zinc-900">{selectedRecord.departmentName} / {selectedRecord.doctorName}</p>
-                      <p className="text-xs text-zinc-400">{new Date(selectedRecord.createAt).toLocaleString()}</p>
+                      <p className="text-xs text-zinc-400">{selectedRecord.createAt ? new Date(selectedRecord.createAt).toLocaleString('ko-KR') : ""}</p>
                     </div>
                     <p className="text-lg font-bold text-zinc-900">{selectedRecord.title}</p>
                     {selectedRecord.isSensitive && (
@@ -360,8 +363,8 @@ const MedicalRecordPage = () => {
           <DialogHeader><DialogTitle>진료 시작</DialogTitle></DialogHeader>
           <p className="text-sm text-zinc-600 mt-2">진료중으로 변경하시겠습니까?</p>
           <div className="flex justify-center gap-2 mt-4">
-            <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => setShowStatusModal(false)}>아니오</Button>
             <Button size="sm" className="cursor-pointer" onClick={handleChangeToInProgress}>예</Button>
+            <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => setShowStatusModal(false)}>아니오</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -372,8 +375,8 @@ const MedicalRecordPage = () => {
           <DialogHeader><DialogTitle>진료 완료</DialogTitle></DialogHeader>
           <p className="text-sm text-zinc-600 mt-2">진료를 완료하시겠습니까?</p>
           <div className="flex justify-center gap-2 mt-4">
-            <Button variant="outline" size="sm" className="cursor-pointer" onClick={handleConfirmNo}>아니오</Button>
             <Button size="sm" className="cursor-pointer" onClick={handleConfirmYes}>예</Button>
+            <Button variant="outline" size="sm" className="cursor-pointer" onClick={handleConfirmNo}>아니오</Button>
           </div>
         </DialogContent>
       </Dialog>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import dayjs from "dayjs";
 import usePagination from "../../hooks/usePagination";
 import Pagination from "../../components/common/Pagination";
 import RegisterButton from "../../components/common/RegisterButton";
@@ -31,7 +32,7 @@ const Schedule_policyPage = () => {
         endTime:        item.endTime,
         isActive:       item.isActive,
         isActiveText:   item.isActive ? "사용" : "비활성",
-        createdAt:      item.createdAt ? item.createdAt.replace("T", " ").slice(0, 16) : "",
+        createdAt:      item.createdAt ? dayjs(item.createdAt).format("YYYY년 MM월 DD일 HH시 mm분 ss초") : "",
         action: (
           <div className="flex gap-1.5">
             <Button size="sm" variant="outline" className="h-7 text-xs cursor-pointer" onClick={() => handleEdit(item)}>수정</Button>

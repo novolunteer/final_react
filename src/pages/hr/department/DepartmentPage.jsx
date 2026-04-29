@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import usePagination from "../../../hooks/usePagination";
 import RegisterButton from "../../../components/common/RegisterButton";
 import SearchBar from "../../../components/common/SearchBar";
 import CommonModal from "../../../components/common/CommonModal";
@@ -10,6 +11,8 @@ import { Building2, MapPin } from "lucide-react";
 
 const DepartmentPage = () => {
   const [departmentList, setDepartmentList]         = useState([]);
+  const PAGE_SIZE = 12;
+  const [deptPage, setDeptPage] = useState(0);
   const [originalDepartmentList, setOriginalDepartmentList] = useState([]);
   const [open, setOpen]                             = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
@@ -52,13 +55,17 @@ const DepartmentPage = () => {
       (i.departmentName||"").replace(/\s/g,"").toLowerCase().includes(kw)
     );
     if (matched.length === 0) { alert("검색 결과가 없습니다"); setDepartmentList([]); return; }
-    setDepartmentList(matched);
+    setDepartmentList(matched); setDeptPage(0);
   };
 
-  const handleResetSearch = () => { setSearchKeyword(""); setDepartmentList(originalDepartmentList); };
+  const handleResetSearch = () => { setSearchKeyword(""); setDepartmentList(originalDepartmentList); setDeptPage(0); };
 
-  const activeList   = departmentList.filter(d => d.status !== "N");
-  const inactiveList = departmentList.filter(d => d.status === "N");
+  const allActive    = departmentList.filter(d => d.status !== "N");
+  const allInactive  = departmentList.filter(d => d.status === "N");
+  const totalDeptPages = Math.max(1, Math.ceil(departmentList.length / PAGE_SIZE));
+  const pagedDepts = departmentList.slice(deptPage * PAGE_SIZE, (deptPage + 1) * PAGE_SIZE);
+  const activeList   = pagedDepts.filter(d => d.status !== "N");
+  const inactiveList = pagedDepts.filter(d => d.status === "N");
 
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">
@@ -149,6 +156,17 @@ const DepartmentPage = () => {
 
       {departmentList.length === 0 && (
         <div className="text-center py-16 text-sm text-zinc-400">부서가 없습니다.</div>
+      )}
+
+      {/* 페이지네이션 */}
+      {totalDeptPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-2">
+          <button onClick={() => setDeptPage(p => p - 1)} disabled={deptPage === 0}
+            className="px-4 h-8 text-sm rounded border border-zinc-200 bg-white hover:bg-zinc-50 disabled:opacity-40 disabled:cursor-not-allowed">이전</button>
+          <span className="text-sm text-zinc-500">{deptPage + 1} / {totalDeptPages}</span>
+          <button onClick={() => setDeptPage(p => p + 1)} disabled={deptPage >= totalDeptPages - 1}
+            className="px-4 h-8 text-sm rounded border border-zinc-200 bg-white hover:bg-zinc-50 disabled:opacity-40 disabled:cursor-not-allowed">다음</button>
+        </div>
       )}
 
       <CommonModal open={open} onClose={handleClose} title={selectedDepartment ? "부서 수정" : "부서 등록"}>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { jwtDecode } from "jwt-decode";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -47,6 +48,17 @@ const DepartmentScheduleGroup = ({ departmentName, items, columns, deptTableData
 };
 
 const selectClass = "h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
+
+const getRoles = () => {
+  try {
+    const token = sessionStorage.getItem("accessToken");
+    return token ? (jwtDecode(token).roles || []) : [];
+  } catch { return []; }
+};
+const canManageSchedule = () => {
+  const roles = getRoles();
+  return roles.includes("PROFESSOR") || roles.includes("ADMIN");
+};
 
 const StaffSchedulePage = () => {
   const [scheduleList, setScheduleList]       = useState([]);
@@ -295,17 +307,19 @@ const StaffSchedulePage = () => {
           <CalendarDays size={20} className="text-blue-600" />
           <h2 className="text-lg font-bold text-zinc-900">직원 스케줄 관리</h2>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          <RegisterButton onClick={handleOpen}>개별등록</RegisterButton>
-          <Button variant="outline" className="cursor-pointer" onClick={handleBulkOpen}>일괄등록</Button>
-          <Button variant="outline" className="cursor-pointer gap-1.5" onClick={handleAutoOpen}>
-            <Bot size={14} /> 자동스케줄
-          </Button>
-          <Button className="cursor-pointer gap-1.5" onClick={handleBulkConfirm}
-            disabled={viewMode==="week" || selectedIds.length===0}>
-            <CheckCheck size={14} /> 선택확정
-          </Button>
-        </div>
+        {canManageSchedule() && (
+          <div className="flex gap-2 flex-wrap">
+            <RegisterButton onClick={handleOpen}>개별등록</RegisterButton>
+            <Button variant="outline" className="cursor-pointer" onClick={handleBulkOpen}>일괄등록</Button>
+            <Button variant="outline" className="cursor-pointer gap-1.5" onClick={handleAutoOpen}>
+              <Bot size={14} /> 자동스케줄
+            </Button>
+            <Button className="cursor-pointer gap-1.5" onClick={handleBulkConfirm}
+              disabled={viewMode==="week" || selectedIds.length===0}>
+              <CheckCheck size={14} /> 선택확정
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* 필터 바 */}

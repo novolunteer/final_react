@@ -51,7 +51,7 @@ const ReceptionPage = () => {
   const { data, isLoading } = useQuery({
     queryKey: ['receptionList', status, debouncedName, page],
     queryFn: () => jwtAxios.get('/api/reception', {
-      params: { status: status || undefined, name: debouncedName, page, size: 10 }
+      params: { status: status || undefined, name: debouncedName, page, size: 5 }
     }).then(r => r.data),
     placeholderData: (prev) => prev,
   });
@@ -149,7 +149,7 @@ const ReceptionPage = () => {
       )}
 
       {/* 페이지네이션 */}
-      {totalPages > 1 && (
+      {totalPages >= 1 && (
         <div className="flex items-center justify-center gap-2">
           <button
             onClick={() => setPage((p) => p - 1)} disabled={page === 0}

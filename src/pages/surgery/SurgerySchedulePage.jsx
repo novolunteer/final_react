@@ -1,4 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
+import { jwtDecode } from "jwt-decode";
+
+const canRegisterSurgery = () => {
+  try {
+    const token = sessionStorage.getItem("accessToken");
+    const roles = token ? (jwtDecode(token).roles || []) : [];
+    return roles.includes("PROFESSOR");
+  } catch { return false; }
+};
 import CommonModal from "../../components/common/CommonModal";
 import { getSurgeryList, registerSurgery, registerEmergencySurgery, updateSurgery, cancelSurgery } from "../../api/surgeryApi";
 import { getStaffList } from "../../api/hr/staffApi";
@@ -305,12 +314,14 @@ const SurgerySchedulePage = () => {
           <Scissors size={20} className="text-blue-600" />
           <h2 className="text-lg font-bold text-zinc-900">수술 스케줄 관리</h2>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="cursor-pointer" onClick={openRegister}>수술 등록</Button>
-          <Button className="cursor-pointer bg-red-600 hover:bg-red-700 gap-1.5" onClick={openEmergency}>
-            <AlertTriangle size={14} /> 응급 수술 등록
-          </Button>
-        </div>
+        {canRegisterSurgery() && (
+          <div className="flex gap-2">
+            <Button variant="outline" className="cursor-pointer" onClick={openRegister}>수술 등록</Button>
+            <Button className="cursor-pointer bg-red-600 hover:bg-red-700 gap-1.5" onClick={openEmergency}>
+              <AlertTriangle size={14} /> 응급 수술 등록
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* 필터 바 */}
@@ -454,10 +465,10 @@ const SurgerySchedulePage = () => {
                 ["상태",      <Badge className={cn("text-xs", STATUS_BADGE[selectedSurgery.status])}>{STATUS_LABEL[selectedSurgery.status]||selectedSurgery.status}</Badge>],
                 ["담당 의사",  `${selectedSurgery.doctorName} (#${selectedSurgery.doctorId})`],
                 ["환자",      `${selectedSurgery.patientName} (#${selectedSurgery.patientId})`],
-                ["시작 시간",  selectedSurgery.startTime?.replace("T"," ").slice(0,16)],
-                ["종료 시간",  selectedSurgery.endTime?.replace("T"," ").slice(0,16)],
+                ["시작 시간",  selectedSurgery.startTime ? new Date(selectedSurgery.startTime).toLocaleString('ko-KR') : ""],
+                ["종료 시간",  selectedSurgery.endTime ? new Date(selectedSurgery.endTime).toLocaleString('ko-KR') : ""],
                 ["수술 내용",  selectedSurgery.description || "-"],
-                ["등록 일시",  selectedSurgery.createdAt?.replace("T"," ").slice(0,16)],
+                ["등록 일시",  selectedSurgery.createdAt ? new Date(selectedSurgery.createdAt).toLocaleString('ko-KR') : ""],
               ].map(([k, v]) => (
                 <>
                   <span className="text-zinc-500 font-medium self-center">{k}</span>

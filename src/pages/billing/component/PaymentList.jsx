@@ -71,7 +71,7 @@ const PaymentList = ({ keyword }) => {
                       <Badge className="text-xs bg-zinc-100 text-zinc-600 hover:bg-zinc-100">{p.method}</Badge>
                     </TableCell>
                     <TableCell className="text-xs text-zinc-500 whitespace-nowrap">
-                      {dayjs(p.paymentDatetime).format('YYYY.MM.DD HH:mm')}
+                      {dayjs(p.paymentDatetime).format('YYYY년 MM월 DD일 HH시 mm분 ss초')}
                     </TableCell>
                   </TableRow>
                 ))

@@ -54,9 +54,8 @@ const MySchedulePage = () => {
       const data = await getMySchedule({ startDate, endDate, size: 100 });
       const content = data.content ?? [];
       setScheduleList(content);
-      if (content.length > 0 && !departmentName) {
-        setDepartmentName(content[0].departmentName ?? "");
-      }
+      // 이미 설정된 값 유지, 새 데이터 있을 때만 업데이트
+      setDepartmentName(prev => prev || (content[0]?.departmentName ?? ""));
     } catch (err) { console.error("내 스케줄 조회 실패", err); }
     finally { setLoading(false); }
   };

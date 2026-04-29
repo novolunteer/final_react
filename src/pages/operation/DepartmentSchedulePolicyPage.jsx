@@ -90,7 +90,7 @@ const DepartmentSchedulePolicyPage = () => {
   const handleResetSearch = () => { setSearchKeyword(""); setPolicyList(originalPolicyList); };
 
   const columns = [
-    { key: "departmentId",        title: "번호" },
+    { key: "rowNum",              title: "번호" },
     { key: "departmentName",      title: "부서명" },
     { key: "jobType",             title: "직무유형" },
     { key: "shiftTypesText",      title: "허용 근무유형" },
@@ -116,7 +116,7 @@ const DepartmentSchedulePolicyPage = () => {
         <Button variant="outline" className="cursor-pointer" onClick={handleResetSearch}>전체보기</Button>
       </div>
 
-      <CommonTable columns={columns} data={pagedPolicyList} />
+      <CommonTable columns={columns} data={pagedPolicyList.map((item, idx) => ({ ...item, rowNum: page * 10 + idx + 1 }))} />
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       <CommonModal open={open} onClose={handleClose} title={selectedPolicy ? "부서 정책 수정" : "부서 정책 등록"}>

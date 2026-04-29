@@ -253,19 +253,20 @@ const ReservationConfirm = () => {
                     isSelected ? "border-blue-500 bg-blue-50 ring-1 ring-blue-400" : "border-zinc-200 bg-zinc-50 hover:bg-zinc-100"
                   )}
                 >
+                  {/* 환자명 + 진료과 + 날짜 + 취소 */}
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-semibold text-zinc-900">{item.patientName}</span>
-                    <span className="text-xs text-blue-600 font-medium">{item.departmentName}</span>
-                  </div>
-                  <div className="text-xs text-zinc-500 mb-1">👨‍⚕️ {item.doctorName || '희망 의사 없음'}</div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-zinc-400 truncate max-w-30">{item.symptom}</span>
                     <div className="flex items-center gap-2">
+                      <span className="text-xs text-blue-600 font-medium">{item.departmentName}</span>
                       <span className="text-xs text-zinc-400">{getDate(item) ? dayjs(getDate(item)).format('MM/DD HH:mm') : '없음'}</span>
                       <button onClick={(e) => { e.stopPropagation(); handleCancel(item.reservationId); }}
                         className="text-[10px] px-2 py-0.5 rounded bg-red-50 text-red-500 hover:bg-red-100 border border-red-100">취소</button>
                     </div>
                   </div>
+                  {/* 증상 - 가운데 강조 */}
+                  <p className="text-sm text-zinc-700 my-1.5 line-clamp-2">{item.symptom || '증상 없음'}</p>
+                  {/* 의사 - 아래 */}
+                  <div className="text-xs text-zinc-400">👨‍⚕️ {item.doctorName || '희망 의사 없음'}</div>
                 </div>
               );
             })}
