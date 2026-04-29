@@ -1,180 +1,132 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import ChatRoomList from '../component/ChatRoomList'
 import ChatRoom from '../component/ChatRoom'
-import "./chatLayout.css"
 import { Client } from '@stomp/stompjs'
 import { chatRoomList, getStaffList } from '../../../api/chatApi'
 import AttachmentArchive from '../component/AttachmentArchive'
 import { useNavigate } from 'react-router-dom'
 
 const ChatLayout = () => {
-  const [selectedRoomId, setSelectedRoomId]=useState(null);
-  const [connected, setConnected]=useState(false);
-  const [rooms, setRooms]=useState([]);
-  const [staffList, setStaffList]=useState([]);
-  const [webSocketReady, setWebSocketReady]=useState(false);
-  const [roomRefresh, setRoomRefresh]=useState(0);
-  const [showAttachmentArchive, setShowAttachmentArchive]=useState(false);
-  const [roomName, setRoomName]=useState("");
+  const [selectedRoomId, setSelectedRoomId]     = useState(null);
+  const [connected, setConnected]               = useState(false);
+  const [rooms, setRooms]                       = useState([]);
+  const [staffList, setStaffList]               = useState([]);
+  const [webSocketReady, setWebSocketReady]     = useState(false);
+  const [roomRefresh, setRoomRefresh]           = useState(0);
+  const [showAttachmentArchive, setShowAttachmentArchive] = useState(false);
+  const [roomName, setRoomName]                 = useState("");
 
-  const clientRef=useRef(null);
-  const navigate=useNavigate();
+  const clientRef = useRef(null);
+  const navigate  = useNavigate();
 
-  const accessToken=sessionStorage.getItem('accessToken');
-  const roles = sessionStorage.getItem("roles") || [];
+  const accessToken = sessionStorage.getItem('accessToken');
+  const roles       = sessionStorage.getItem("roles") || [];
 
-  useEffect(()=>{
-      if(!accessToken){
-        navigate("/login", {replace:true});
-      }
+  useEffect(() => {
+    if (!accessToken) navigate("/login", { replace: true });
+    if (roles.includes("PATIENT")) navigate("/", { replace: true });
+  }, []);
 
-      if(roles.includes("PATIENT")){
-        navigate("/", {replace:true});
-      }
-  },[])
+  const getRooms = useCallback(async () => {
+    try {
+      const res      = await chatRoomList();
+      const roomRes  = res.result.map(room =>
+        Number(room.roomId) === Number(selectedRoomId) ? { ...room, unreadCount: 0 } : room
+      );
+      setRooms(roomRes);
 
-  const getRooms=useCallback(
-    async()=>{
-        try{
-            const res=await chatRoomList();
+      const staffRes = await getStaffList();
+      setStaffList(staffRes.result);
 
-            const roomRes=res.result.map(room => 
-                Number(room.roomId) === Number(selectedRoomId)
-                ? {...room, unreadCount:0}
-                : room
-            );
-
-            setRooms(roomRes);
-
-            const staffRes=await getStaffList();
-            setStaffList(staffRes.result);
-
-            if(selectedRoomId && !roomRes.some(room => room.roomId === selectedRoomId)){
-                setSelectedRoomId(null);
-            }
-
-            setWebSocketReady(true);
-        }catch(error){
-            console.log(error);
-        }
-  },[selectedRoomId]);  
-
-  useEffect(()=>{
-    getRooms();
-  },[getRooms]);
-
-  useEffect(()=>{
-      if(!webSocketReady) return;  
-
-      const accessToken=sessionStorage.getItem("accessToken");
-      if(!accessToken) return;
-  
-      const client=new Client({
-          brokerURL: 'wss://xyzoffer.xyz/ws',
-          connectHeaders:{
-              Authorization:`Bearer ${accessToken}`
-          },
-          reconnectDelay: 5000,
-          debug: (str) => {
-              console.log(str)
-          }
-      });
-  
-      client.onConnect = () => {
-        console.log("WEBSOCKET_CONNECTED");
-        setConnected(true);
-      };
-  
-      client.onStompError = (error) => {
-          console.error("STOMP_ERROR ==> ", error);
-      };
-  
-      client.onWebSocketError = (error) => {
-          console.error("WEBSOCKET_ERROR ==> ", error);
-      };
-  
-      client.onWebSocketClose = (event) => {
-          console.error("WEBSOCKET_CLOSE ==> ", event);
-          setConnected(false)
-      };
-  
-      client.activate();
-      clientRef.current=client;
-  
-      return ()=>{
-          if(clientRef.current){
-              clientRef.current.deactivate();
-              clientRef.current=null;
-          }
-
-          setConnected(false);
-      };
-    }, [webSocketReady]);
-
-    useEffect(()=>{
-        const client=clientRef.current;
-        if(!client || !connected) return;
-
-        const roomListSubscription=client.subscribe(
-            '/user/queue/chat.list',
-            async (message) => {
-                const payload=JSON.parse(message.body);
-
-                if (payload.type === 'ROOM_LIST_REFRESH') {
-                    await getRooms();
-
-                    if (Number(payload.roomId) === Number(selectedRoomId)) {
-                        setRoomRefresh(prev => prev + 1);
-                    }
-                }
-            }
-        );
-
-        return ()=>{
-            roomListSubscription.unsubscribe();
-        };
-    },[connected, getRooms, selectedRoomId])
-
-    const handleReadRoom=(roomId)=>{
-        setRooms(prevRooms => 
-            prevRooms.map(room => 
-                Number(room.roomId) === Number(roomId)
-                ? {...room, unreadCount: 0}
-                : room
-            )
-        );
-    };
-
-    const handleLeaveRoomSuccess=async() => {
+      if (selectedRoomId && !roomRes.some(room => room.roomId === selectedRoomId)) {
         setSelectedRoomId(null);
+      }
+      setWebSocketReady(true);
+    } catch (error) { console.log(error); }
+  }, [selectedRoomId]);
+
+  useEffect(() => { getRooms(); }, [getRooms]);
+
+  useEffect(() => {
+    if (!webSocketReady) return;
+    const token = sessionStorage.getItem("accessToken");
+    if (!token) return;
+
+    const client = new Client({
+      brokerURL: 'wss://xyzoffer.xyz/ws',
+      connectHeaders: { Authorization: `Bearer ${token}` },
+      reconnectDelay: 5000,
+      debug: (str) => console.log(str)
+    });
+
+    client.onConnect        = () => { console.log("WEBSOCKET_CONNECTED"); setConnected(true); };
+    client.onStompError     = (e) => console.error("STOMP_ERROR ==> ", e);
+    client.onWebSocketError = (e) => console.error("WEBSOCKET_ERROR ==> ", e);
+    client.onWebSocketClose = (e) => { console.error("WEBSOCKET_CLOSE ==> ", e); setConnected(false); };
+
+    client.activate();
+    clientRef.current = client;
+
+    return () => {
+      if (clientRef.current) { clientRef.current.deactivate(); clientRef.current = null; }
+      setConnected(false);
+    };
+  }, [webSocketReady]);
+
+  useEffect(() => {
+    const client = clientRef.current;
+    if (!client || !connected) return;
+
+    const sub = client.subscribe('/user/queue/chat.list', async (message) => {
+      const payload = JSON.parse(message.body);
+      if (payload.type === 'ROOM_LIST_REFRESH') {
         await getRooms();
-    }
+        if (Number(payload.roomId) === Number(selectedRoomId)) setRoomRefresh(prev => prev + 1);
+      }
+    });
+
+    return () => sub.unsubscribe();
+  }, [connected, getRooms, selectedRoomId]);
+
+  const handleReadRoom = (roomId) => {
+    setRooms(prev => prev.map(room =>
+      Number(room.roomId) === Number(roomId) ? { ...room, unreadCount: 0 } : room
+    ));
+  };
+
+  const handleLeaveRoomSuccess = async () => {
+    setSelectedRoomId(null);
+    await getRooms();
+  };
 
   return (
-    <div className='chatArea' style={{ paddingTop: '24px' }}>
-        <div className='chatRoomListArea'>
-            <ChatRoomList rooms={rooms} selectedRoomId={selectedRoomId} 
-                onSelectRoom={setSelectedRoomId} staffList={staffList}
-                setStaffList={setStaffList} setRooms={setRooms}/>
-        </div>
-        <div className='chatRoomArea'>
-            <ChatRoom roomId={selectedRoomId} onReadRoom={handleReadRoom}
-              clientRef={clientRef} connected={connected}
-              onLeaveRoom={handleLeaveRoomSuccess}
-              roomRefresh={roomRefresh} getRooms={getRooms}
-              setAttachmentArchive={setShowAttachmentArchive}
-              setRoomName={setRoomName}/>
-        </div>
-        {
-            showAttachmentArchive && (
-                <div className='AttachmentArchiveArea'>
-                    <AttachmentArchive roomId={selectedRoomId}
-                        roomName={roomName} setAttachmentArchive={setShowAttachmentArchive}/>
-                </div>
-            )
-        }
-    </div>
-  )
-}
+    <div className="flex overflow-hidden bg-white -my-6" style={{ height: 'calc(100% + 48px)' }}>
+      {/* 채팅방 목록 */}
+      <div className="w-72 shrink-0 border-r border-zinc-200 flex flex-col">
+        <ChatRoomList rooms={rooms} selectedRoomId={selectedRoomId}
+          onSelectRoom={setSelectedRoomId} staffList={staffList}
+          setStaffList={setStaffList} setRooms={setRooms} />
+      </div>
 
-export default ChatLayout
+      {/* 채팅 영역 */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <ChatRoom roomId={selectedRoomId} onReadRoom={handleReadRoom}
+          clientRef={clientRef} connected={connected}
+          onLeaveRoom={handleLeaveRoomSuccess}
+          roomRefresh={roomRefresh} getRooms={getRooms}
+          setAttachmentArchive={setShowAttachmentArchive}
+          setRoomName={setRoomName} />
+      </div>
+
+      {/* 첨부 보관함 */}
+      {showAttachmentArchive && (
+        <div className="w-72 shrink-0 border-l border-zinc-200 flex flex-col">
+          <AttachmentArchive roomId={selectedRoomId}
+            roomName={roomName} setAttachmentArchive={setShowAttachmentArchive} />
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ChatLayout;
