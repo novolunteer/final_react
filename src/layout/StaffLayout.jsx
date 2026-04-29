@@ -226,7 +226,7 @@ const StaffLayout = () => {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto pt-6">
           <Outlet />
         </main>
       </div>
