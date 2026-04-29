@@ -42,6 +42,8 @@ const MySchedulePage = () => {
   const [selectedDate, setSelectedDate] = useState(getTodayString());
   const [currentMonth, setCurrentMonth] = useState(getTodayString());
   const [loading, setLoading]           = useState(false);
+  const [staffName, setStaffName]       = useState("");
+  const [departmentName, setDepartmentName] = useState("");
   const calendarRef = useRef(null);
 
   const fetchSchedule = async (monthDate) => {
@@ -49,7 +51,12 @@ const MySchedulePage = () => {
     try {
       const { startDate, endDate } = getMonthRange(monthDate);
       const data = await getMySchedule({ startDate, endDate, size: 100 });
-      setScheduleList(data.content ?? []);
+      const content = data.content ?? [];
+      setScheduleList(content);
+      if (content.length > 0) {
+        if (!staffName)      setStaffName(content[0].staffName ?? "");
+        if (!departmentName) setDepartmentName(content[0].departmentName ?? "");
+      }
     } catch (err) { console.error("내 스케줄 조회 실패", err); }
     finally { setLoading(false); }
   };
@@ -68,9 +75,6 @@ const MySchedulePage = () => {
   const selectedDaySchedules = useMemo(() =>
     scheduleList.filter((item) => item.workDate === selectedDate),
     [scheduleList, selectedDate]);
-
-  const staffName      = scheduleList[0]?.staffName ?? "";
-  const departmentName = scheduleList[0]?.departmentName ?? "";
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-4">
