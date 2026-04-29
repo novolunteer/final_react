@@ -11,23 +11,16 @@ const initState = {
 
 const positionOptionsMap = {
   DOCTOR: [
-    { value: "INTERN",      label: "인턴" },
     { value: "RESIDENT",    label: "레지던트" },
     { value: "FELLOW",      label: "전임의" },
-    { value: "SPECIALIST",  label: "전문의" },
     { value: "PROFESSOR",   label: "교수" },
-    { value: "HEAD_DOCTOR", label: "과장" },
   ],
   NURSE: [
-    { value: "NURSE",          label: "일반 간호사" },
-    { value: "CHARGE_NURSE",   label: "책임 간호사" },
+    { value: "NURSE",          label: "간호사" },
     { value: "HEAD_NURSE",     label: "수간호사" },
-    { value: "DIRECTOR_NURSE", label: "간호부장" },
   ],
   ADMIN: [
-    { value: "STAFF",   label: "사원" },
-    { value: "MANAGER", label: "팀장" },
-    { value: "ADMIN",   label: "총관리자" },
+    { value: "ADMIN",   label: "관리자" },
   ],
 };
 

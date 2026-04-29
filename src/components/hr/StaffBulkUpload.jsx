@@ -162,7 +162,7 @@ const StaffBulkUpload = ({open, onClose, onSuccess, departmentList = []}) => {
   const okCount = rows.length - errorCount;
 
   return (
-    <CommonModal open={open} onClose={handleClose} title="직원 일괄등록" contentClass="max-w-4xl">
+    <CommonModal open={open} onClose={handleClose} title="직원 일괄등록" contentClass="max-w-4xl sm:max-w-4xl">
     <div className='bulk-upload'>
       <div className='bulk-upload_header'>
         <h2 className='bulk-upload_title'>
