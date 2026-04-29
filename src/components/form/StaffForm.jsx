@@ -1,355 +1,207 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import CommonModal from "../common/CommonModal";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const initState = {
-  staffId: "",
-  email: "",
-  password: "",
-  departmentId: "",
-  managerId: "",
-  position: "",
-  name: "",
-  phone: "",
-  address: "",
-  isActive:"Y",
+  staffId: "", email: "", password: "", departmentId: "",
+  managerId: "", position: "", name: "", phone: "", address: "", isActive: "Y",
 };
 
 const positionOptionsMap = {
   DOCTOR: [
-    { value: "INTERN", label: "인턴" },
-    { value: "RESIDENT", label: "레지던트" },
-    { value: "FELLOW", label: "전임의" },
-    { value: "SPECIALIST", label: "전문의" },
-    { value: "PROFESSOR", label: "교수" },
+    { value: "INTERN",      label: "인턴" },
+    { value: "RESIDENT",    label: "레지던트" },
+    { value: "FELLOW",      label: "전임의" },
+    { value: "SPECIALIST",  label: "전문의" },
+    { value: "PROFESSOR",   label: "교수" },
     { value: "HEAD_DOCTOR", label: "과장" },
   ],
   NURSE: [
-    { value: "NURSE", label: "일반 간호사" },
-    { value: "CHARGE_NURSE", label: "책임 간호사" },
-    { value: "HEAD_NURSE", label: "수간호사" },
+    { value: "NURSE",          label: "일반 간호사" },
+    { value: "CHARGE_NURSE",   label: "책임 간호사" },
+    { value: "HEAD_NURSE",     label: "수간호사" },
     { value: "DIRECTOR_NURSE", label: "간호부장" },
   ],
   ADMIN: [
-    { value: "STAFF", label: "사원" },
+    { value: "STAFF",   label: "사원" },
     { value: "MANAGER", label: "팀장" },
-    { value: "ADMIN", label: "총관리자" },
+    { value: "ADMIN",   label: "총관리자" },
   ],
 };
 
-const StaffForm = ({
-  onSubmit,
-  onClose,
-  initialData,
-  departmentList = [],
-  staffList = [],
-}) => {
-  const [form, setForm] = useState(initState);
+const selectClass = "w-full h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed";
 
-  const [managerModalOpen, setManagerModalOpen] = useState(false);
-  const [managerKeyword, setManagerKeyword] = useState("");
+const StaffForm = ({ onSubmit, onClose, initialData, departmentList = [], staffList = [] }) => {
+  const [form, setForm]                           = useState(initState);
+  const [managerModalOpen, setManagerModalOpen]   = useState(false);
+  const [managerKeyword, setManagerKeyword]       = useState("");
   const [managerSearchResult, setManagerSearchResult] = useState([]);
   const [selectedManagerLabel, setSelectedManagerLabel] = useState("");
 
   useEffect(() => {
     if (initialData) {
       setForm({
-        staffId: initialData.staffId || "",
-        email: "",
-        password: "",
-        departmentId: initialData.departmentId || "",
-        managerId: initialData.managerId || "",
-        position: initialData.position || "",
-        name: initialData.name || "",
-        phone: initialData.phone || "",
-        address: initialData.address || "",
+        staffId: initialData.staffId || "", email: "", password: "",
+        departmentId: initialData.departmentId || "", managerId: initialData.managerId || "",
+        position: initialData.position || "", name: initialData.name || "",
+        phone: initialData.phone || "", address: initialData.address || "",
         isActive: initialData.isActive ?? "Y",
       });
-
-      const selectedManager = staffList.find(
-        (staff) => Number(staff.staffId) === Number(initialData.managerId)
-      );
-
-      setSelectedManagerLabel(
-        selectedManager
-          ? `${selectedManager.staffId} / ${selectedManager.name || ""}`
-          : ""
-      );
+      const mgr = staffList.find(s => Number(s.staffId) === Number(initialData.managerId));
+      setSelectedManagerLabel(mgr ? `${mgr.staffId} / ${mgr.name || ""}` : "");
     } else {
-      setForm(initState);
-      setSelectedManagerLabel("");
-      setManagerKeyword("");
-      setManagerSearchResult([]);
+      setForm(initState); setSelectedManagerLabel(""); setManagerKeyword(""); setManagerSearchResult([]);
     }
   }, [initialData, staffList]);
 
   const handleChange = (e) => {
-  const { name, value } = e.target;
-
-    if (name === "departmentId") {
-      setForm((prev) => ({
-        ...prev,
-        departmentId: value,
-        position: "",
-      }));
-      return;
-    }
-
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    const { name, value } = e.target;
+    if (name === "departmentId") { setForm(p => ({ ...p, departmentId: value, position: "" })); return; }
+    setForm(p => ({ ...p, [name]: value }));
   };
 
   const handleManagerSearch = () => {
-    const keyword = managerKeyword.trim().replace(/\s/g, "").toLowerCase();
-
-    const result = staffList.filter((staff) => {
-      const target = `${staff.staffId || ""} ${staff.name || ""} ${staff.position || ""}`
-        .replace(/\s/g, "")
-        .toLowerCase();
-
-      if (!keyword) return true;
-
-      return target.includes(keyword);
-    });
-
-    setManagerSearchResult(result);
-  };
-
-  const handleOpenManagerModal = () => {
-    setManagerModalOpen(true);
-    setManagerKeyword("");
-    setManagerSearchResult(staffList);
-  };
-
-  const handleCloseManagerModal = () => {
-    setManagerModalOpen(false);
-    setManagerKeyword("");
-    setManagerSearchResult([]);
-  };
-
-  const handleManagerSelect = (staff) => {
-    setForm((prev) => ({
-      ...prev,
-      managerId: staff.staffId,
+    const kw = managerKeyword.trim().replace(/\s/g, "").toLowerCase();
+    setManagerSearchResult(staffList.filter(s => {
+      const t = `${s.staffId||""} ${s.name||""} ${s.position||""}`.replace(/\s/g,"").toLowerCase();
+      return !kw || t.includes(kw);
     }));
+  };
 
+  const handleOpenManagerModal  = () => { setManagerModalOpen(true); setManagerKeyword(""); setManagerSearchResult(staffList); };
+  const handleCloseManagerModal = () => { setManagerModalOpen(false); setManagerKeyword(""); setManagerSearchResult([]); };
+  const handleManagerSelect = (staff) => {
+    setForm(p => ({ ...p, managerId: staff.staffId }));
     setSelectedManagerLabel(`${staff.staffId} / ${staff.name || ""}`);
     handleCloseManagerModal();
   };
 
-  const selectedDepartment = departmentList.find(
-    (dept) => Number(dept.departmentId) === Number(form.departmentId)
-  );
-
-  const departmentCategory = selectedDepartment?.departmentCategory || "";
-  const positionOptions = positionOptionsMap[departmentCategory] || [];
-
-  console.log("form.departmentId:", form.departmentId);
-  console.log("selectedDepartment:", selectedDepartment);
-  console.log("departmentCategory:", departmentCategory);
-  console.log("positionOptions:", positionOptions);
+  const selectedDept      = departmentList.find(d => Number(d.departmentId) === Number(form.departmentId));
+  const departmentCategory = selectedDept?.departmentCategory || "";
+  const positionOptions   = positionOptionsMap[departmentCategory] || [];
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    const requestData = {
+    onSubmit({
       staffId: form.staffId ? Number(form.staffId) : null,
-      email: form.email || null,
-      password: form.password || null,
+      email: form.email || null, password: form.password || null,
       departmentId: form.departmentId ? Number(form.departmentId) : null,
       managerId: form.managerId ? Number(form.managerId) : null,
-      position: form.position,
-      name: form.name,
-      phone: form.phone,
-      address: form.address,
-      isActive: form.isActive,
-    };
-
-    onSubmit(requestData);
-
-    setForm(initState);
-    setSelectedManagerLabel("");
-    setManagerKeyword("");
-    setManagerSearchResult([]);
+      position: form.position, name: form.name, phone: form.phone,
+      address: form.address, isActive: form.isActive,
+    });
+    setForm(initState); setSelectedManagerLabel(""); setManagerKeyword(""); setManagerSearchResult([]);
   };
 
   return (
     <>
-      <form onSubmit={handleSubmit}>
-        <h3>직원등록</h3>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <p className="text-base font-semibold text-zinc-900">
+          {initialData ? "직원 수정" : "직원 등록"}
+        </p>
 
-        <div style={styles.formGrid}>
+        <div className="grid grid-cols-2 gap-4">
           {!initialData && (
             <>
-              <div>
-                <label>이메일</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  placeholder="이메일 입력"
-                />
+              <div className="space-y-1.5">
+                <Label>이메일</Label>
+                <Input type="email" name="email" value={form.email} onChange={handleChange} placeholder="이메일 입력" />
               </div>
-              <div>
-                <label>비밀번호</label>
-                <input
-                  type="password"
-                  name="password"
-                  value={form.password}
-                  onChange={handleChange}
-                  placeholder="비밀번호 입력"
-                />
+              <div className="space-y-1.5">
+                <Label>비밀번호</Label>
+                <Input type="password" name="password" value={form.password} onChange={handleChange} placeholder="비밀번호 입력" />
               </div>
             </>
           )}
 
-          <div>
-            <label>부서명</label>
-            <select
-              name="departmentId"
-              value={form.departmentId}
-              onChange={handleChange}
-              disabled={!!initialData}
-            >
+          <div className="space-y-1.5">
+            <Label>부서명</Label>
+            <select name="departmentId" value={form.departmentId} onChange={handleChange} disabled={!!initialData} className={selectClass}>
               <option value="">부서 선택</option>
-              {departmentList.map((dept) => (
-                <option key={dept.departmentId} value={dept.departmentId}>
-                  {dept.departmentName}
-                </option>
+              {departmentList.map(dept => (
+                <option key={dept.departmentId} value={dept.departmentId}>{dept.departmentName}</option>
               ))}
             </select>
           </div>
 
-          <div>
-            <label>담당직원ID</label>
-            <div style={styles.searchRow}>
-              <input
-                type="text"
-                value={selectedManagerLabel}
-                placeholder="선택된 담당직원이 표시됩니다"
-                readOnly
-              />
-              <button type="button" onClick={handleOpenManagerModal}>
-                검색
-              </button>
+          <div className="space-y-1.5">
+            <Label>직급</Label>
+            <select name="position" value={form.position} onChange={handleChange} className={selectClass}>
+              <option value="">직급 선택</option>
+              {positionOptions.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>이름</Label>
+            <Input type="text" name="name" placeholder="이름" value={form.name} onChange={handleChange} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>전화번호</Label>
+            <Input type="text" name="phone" placeholder="전화번호" value={form.phone} onChange={handleChange} />
+          </div>
+
+          <div className="col-span-2 space-y-1.5">
+            <Label>주소</Label>
+            <Input type="text" name="address" placeholder="주소" value={form.address} onChange={handleChange} />
+          </div>
+
+          <div className="col-span-2 space-y-1.5">
+            <Label>담당직원</Label>
+            <div className="flex gap-2">
+              <Input value={selectedManagerLabel} placeholder="담당직원을 검색하세요" readOnly className="flex-1" />
+              <Button type="button" variant="outline" className="shrink-0 cursor-pointer" onClick={handleOpenManagerModal}>검색</Button>
             </div>
           </div>
 
-          <div>
-            <label>직급</label>
-            <select
-              name="position"
-              value={form.position}
-              onChange={handleChange}
-            >
-              <option value="">직급선택</option>
-              {positionOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
+          <div className="space-y-1.5">
+            <Label>상태</Label>
+            <select name="isActive" value={form.isActive} onChange={handleChange} className={selectClass}>
+              <option value="Y">사용</option>
+              <option value="N">비활성</option>
             </select>
-          </div>
-
-          <div>
-            <label>이름</label>
-            <input
-              type="text"
-              name="name"
-              placeholder="이름"
-              value={form.name}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
-            <label>전화번호</label>
-            <input
-              type="text"
-              name="phone"
-              placeholder="전화번호"
-              value={form.phone}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
-            <label>주소</label>
-            <input
-              type="text"
-              name="address"
-              placeholder="주소"
-              value={form.address}
-              onChange={handleChange}
-            />
           </div>
         </div>
 
-        <div>
-                <label>상태</label>
-             <select
-                name="isActive"
-                value={form.isActive}
-                onChange={handleChange}
-                >
-                <option value="Y">사용</option>
-                <option value="N">비활성</option>
-            </select>
-            </div>
-
-        <div style={styles.buttonBox}>
-          <button type="submit">{initialData ? "수정" : "등록"}</button>
-          <button type="button" onClick={onClose}>
-            취소
-          </button>
+        <div className="flex justify-end gap-2 pt-2 border-t border-zinc-100">
+          <Button type="button" variant="outline" className="cursor-pointer" onClick={onClose}>취소</Button>
+          <Button type="submit" className="cursor-pointer">{initialData ? "수정" : "등록"}</Button>
         </div>
       </form>
 
-      <CommonModal open={managerModalOpen}>
-        <h3>담당직원 검색</h3>
-
-        <div style={styles.searchRow}>
-          <input
-            type="text"
-            value={managerKeyword}
-            onChange={(e) => setManagerKeyword(e.target.value)}
-            placeholder="이름 / ID / 직급 검색"
-            style={styles.searchInput}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                handleManagerSearch();
-              }
-            }}
-          />
-          <button type="button" onClick={handleManagerSearch}>
-            검색
-          </button>
-          <button type="button" onClick={handleCloseManagerModal}>
-            취소
-          </button>
-        </div>
-
-        <div style={styles.listBox}>
-          {managerSearchResult.length === 0 ? (
-            <div style={styles.emptyText}>검색 결과가 없습니다.</div>
-          ) : (
-            managerSearchResult.map((staff) => (
-              <div
-                key={staff.staffId}
-                style={styles.listItem}
-                onClick={() => handleManagerSelect(staff)}
-              >
-                <div>
-                  <strong>{staff.name || "-"}</strong>
+      {/* 담당직원 검색 모달 */}
+      <CommonModal open={managerModalOpen} onClose={handleCloseManagerModal} title="담당직원 검색">
+        <div className="space-y-3">
+          <div className="flex gap-2">
+            <Input
+              value={managerKeyword}
+              onChange={(e) => setManagerKeyword(e.target.value)}
+              placeholder="이름 / ID / 직급 검색"
+              className="flex-1"
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleManagerSearch(); } }}
+            />
+            <Button type="button" variant="outline" className="shrink-0 cursor-pointer" onClick={handleManagerSearch}>검색</Button>
+          </div>
+          <div className="border border-zinc-200 rounded-lg overflow-y-auto max-h-72 divide-y divide-zinc-100">
+            {managerSearchResult.length === 0 ? (
+              <p className="text-sm text-zinc-400 text-center py-8">검색 결과가 없습니다.</p>
+            ) : (
+              managerSearchResult.map(staff => (
+                <div key={staff.staffId} onClick={() => handleManagerSelect(staff)}
+                  className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-zinc-50 transition-colors">
+                  <div>
+                    <p className="text-sm font-medium text-zinc-800">{staff.name || "-"}</p>
+                    <p className="text-xs text-zinc-400">ID: {staff.staffId} · {staff.position || "-"}</p>
+                  </div>
                 </div>
-                <div>ID: {staff.staffId}</div>
-                <div>{staff.position || "-"}</div>
-              </div>
-            ))
-          )}
+              ))
+            )}
+          </div>
         </div>
       </CommonModal>
     </>
@@ -357,41 +209,3 @@ const StaffForm = ({
 };
 
 export default StaffForm;
-
-const styles = {
-  formGrid: {
-    display: "grid",
-    gap: "10px",
-  },
-  searchRow: {
-    display: "flex",
-    gap: "8px",
-  },
-  buttonBox: {
-    marginTop: "16px",
-    display: "flex",
-    gap: "8px",
-  },
-  searchInput: {
-    width: "100%",
-    padding: "8px",
-    boxSizing: "border-box",
-  },
-  listBox: {
-    border: "1px solid #ddd",
-    borderRadius: "6px",
-    overflowY: "auto",
-    maxHeight: "320px",
-    marginTop: "12px",
-  },
-  listItem: {
-    padding: "12px",
-    borderBottom: "1px solid #eee",
-    cursor: "pointer",
-  },
-  emptyText: {
-    padding: "20px",
-    textAlign: "center",
-    color: "#777",
-  },
-};
