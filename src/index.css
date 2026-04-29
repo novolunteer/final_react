@@ -128,3 +128,12 @@
     @apply font-sans;
     }
 }
+
+/* FullCalendar 선택 날짜 하이라이트 */
+.fc .fc-daygrid-day.selected-day {
+  background-color: #dbeafe !important;
+}
+.fc .fc-daygrid-day.selected-day .fc-daygrid-day-number {
+  color: #1d4ed8;
+  font-weight: 600;
+}

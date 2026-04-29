@@ -347,6 +347,11 @@ const StaffSchedulePage = () => {
               headerToolbar={{ right: "prev,next myToday", center: "title", left: "" }}
               customButtons={{ myToday: { text: "오늘", click: handleToday } }}
               dateClick={info => setSelectedDate(info.dateStr)}
+              dayCellClassNames={info => {
+                const d = info.date;
+                const s = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+                return selectedDate === s ? ["selected-day"] : [];
+              }}
               height="auto" dayMaxEvents={true} dayMaxEventRows={3} fixedWeekCount={false}
             />
           </div>
