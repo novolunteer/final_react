@@ -45,7 +45,6 @@ const MENU = [
     ],
   },
   { path: "/chat",            label: "채팅",    icon: MessageSquare, roles: ["ADMIN", "DOCTOR", "NURSE", "MANAGER", "STAFF"] },
-  { path: "/inquiry/chatbot", label: "AI 문의", icon: Bot },
 ];
 
 const StaffLayout = () => {
@@ -219,7 +218,7 @@ const StaffLayout = () => {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 overflow-auto pt-6">
+        <main className="flex-1 overflow-auto py-6">
           <Outlet />
         </main>
       </div>
