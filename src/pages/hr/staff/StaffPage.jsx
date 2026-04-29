@@ -41,8 +41,8 @@ const StaffPage = () => {
   }, [originalStaffList, selectedDepartmentId, searchKeyword]);
 
   const columns = [
-    { key: "id",           title: "직원번호" },
-    { key: "userId",       title: "사용자ID" },
+    { key: "rowNum",       title: "번호" },
+    { key: "userId",       title: "직원 ID" },
     { key: "departmentName", title: "부서명" },
     { key: "managerId",    title: "담당직원ID" },
     { key: "position",     title: "직급" },
@@ -158,7 +158,7 @@ const StaffPage = () => {
       </div>
 
       {/* 테이블 */}
-      <CommonTable columns={columns} data={pagedStaffList} />
+      <CommonTable columns={columns} data={pagedStaffList.map((item, idx) => ({ ...item, rowNum: page * 10 + idx + 1 }))} />
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       {/* 직원 등록/수정 모달 */}
