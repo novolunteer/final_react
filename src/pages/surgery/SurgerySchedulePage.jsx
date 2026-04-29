@@ -1,104 +1,69 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import CommonModal from "../../components/common/CommonModal";
-import {
-  getSurgeryList,
-  registerSurgery,
-  registerEmergencySurgery,
-  updateSurgery,
-  cancelSurgery,
-} from "../../api/surgeryApi";
+import { getSurgeryList, registerSurgery, registerEmergencySurgery, updateSurgery, cancelSurgery } from "../../api/surgeryApi";
 import { getStaffList } from "../../api/hr/staffApi";
 import { getDoctorDepartmentList } from "../../api/hr/departmentApi";
 import { getScheduleList } from "../../api/hr/staffScheduleApi";
-
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Scissors, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const getTodayString = () => {
   const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 };
-
-const formatDate = (date) => {
-  const yyyy = date.getFullYear();
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const dd = String(date.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-};
+const formatDate = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 
 const getWeekDates = (baseDate) => {
   const d = new Date(baseDate);
-  const day = d.getDay();
   const sunday = new Date(d);
-  sunday.setDate(d.getDate() - day);
-
+  sunday.setDate(d.getDate() - d.getDay());
   return Array.from({ length: 7 }, (_, i) => {
     const cur = new Date(sunday);
     cur.setDate(sunday.getDate() + i);
     return {
       date: formatDate(cur),
-      label: `${String(cur.getMonth() + 1).padStart(2, "0")}/${String(cur.getDate()).padStart(2, "0")}`,
-      dayName: ["일", "월", "화", "수", "목", "금", "토"][cur.getDay()],
+      label: `${String(cur.getMonth()+1).padStart(2,"0")}/${String(cur.getDate()).padStart(2,"0")}`,
+      dayName: ["일","월","화","수","목","금","토"][cur.getDay()],
       isToday: formatDate(cur) === getTodayString(),
     };
   });
 };
 
-const STATUS_LABEL = {
-  SCHEDULED: "예정",
-  IN_PROGRESS: "진행 중",
-  COMPLETED: "완료",
-  CANCELLED: "취소",
-  EMERGENCY: "응급",
+const STATUS_LABEL = { SCHEDULED: "예정", IN_PROGRESS: "진행 중", COMPLETED: "완료", CANCELLED: "취소", EMERGENCY: "응급" };
+const STATUS_BADGE = {
+  SCHEDULED:   "bg-blue-100 text-blue-700 hover:bg-blue-100",
+  IN_PROGRESS: "bg-amber-100 text-amber-700 hover:bg-amber-100",
+  COMPLETED:   "bg-green-100 text-green-700 hover:bg-green-100",
+  CANCELLED:   "bg-zinc-100 text-zinc-500 hover:bg-zinc-100",
+  EMERGENCY:   "bg-red-100 text-red-700 hover:bg-red-100",
+};
+const STATUS_BORDER = {
+  SCHEDULED: "border-l-blue-500", IN_PROGRESS: "border-l-amber-500",
+  COMPLETED: "border-l-green-500", CANCELLED: "border-l-zinc-300", EMERGENCY: "border-l-red-500",
 };
 
-const STATUS_COLOR = {
-  SCHEDULED: { bg: "#fff", text: "#222" },
-  IN_PROGRESS: { bg: "#fff", text: "#222" },
-  COMPLETED: { bg: "#fff", text: "#222" },
-  CANCELLED: { bg: "#fff", text: "#222" },
-  EMERGENCY: { bg: "#fff", text: "#222" },
-};
+const emptyForm = { surgeryId: null, doctorId: "", patientId: "", startTime: "", durationHours: 1, description: "", status: "SCHEDULED" };
 
+const selectClass = "w-full h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50";
 
-const emptyForm = {
-  surgeryId: null,
-  doctorId: "",
-  patientId: "",
-  startTime: "",
-  durationHours: 1,
-  description: "",
-  status: "SCHEDULED",
-};
-
-
-const SurgeryForm = ({
-  formData,
-  setFormData,
-  onSubmit,
-  onClose,
-  isEdit,
-  isEmergency,
-  staffList,
-  departmentList,
-  scheduleList,
-}) => {
+// ── SurgeryForm ──────────────────────────────────────────────────────────────
+const SurgeryForm = ({ formData, setFormData, onSubmit, onClose, isEdit, isEmergency, staffList, departmentList, scheduleList }) => {
   const [filterDeptId, setFilterDeptId] = useState("");
 
-  const filteredDoctors = useMemo(() => {
-    if (!filterDeptId) return staffList;
-    return staffList.filter(
-      (s) => String(s.departmentId) === String(filterDeptId)
-    );
-  }, [staffList, filterDeptId]);
+  const filteredDoctors = useMemo(() =>
+    !filterDeptId ? staffList : staffList.filter(s => String(s.departmentId) === String(filterDeptId)),
+    [staffList, filterDeptId]);
 
-  // 선택된 의사+날짜의 직원 스케줄 확인
   const scheduleWarning = useMemo(() => {
     if (!formData.doctorId || !formData.startTime) return null;
     const dateStr = formData.startTime.slice(0, 10);
-    const schedule = scheduleList.find(
-      (s) =>
-        String(s.staffId) === String(formData.doctorId) &&
-        s.workDate === dateStr
-    );
+    const schedule = scheduleList.find(s => String(s.staffId) === String(formData.doctorId) && s.workDate === dateStr);
     if (!schedule) return { level: "error", msg: "해당 날짜에 직원 스케줄이 등록되지 않아 수술 등록이 불가합니다." };
     if (schedule.scheduleTypeId === 3) return { level: "error", msg: `휴일(${schedule.typeName || "OFF"}) 스케줄입니다. 수술 등록이 불가합니다.` };
     if (schedule.status === "TEMP") return { level: "warn", msg: `스케줄이 미확정(임시) 상태입니다. 확정 후 등록을 권장합니다.` };
@@ -107,641 +72,346 @@ const SurgeryForm = ({
 
   const isScheduleBlocked = !isEmergency && scheduleWarning?.level === "error";
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  const handleChange = (e) => { const { name, value } = e.target; setFormData(p => ({ ...p, [name]: value })); };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.doctorId || !formData.patientId || !formData.startTime || !formData.durationHours) {
-      alert("의사, 환자, 수술 시작 시간, 예상 시간은 필수입니다");
-      return;
+      alert("의사, 환자, 수술 시작 시간, 예상 시간은 필수입니다"); return;
     }
-    if (isScheduleBlocked) {
-      alert(scheduleWarning.msg);
-      return;
-    }
+    if (isScheduleBlocked) { alert(scheduleWarning.msg); return; }
     onSubmit(formData);
   };
 
-  const title = isEmergency
-    ? "응급 수술 등록"
-    : isEdit
-    ? "수술 수정"
-    : "수술 등록";
+  const warningClass = scheduleWarning ? {
+    error: "bg-red-50 border border-red-200 text-red-700",
+    warn:  "bg-amber-50 border border-amber-200 text-amber-700",
+    ok:    "bg-green-50 border border-green-200 text-green-700",
+  }[scheduleWarning.level] : "";
 
   return (
-    <form onSubmit={handleSubmit} style={formStyles.wrap}>
-      <h3 style={formStyles.title}>
-        {isEmergency && <span style={formStyles.emergencyBadge}>응급</span>}
-        {title}
-      </h3>
-
-      {/* 부서 필터 */}
-      <div style={formStyles.field}>
-        <label style={formStyles.label}>부서 선택 (의사 필터)</label>
-        <select
-          value={filterDeptId}
-          onChange={(e) => setFilterDeptId(e.target.value)}
-          style={formStyles.input}
-        >
-          <option value="">전체 부서</option>
-          {departmentList.map((d) => (
-            <option key={d.departmentId} value={d.departmentId}>
-              {d.departmentName}
-            </option>
-          ))}
-        </select>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="flex items-center gap-2">
+        {isEmergency && <Badge className="bg-red-100 text-red-700 hover:bg-red-100">응급</Badge>}
+        <p className="text-base font-semibold text-zinc-900">
+          {isEmergency ? "응급 수술 등록" : isEdit ? "수술 수정" : "수술 등록"}
+        </p>
       </div>
 
-      {/* 의사 */}
-      <div style={formStyles.field}>
-        <label style={formStyles.label}>담당 의사 *</label>
-        <select
-          name="doctorId"
-          value={formData.doctorId}
-          onChange={handleChange}
-          style={formStyles.input}
-          required
-        >
-          <option value="">의사 선택</option>
-          {filteredDoctors.map((s) => (
-            <option key={s.staffId} value={s.staffId}>
-              {s.name} ({s.staffId})
-            </option>
-          ))}
-        </select>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label>부서 필터</Label>
+          <select value={filterDeptId} onChange={e => setFilterDeptId(e.target.value)} className={selectClass}>
+            <option value="">전체 부서</option>
+            {departmentList.map(d => <option key={d.departmentId} value={d.departmentId}>{d.departmentName}</option>)}
+          </select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>담당 의사 <span className="text-red-500">*</span></Label>
+          <select name="doctorId" value={formData.doctorId} onChange={handleChange} required className={selectClass}>
+            <option value="">의사 선택</option>
+            {filteredDoctors.map(s => <option key={s.staffId} value={s.staffId}>{s.name} ({s.staffId})</option>)}
+          </select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>환자 ID <span className="text-red-500">*</span></Label>
+          <Input type="number" name="patientId" value={formData.patientId} onChange={handleChange}
+            placeholder="환자 ID 입력" required min={1} />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>수술 시작 시간 <span className="text-red-500">*</span></Label>
+          <input type="datetime-local" name="startTime" value={formData.startTime} onChange={handleChange}
+            required className={`${selectClass}`} />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>예상 시간 (시간) <span className="text-red-500">*</span></Label>
+          <Input type="number" name="durationHours" value={formData.durationHours} onChange={handleChange}
+            min={1} max={24} required />
+        </div>
+
+        {isEdit && (
+          <div className="space-y-1.5">
+            <Label>상태</Label>
+            <select name="status" value={formData.status} onChange={handleChange} className={selectClass}>
+              {Object.entries(STATUS_LABEL).map(([val, label]) => (
+                <option key={val} value={val}>{label}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
-      {/* 환자 ID */}
-      <div style={formStyles.field}>
-        <label style={formStyles.label}>환자 ID *</label>
-        <input
-          type="number"
-          name="patientId"
-          value={formData.patientId}
-          onChange={handleChange}
-          style={formStyles.input}
-          placeholder="환자 ID를 입력하세요"
-          required
-          min={1}
-        />
-      </div>
-
-      {/* 수술 시작 시간 */}
-      <div style={formStyles.field}>
-        <label style={formStyles.label}>수술 시작 시간 *</label>
-        <input
-          type="datetime-local"
-          name="startTime"
-          value={formData.startTime}
-          onChange={handleChange}
-          style={formStyles.input}
-          required
-        />
-      </div>
-
-      {/* 직원 스케줄 상태 */}
       {scheduleWarning && (
-        <div style={{
-          ...formStyles.field,
-          padding: "8px 12px",
-          borderRadius: "6px",
-          fontSize: "13px",
-          background: scheduleWarning.level === "error" ? "#fee2e2"
-            : scheduleWarning.level === "warn" ? "#fef9c3"
-            : "#dcfce7",
-          color: scheduleWarning.level === "error" ? "#b91c1c"
-            : scheduleWarning.level === "warn" ? "#92400e"
-            : "#15803d",
-          border: `1px solid ${scheduleWarning.level === "error" ? "#fca5a5"
-            : scheduleWarning.level === "warn" ? "#fde68a"
-            : "#86efac"}`,
-        }}>
+        <div className={cn("rounded-lg px-3 py-2.5 text-sm", warningClass)}>
           {scheduleWarning.level === "error" ? "⛔ " : scheduleWarning.level === "warn" ? "⚠️ " : "✅ "}
           {scheduleWarning.msg}
           {isEmergency && scheduleWarning.level === "error" && (
-            <span style={{ marginLeft: "6px", fontWeight: "bold" }}>(응급 수술이므로 강제 등록 가능)</span>
+            <span className="ml-1.5 font-semibold">(응급 수술이므로 강제 등록 가능)</span>
           )}
         </div>
       )}
 
-      {/* 수술 예상 시간 */}
-      <div style={formStyles.field}>
-        <label style={formStyles.label}>수술 예상 시간 (시간) *</label>
-        <input
-          type="number"
-          name="durationHours"
-          value={formData.durationHours}
-          onChange={handleChange}
-          style={formStyles.input}
-          min={1}
-          max={24}
-          required
-        />
+      <div className="space-y-1.5">
+        <Label>수술 내용</Label>
+        <Textarea name="description" value={formData.description} onChange={handleChange}
+          placeholder="수술 내용을 입력하세요" rows={3} />
       </div>
 
-      {/* 수술 설명 */}
-      <div style={formStyles.field}>
-        <label style={formStyles.label}>수술 내용</label>
-        <textarea
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          style={{ ...formStyles.input, height: "80px", resize: "vertical" }}
-          placeholder="수술 내용을 입력하세요"
-        />
-      </div>
-
-      {/* 상태 (수정 시에만) */}
-      {isEdit && (
-        <div style={formStyles.field}>
-          <label style={formStyles.label}>상태</label>
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            style={formStyles.input}
-          >
-            {Object.entries(STATUS_LABEL).map(([val, label]) => (
-              <option key={val} value={val}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      <div style={formStyles.btnRow}>
-        <button type="button" onClick={onClose} style={formStyles.cancelBtn}>
-          취소
-        </button>
-        <button
-          type="submit"
-          disabled={isScheduleBlocked}
-          style={{
-            ...(isEmergency ? formStyles.emergencyBtn : formStyles.submitBtn),
-            ...(isScheduleBlocked ? { opacity: 0.45, cursor: "not-allowed" } : {}),
-          }}
-        >
+      <div className="flex justify-end gap-2 pt-2 border-t border-zinc-100">
+        <Button type="button" variant="outline" className="cursor-pointer" onClick={onClose}>취소</Button>
+        <Button type="submit" disabled={isScheduleBlocked}
+          className={cn("cursor-pointer", isEmergency && "bg-red-600 hover:bg-red-700")}>
           {isEmergency ? "응급 등록" : isEdit ? "수정" : "등록"}
-        </button>
+        </Button>
       </div>
     </form>
   );
 };
 
-const formStyles = {
-  wrap: { minWidth: "420px", display: "flex", flexDirection: "column", gap: "12px" },
-  title: { margin: "0 0 8px 0", fontSize: "18px", fontWeight: "bold", display: "flex", alignItems: "center", gap: "8px" },
-  emergencyBadge: { background: "#fee2e2", color: "#b91c1c", padding: "2px 10px", borderRadius: "999px", fontSize: "12px", fontWeight: "bold" },
-  field: { display: "flex", flexDirection: "column", gap: "4px" },
-  label: { fontSize: "13px", fontWeight: "600", color: "#374151" },
-  input: { padding: "8px 10px", border: "1px solid #d1d5db", borderRadius: "6px", fontSize: "14px", width: "100%", boxSizing: "border-box" },
-  btnRow: { display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "8px" },
-  cancelBtn: { padding: "8px 20px", background: "#f3f4f6", border: "1px solid #d1d5db", borderRadius: "6px", cursor: "pointer", fontSize: "14px" },
-  submitBtn: { padding: "8px 20px", background: "#fff", border: "1px solid #d1d5db", borderRadius: "6px", cursor: "pointer", fontSize: "14px", fontWeight: "bold" },
-  emergencyBtn: { padding: "8px 20px", background: "#fff", border: "1px solid #d1d5db", borderRadius: "6px", cursor: "pointer", fontSize: "14px", fontWeight: "bold" },
-};
-
-
+// ── SurgerySchedulePage ───────────────────────────────────────────────────────
 const SurgerySchedulePage = () => {
-  const [surgeryList, setSurgeryList] = useState([]);
-  const [staffList, setStaffList] = useState([]);
+  const [surgeryList, setSurgeryList]       = useState([]);
+  const [staffList, setStaffList]           = useState([]);
   const [departmentList, setDepartmentList] = useState([]);
-  const [scheduleList, setScheduleList] = useState([]);
-
-
-  const [selectedDeptId, setSelectedDeptId] = useState("");
-  const [selectedDoctorId, setSelectedDoctorId] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("");
+  const [scheduleList, setScheduleList]     = useState([]);
+  const [selectedDeptId, setSelectedDeptId]       = useState("");
+  const [selectedDoctorId, setSelectedDoctorId]   = useState("");
+  const [selectedStatus, setSelectedStatus]       = useState("");
   const [doctorSearchKeyword, setDoctorSearchKeyword] = useState("");
-
-  const [currentWeek, setCurrentWeek] = useState(getTodayString());
-
-  // 상세 모달
-  const [detailOpen, setDetailOpen] = useState(false);
+  const [currentWeek, setCurrentWeek]       = useState(getTodayString());
+  const [detailOpen, setDetailOpen]         = useState(false);
   const [selectedSurgery, setSelectedSurgery] = useState(null);
+  const [modalOpen, setModalOpen]           = useState(false);
+  const [isEdit, setIsEdit]                 = useState(false);
+  const [isEmergency, setIsEmergency]       = useState(false);
+  const [formData, setFormData]             = useState(emptyForm);
 
-  // 등록/수정 모달
-  const [modalOpen, setModalOpen] = useState(false);
-  const [isEdit, setIsEdit] = useState(false);
-  const [isEmergency, setIsEmergency] = useState(false);
-  const [formData, setFormData] = useState(emptyForm);
-
-  useEffect(() => {
-    fetchAll();
-  }, []);
+  useEffect(() => { fetchAll(); }, []);
 
   const fetchAll = async () => {
     try {
       const [surgeries, staffs, depts, schedules] = await Promise.all([
-        getSurgeryList(),
-        getStaffList(),
-        getDoctorDepartmentList(),
-        getScheduleList(),
+        getSurgeryList(), getStaffList(), getDoctorDepartmentList(), getScheduleList(),
       ]);
-      setSurgeryList(surgeries);
-      setStaffList(staffs);
-      setDepartmentList(depts);
+      setSurgeryList(surgeries); setStaffList(staffs); setDepartmentList(depts);
       setScheduleList(Array.isArray(schedules) ? schedules : schedules?.content ?? []);
-    } catch (err) {
-      console.error("초기 데이터 로드 실패", err);
-      alert("데이터를 불러오는 중 오류가 발생했습니다");
-    }
+    } catch { alert("데이터를 불러오는 중 오류가 발생했습니다"); }
   };
 
   const fetchSurgeries = async () => {
-    try {
-      const data = await getSurgeryList();
-      setSurgeryList(data);
-    } catch (err) {
-      console.error("수술 목록 조회 실패", err);
-    }
+    try { setSurgeryList(await getSurgeryList()); } catch (e) { console.error(e); }
   };
 
-  //  주간 날짜 
   const weekDates = useMemo(() => getWeekDates(currentWeek), [currentWeek]);
+  const moveWeek  = (diff) => { const d = new Date(currentWeek); d.setDate(d.getDate() + diff * 7); setCurrentWeek(formatDate(d)); };
 
-  const moveWeek = (diff) => {
-    const d = new Date(currentWeek);
-    d.setDate(d.getDate() + diff * 7);
-    setCurrentWeek(formatDate(d));
-  };
+  const sortedDepartments = useMemo(() =>
+    [...departmentList].sort((a,b) => (a.departmentName||"").localeCompare(b.departmentName||"","ko")),
+    [departmentList]);
 
-  // 부서 기준 의사 목록 
-  const sortedDepartments = useMemo(
-    () => [...departmentList].sort((a, b) => (a.departmentName || "").localeCompare(b.departmentName || "", "ko")),
-    [departmentList]
-  );
-
-  const doctorsByDept = useMemo(() => {
-    if (!selectedDeptId) return staffList;
-    return staffList.filter((s) => String(s.departmentId) === String(selectedDeptId));
-  }, [staffList, selectedDeptId]);
+  const doctorsByDept = useMemo(() =>
+    !selectedDeptId ? staffList : staffList.filter(s => String(s.departmentId) === String(selectedDeptId)),
+    [staffList, selectedDeptId]);
 
   const filteredDoctors = useMemo(() => {
-    let result = doctorsByDept;
-    if (selectedDoctorId) {
-      result = result.filter((s) => String(s.staffId) === String(selectedDoctorId));
-    }
-    if (doctorSearchKeyword.trim()) {
-      result = result.filter((s) =>
-        (s.name || "").includes(doctorSearchKeyword.trim())
-      );
-    }
-    return result;
+    let r = doctorsByDept;
+    if (selectedDoctorId) r = r.filter(s => String(s.staffId) === String(selectedDoctorId));
+    if (doctorSearchKeyword.trim()) r = r.filter(s => (s.name||"").includes(doctorSearchKeyword.trim()));
+    return r;
   }, [doctorsByDept, selectedDoctorId, doctorSearchKeyword]);
 
-  // 수술 맵: doctorId → date → surgeries[] 
   const surgeryMap = useMemo(() => {
     const map = {};
-    const weekDateSet = new Set(weekDates.map((d) => d.date));
-
-    surgeryList.forEach((s) => {
+    const weekSet = new Set(weekDates.map(d => d.date));
+    surgeryList.forEach(s => {
       if (!s.startTime) return;
       const dateStr = s.startTime.slice(0, 10);
-      if (!weekDateSet.has(dateStr)) return;
-
-      // 상태 필터
+      if (!weekSet.has(dateStr)) return;
       if (selectedStatus && s.status !== selectedStatus) return;
-
-      const doctorId = s.doctorId;
-      if (!doctorId) return;
-
-      if (!map[doctorId]) map[doctorId] = {};
-      if (!map[doctorId][dateStr]) map[doctorId][dateStr] = [];
-      map[doctorId][dateStr].push(s);
+      const did = s.doctorId;
+      if (!did) return;
+      if (!map[did]) map[did] = {};
+      if (!map[did][dateStr]) map[did][dateStr] = [];
+      map[did][dateStr].push(s);
     });
-
     return map;
   }, [surgeryList, weekDates, selectedStatus]);
 
-  const openDetail = (surgery) => {
-    setSelectedSurgery(surgery);
-    setDetailOpen(true);
-  };
+  const openDetail   = (s) => { setSelectedSurgery(s); setDetailOpen(true); };
+  const closeDetail  = () => { setDetailOpen(false); setSelectedSurgery(null); };
+  const openRegister = () => { setIsEdit(false); setIsEmergency(false); setFormData(emptyForm); setModalOpen(true); };
+  const openEmergency = () => { setIsEdit(false); setIsEmergency(true); setFormData(emptyForm); setModalOpen(true); };
+  const closeModal   = () => { setModalOpen(false); setFormData(emptyForm); };
 
-  const closeDetail = () => {
-    setDetailOpen(false);
-    setSelectedSurgery(null);
-  };
-
-  const openRegister = () => {
-    setIsEdit(false);
-    setIsEmergency(false);
-    setFormData(emptyForm);
-    setModalOpen(true);
-  };
-
-  const openEmergency = () => {
-    setIsEdit(false);
-    setIsEmergency(true);
-    setFormData(emptyForm);
-    setModalOpen(true);
-  };
-
-  const openEdit = (surgery) => {
-    setIsEdit(true);
-    setIsEmergency(false);
-    closeDetail();
-    // startTime ~ endTime으로 durationHours 역산
+  const openEdit = (s) => {
+    setIsEdit(true); setIsEmergency(false); closeDetail();
     let durationHours = 1;
-    if (surgery.startTime && surgery.endTime) {
-      const diff = new Date(surgery.endTime) - new Date(surgery.startTime);
-      durationHours = Math.round(diff / (1000 * 60 * 60)) || 1;
-    }
-    setFormData({
-      surgeryId: surgery.surgeryId,
-      doctorId: surgery.doctorId || "",
-      patientId: surgery.patientId || "",
-      startTime: surgery.startTime ? surgery.startTime.slice(0, 16) : "",
-      durationHours,
-      description: surgery.description || "",
-      status: surgery.status || "SCHEDULED",
-    });
+    if (s.startTime && s.endTime) durationHours = Math.round((new Date(s.endTime) - new Date(s.startTime)) / 3600000) || 1;
+    setFormData({ surgeryId: s.surgeryId, doctorId: s.doctorId||"", patientId: s.patientId||"",
+      startTime: s.startTime ? s.startTime.slice(0, 16) : "", durationHours, description: s.description||"", status: s.status||"SCHEDULED" });
     setModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setModalOpen(false);
-    setFormData(emptyForm);
   };
 
   const handleSubmit = async (data) => {
     try {
       const startIso = data.startTime.length === 16 ? data.startTime + ":00" : data.startTime;
-
-      const payload = {
-        doctorId: Number(data.doctorId),
-        patientId: Number(data.patientId),
-        startTime: startIso,
-        durationHours: Number(data.durationHours),
-        description: data.description,
-      };
-
-      if (isEdit) {
-        await updateSurgery({
-          ...payload,
-          surgeryId: data.surgeryId,
-          status: data.status,
-        });
-        alert("수술이 수정되었습니다");
-      } else if (isEmergency) {
-        await registerEmergencySurgery(payload);
-        alert("응급 수술이 등록되었습니다");
-      } else {
-        await registerSurgery(payload);
-        alert("수술이 등록되었습니다");
-      }
-
-      closeModal();
-      fetchSurgeries();
-    } catch (err) {
-      console.error("수술 저장 실패", err);
-      const msg = err?.response?.data?.message || "저장 중 오류가 발생했습니다";
-      alert(msg);
-    }
+      const payload  = { doctorId: Number(data.doctorId), patientId: Number(data.patientId), startTime: startIso, durationHours: Number(data.durationHours), description: data.description };
+      if (isEdit)          { await updateSurgery({ ...payload, surgeryId: data.surgeryId, status: data.status }); alert("수술이 수정되었습니다"); }
+      else if (isEmergency){ await registerEmergencySurgery(payload); alert("응급 수술이 등록되었습니다"); }
+      else                 { await registerSurgery(payload); alert("수술이 등록되었습니다"); }
+      closeModal(); fetchSurgeries();
+    } catch (err) { alert(err?.response?.data?.message || "저장 중 오류가 발생했습니다"); }
   };
 
   const handleCancel = async (surgeryId) => {
     if (!window.confirm("해당 수술을 취소하시겠습니까?")) return;
-    try {
-      await cancelSurgery(surgeryId);
-      alert("수술이 취소되었습니다");
-      closeDetail();
-      fetchSurgeries();
-    } catch (err) {
-      console.error("수술 취소 실패", err);
-      alert("취소 중 오류가 발생했습니다");
-    }
+    try { await cancelSurgery(surgeryId); alert("수술이 취소되었습니다"); closeDetail(); fetchSurgeries(); }
+    catch { alert("취소 중 오류가 발생했습니다"); }
   };
 
-  const handleResetFilter = () => {
-    setSelectedDeptId("");
-    setSelectedDoctorId("");
-    setSelectedStatus("");
-    setDoctorSearchKeyword("");
-    setCurrentWeek(getTodayString());
-  };
-
+  const handleResetFilter = () => { setSelectedDeptId(""); setSelectedDoctorId(""); setSelectedStatus(""); setDoctorSearchKeyword(""); setCurrentWeek(getTodayString()); };
 
   return (
-    <div style={styles.container}>
+    <div className="p-6 space-y-5">
       {/* 헤더 */}
-      <div style={styles.header}>
-        <h2 style={styles.title}>수술 스케줄 관리</h2>
-        <div style={styles.headerBtns}>
-          <button style={styles.registerBtn} onClick={openRegister}>
-            수술 등록
-          </button>
-          <button style={styles.emergencyBtn} onClick={openEmergency}>
-            응급 수술 등록
-          </button>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Scissors size={20} className="text-blue-600" />
+          <h2 className="text-lg font-bold text-zinc-900">수술 스케줄 관리</h2>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" className="cursor-pointer" onClick={openRegister}>수술 등록</Button>
+          <Button className="cursor-pointer bg-red-600 hover:bg-red-700 gap-1.5" onClick={openEmergency}>
+            <AlertTriangle size={14} /> 응급 수술 등록
+          </Button>
         </div>
       </div>
 
       {/* 필터 바 */}
-      <div style={styles.filterBar}>
-        {/* 부서 */}
-        <div style={styles.filterItem}>
-          <label style={styles.filterLabel}>부서</label>
-          <select
-            value={selectedDeptId}
-            onChange={(e) => {
-              setSelectedDeptId(e.target.value);
-              setSelectedDoctorId("");
-            }}
-            style={styles.select}
-          >
+      <div className="flex items-end gap-3 flex-wrap bg-zinc-50 rounded-xl border border-zinc-200 px-5 py-4">
+        <div className="space-y-1">
+          <p className="text-xs font-semibold text-zinc-500">부서</p>
+          <select value={selectedDeptId} onChange={e => { setSelectedDeptId(e.target.value); setSelectedDoctorId(""); }}
+            className="h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm min-w-36 focus:outline-none">
             <option value="">전체 부서</option>
-            {sortedDepartments.map((d) => (
-              <option key={d.departmentId} value={d.departmentId}>
-                {d.departmentName}
-              </option>
-            ))}
+            {sortedDepartments.map(d => <option key={d.departmentId} value={d.departmentId}>{d.departmentName}</option>)}
           </select>
         </div>
-
-        {/* 의사 */}
-        <div style={styles.filterItem}>
-          <label style={styles.filterLabel}>의사</label>
-          <select
-            value={selectedDoctorId}
-            onChange={(e) => setSelectedDoctorId(e.target.value)}
-            style={styles.select}
-          >
+        <div className="space-y-1">
+          <p className="text-xs font-semibold text-zinc-500">의사</p>
+          <select value={selectedDoctorId} onChange={e => setSelectedDoctorId(e.target.value)}
+            className="h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm min-w-36 focus:outline-none">
             <option value="">전체 의사</option>
-            {doctorsByDept.map((s) => (
-              <option key={s.staffId} value={s.staffId}>
-                {s.name}
-              </option>
-            ))}
+            {doctorsByDept.map(s => <option key={s.staffId} value={s.staffId}>{s.name}</option>)}
           </select>
         </div>
-
-        {/* 의사 이름 검색 */}
-        <div style={styles.filterItem}>
-          <label style={styles.filterLabel}>의사 검색</label>
-          <input
-            type="text"
-            value={doctorSearchKeyword}
-            onChange={(e) => setDoctorSearchKeyword(e.target.value)}
-            placeholder="의사 이름 입력"
-            style={styles.searchInput}
-          />
+        <div className="space-y-1">
+          <p className="text-xs font-semibold text-zinc-500">의사 검색</p>
+          <Input value={doctorSearchKeyword} onChange={e => setDoctorSearchKeyword(e.target.value)}
+            placeholder="이름 입력" className="w-36 h-9" />
         </div>
-
-        {/* 상태 */}
-        <div style={styles.filterItem}>
-          <label style={styles.filterLabel}>상태</label>
-          <select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            style={styles.select}
-          >
+        <div className="space-y-1">
+          <p className="text-xs font-semibold text-zinc-500">상태</p>
+          <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)}
+            className="h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm min-w-28 focus:outline-none">
             <option value="">전체 상태</option>
-            {Object.entries(STATUS_LABEL).map(([val, label]) => (
-              <option key={val} value={val}>
-                {label}
-              </option>
-            ))}
+            {Object.entries(STATUS_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>
         </div>
-
-        <button style={styles.resetBtn} onClick={handleResetFilter}>
-          초기화
-        </button>
+        <Button variant="outline" size="sm" className="cursor-pointer" onClick={handleResetFilter}>초기화</Button>
       </div>
 
       {/* 주간 캘린더 */}
-      <div style={styles.calendarWrapper}>
-        {/* 주간 이동 */}
-        <div style={styles.weekNav}>
-          <button style={styles.navBtn} onClick={() => moveWeek(-1)}>
-            ◀ 이전 주
-          </button>
-          <span style={styles.weekRange}>
+      <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
+        {/* 주간 네비 */}
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-zinc-200">
+          <Button size="sm" variant="outline" className="cursor-pointer gap-1" onClick={() => moveWeek(-1)}>
+            <ChevronLeft size={14} /> 이전 주
+          </Button>
+          <span className="text-sm font-semibold text-zinc-800 flex-1 text-center">
             {weekDates[0]?.date} ~ {weekDates[6]?.date}
           </span>
-          <button style={styles.navBtn} onClick={() => moveWeek(1)}>
-            다음 주 ▶
-          </button>
-          <button
-            style={{ ...styles.navBtn, marginLeft: "8px" }}
-            onClick={() => setCurrentWeek(getTodayString())}
-          >
-            오늘
-          </button>
+          <Button size="sm" variant="outline" className="cursor-pointer gap-1" onClick={() => moveWeek(1)}>
+            다음 주 <ChevronRight size={14} />
+          </Button>
+          <Button size="sm" variant="outline" className="cursor-pointer" onClick={() => setCurrentWeek(getTodayString())}>오늘</Button>
         </div>
 
         {/* 테이블 */}
-        <div style={styles.tableScroll}>
-          <table style={styles.table}>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse" style={{ minWidth: "900px", tableLayout: "fixed" }}>
             <thead>
               <tr>
-                <th style={styles.doctorHeader}>의사</th>
-                {weekDates.map((day) => (
-                  <th
-                    key={day.date}
-                    style={{
-                      ...styles.dateHeader,
-                      ...(day.isToday ? styles.todayHeader : {}),
-                    }}
-                  >
-                    <div style={{ fontWeight: "bold" }}>{day.dayName}</div>
-                    <div style={styles.dateLabel}>{day.label}</div>
+                <th className="w-28 px-3 py-2.5 bg-zinc-50 border-b border-r border-zinc-200 text-xs font-semibold text-zinc-500 text-center">의사</th>
+                {weekDates.map(day => (
+                  <th key={day.date} className={cn(
+                    "px-2 py-2.5 border-b border-r border-zinc-200 text-center text-xs",
+                    day.isToday ? "bg-blue-50" : "bg-zinc-50",
+                    day.dayName === "일" ? "text-red-500" : day.dayName === "토" ? "text-blue-600" : "text-zinc-600"
+                  )}>
+                    <p className="font-bold text-sm">{day.dayName}</p>
+                    <p className="text-zinc-400 mt-0.5">{day.label}</p>
                   </th>
                 ))}
               </tr>
             </thead>
-
             <tbody>
               {filteredDoctors.length === 0 ? (
                 <tr>
-                  <td colSpan={8} style={styles.emptyCell}>
-                    표시할 의사 데이터가 없습니다
-                  </td>
+                  <td colSpan={8} className="py-16 text-center text-sm text-zinc-400">표시할 의사 데이터가 없습니다.</td>
                 </tr>
               ) : (
-                filteredDoctors.map((doctor) => (
-                  <tr key={doctor.staffId}>
-                    {/* 의사 셀 */}
-                    <td style={styles.doctorCell}>
-                      <div style={styles.doctorName}>{doctor.name}</div>
-                      <div style={styles.doctorId}>#{doctor.staffId}</div>
+                filteredDoctors.map(doctor => (
+                  <tr key={doctor.staffId} className="border-b border-zinc-100">
+                    <td className="px-3 py-3 border-r border-zinc-200 bg-zinc-50 text-center">
+                      <p className="text-sm font-semibold text-zinc-800">{doctor.name}</p>
+                      <p className="text-xs text-zinc-400">#{doctor.staffId}</p>
                     </td>
-
-                    {/* 날짜별 수술 */}
-                    {weekDates.map((day) => {
-                      const surgeries =
-                        surgeryMap[doctor.staffId]?.[day.date] || [];
-
-                      // 해당 의사의 해당 날짜 직원 스케줄 확인
-                      const docSchedule = scheduleList.find(
-                        (s) =>
-                          String(s.staffId) === String(doctor.staffId) &&
-                          s.workDate === day.date
-                      );
-                      const isOff = docSchedule?.scheduleTypeId === 3;
-                      const hasNoSchedule = !docSchedule;
+                    {weekDates.map(day => {
+                      const surgeries   = surgeryMap[doctor.staffId]?.[day.date] || [];
+                      const docSchedule = scheduleList.find(s => String(s.staffId)===String(doctor.staffId) && s.workDate===day.date);
+                      const isOff       = docSchedule?.scheduleTypeId === 3;
+                      const hasNoSch    = !docSchedule;
 
                       return (
-                        <td
-                          key={day.date}
-                          style={{
-                            ...styles.surgeryCell,
-                            ...(day.isToday ? styles.todayCell : {}),
-                            background: isOff ? "#fef2f2" : hasNoSchedule ? "#f9fafb" : undefined,
-                          }}
-                        >
-                          {/* 스케줄 상태 뱃지 */}
-                          {isOff && (
-                            <div style={styles.scheduleBadge.off}>휴일</div>
-                          )}
-                          {!isOff && !hasNoSchedule && docSchedule.status === "TEMP" && (
-                            <div style={styles.scheduleBadge.temp}>미확정</div>
-                          )}
-                          {!isOff && !hasNoSchedule && docSchedule.status !== "TEMP" && (
-                            <div style={styles.scheduleBadge.on}>
-                              {docSchedule.typeName || docSchedule.typeCode || "근무"}
-                            </div>
-                          )}
-                          {hasNoSchedule && (
-                            <div style={styles.scheduleBadge.none}>스케줄없음</div>
-                          )}
-                          {surgeries.map((s) => {
-                            const statusStyle =
-                              STATUS_COLOR[s.status] || STATUS_COLOR.SCHEDULED;
-                            const startStr = s.startTime?.slice(11, 16) || "";
-                            const endStr = s.endTime?.slice(11, 16) || "";
-                            const timeStr = endStr ? `${startStr} ~ ${endStr}` : startStr;
+                        <td key={day.date} className={cn(
+                          "px-2 py-2 border-r border-zinc-100 align-top min-h-20",
+                          day.isToday && "bg-blue-50/30",
+                          isOff && "bg-red-50/40",
+                          hasNoSch && !isOff && "bg-zinc-50/60"
+                        )}>
+                          {/* 스케줄 뱃지 */}
+                          <div className="mb-1.5">
+                            {isOff && <span className="inline-block text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-600">휴일</span>}
+                            {!isOff && !hasNoSch && docSchedule.status === "TEMP" && (
+                              <span className="inline-block text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">미확정</span>
+                            )}
+                            {!isOff && !hasNoSch && docSchedule.status !== "TEMP" && (
+                              <span className="inline-block text-[9px] font-bold px-1.5 py-0.5 rounded bg-green-100 text-green-700">{docSchedule.typeName || "근무"}</span>
+                            )}
+                            {hasNoSch && <span className="inline-block text-[9px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-400">스케줄없음</span>}
+                          </div>
 
-                            return (
-                              <div
-                                key={s.surgeryId}
-                                style={{
-                                  ...styles.surgeryCard,
-                                  background: statusStyle.bg,
-                                  borderLeft: `3px solid ${statusStyle.text}`,
-                                  cursor: "pointer",
-                                }}
-                                onClick={() => openDetail(s)}
-                              >
-                                <div style={{ ...styles.surgeryStatus, color: statusStyle.text }}>
-                                  {STATUS_LABEL[s.status] || s.status}
-                                </div>
-                                <div style={styles.surgeryTime}>{timeStr}</div>
-                                <div style={styles.surgeryDesc}>
-                                  {s.description || "-"}
-                                </div>
-                                <div style={styles.surgeryPatient}>
-                                  환자: {s.patientName || s.patientId || "-"}
-                                </div>
-                              </div>
-                            );
-                          })}
+                          {/* 수술 카드 */}
+                          {surgeries.map(s => (
+                            <div key={s.surgeryId} onClick={() => openDetail(s)}
+                              className={cn("rounded-md p-1.5 mb-1 cursor-pointer border-l-2 bg-white border border-zinc-200 hover:shadow-sm transition-shadow text-xs",
+                                STATUS_BORDER[s.status] || "border-l-zinc-300"
+                              )}>
+                              <Badge className={cn("text-[9px] px-1 py-0 mb-1", STATUS_BADGE[s.status] || STATUS_BADGE.SCHEDULED)}>
+                                {STATUS_LABEL[s.status] || s.status}
+                              </Badge>
+                              <p className="font-semibold text-zinc-700">
+                                {s.startTime?.slice(11,16)}{s.endTime ? ` ~ ${s.endTime.slice(11,16)}` : ""}
+                              </p>
+                              <p className="text-zinc-500 truncate">{s.description || "-"}</p>
+                              <p className="text-zinc-400">환자: {s.patientName || s.patientId || "-"}</p>
+                            </div>
+                          ))}
                         </td>
                       );
                     })}
@@ -751,70 +421,34 @@ const SurgerySchedulePage = () => {
             </tbody>
           </table>
         </div>
-
       </div>
 
       {/* 상세 모달 */}
-      <CommonModal open={detailOpen} onClose={closeDetail}>
+      <CommonModal open={detailOpen} onClose={closeDetail} title="수술 상세 정보">
         {selectedSurgery && (
-          <div style={detailStyles.wrap}>
-            <h3 style={detailStyles.title}>수술 상세 정보</h3>
-
-            <div style={detailStyles.grid}>
-              <span style={detailStyles.key}>상태</span>
-              <span style={detailStyles.value}>
-                {STATUS_LABEL[selectedSurgery.status] || selectedSurgery.status}
-              </span>
-
-              <span style={detailStyles.key}>담당 의사</span>
-              <span style={detailStyles.value}>
-                {selectedSurgery.doctorName} (#{selectedSurgery.doctorId})
-              </span>
-
-              <span style={detailStyles.key}>환자</span>
-              <span style={detailStyles.value}>
-                {selectedSurgery.patientName} (#{selectedSurgery.patientId})
-              </span>
-
-              <span style={detailStyles.key}>시작 시간</span>
-              <span style={detailStyles.value}>
-                {selectedSurgery.startTime?.replace("T", " ").slice(0, 16)}
-              </span>
-
-              <span style={detailStyles.key}>종료 시간</span>
-              <span style={detailStyles.value}>
-                {selectedSurgery.endTime?.replace("T", " ").slice(0, 16)}
-              </span>
-
-              <span style={detailStyles.key}>수술 내용</span>
-              <span style={detailStyles.value}>
-                {selectedSurgery.description || "-"}
-              </span>
-
-              <span style={detailStyles.key}>등록 일시</span>
-              <span style={detailStyles.value}>
-                {selectedSurgery.createdAt?.replace("T", " ").slice(0, 16)}
-              </span>
+          <div className="space-y-4">
+            <div className="grid grid-cols-[100px_1fr] gap-x-3 gap-y-2.5 text-sm">
+              {[
+                ["상태",      <Badge className={cn("text-xs", STATUS_BADGE[selectedSurgery.status])}>{STATUS_LABEL[selectedSurgery.status]||selectedSurgery.status}</Badge>],
+                ["담당 의사",  `${selectedSurgery.doctorName} (#${selectedSurgery.doctorId})`],
+                ["환자",      `${selectedSurgery.patientName} (#${selectedSurgery.patientId})`],
+                ["시작 시간",  selectedSurgery.startTime?.replace("T"," ").slice(0,16)],
+                ["종료 시간",  selectedSurgery.endTime?.replace("T"," ").slice(0,16)],
+                ["수술 내용",  selectedSurgery.description || "-"],
+                ["등록 일시",  selectedSurgery.createdAt?.replace("T"," ").slice(0,16)],
+              ].map(([k, v]) => (
+                <>
+                  <span className="text-zinc-500 font-medium self-center">{k}</span>
+                  <span className="text-zinc-800 self-center">{v}</span>
+                </>
+              ))}
             </div>
-
-            <div style={detailStyles.btnRow}>
-              <button style={detailStyles.closeBtn} onClick={closeDetail}>
-                닫기
-              </button>
+            <div className="flex justify-end gap-2 pt-3 border-t border-zinc-100">
+              <Button variant="outline" size="sm" className="cursor-pointer" onClick={closeDetail}>닫기</Button>
               {selectedSurgery.status !== "CANCELLED" && (
                 <>
-                  <button
-                    style={detailStyles.editBtn}
-                    onClick={() => openEdit(selectedSurgery)}
-                  >
-                    수정하기
-                  </button>
-                  <button
-                    style={detailStyles.cancelBtn}
-                    onClick={() => handleCancel(selectedSurgery.surgeryId)}
-                  >
-                    수술 취소
-                  </button>
+                  <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => openEdit(selectedSurgery)}>수정하기</Button>
+                  <Button size="sm" className="cursor-pointer bg-red-500 hover:bg-red-600" onClick={() => handleCancel(selectedSurgery.surgeryId)}>수술 취소</Button>
                 </>
               )}
             </div>
@@ -823,267 +457,13 @@ const SurgerySchedulePage = () => {
       </CommonModal>
 
       {/* 등록/수정 모달 */}
-      <CommonModal open={modalOpen} onClose={closeModal}>
-        <SurgeryForm
-          formData={formData}
-          setFormData={setFormData}
-          onSubmit={handleSubmit}
-          onClose={closeModal}
-          isEdit={isEdit}
-          isEmergency={isEmergency}
-          staffList={staffList}
-          departmentList={departmentList}
-          scheduleList={scheduleList}
-        />
+      <CommonModal open={modalOpen} onClose={closeModal} title={isEmergency ? "응급 수술 등록" : isEdit ? "수술 수정" : "수술 등록"}>
+        <SurgeryForm formData={formData} setFormData={setFormData} onSubmit={handleSubmit}
+          onClose={closeModal} isEdit={isEdit} isEmergency={isEmergency}
+          staffList={staffList} departmentList={departmentList} scheduleList={scheduleList} />
       </CommonModal>
     </div>
   );
 };
 
 export default SurgerySchedulePage;
-
-
-const styles = {
-  container: { padding: "24px" },
-
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "20px",
-  },
-  title: { margin: 0, fontSize: "22px", fontWeight: "bold" },
-  headerBtns: { display: "flex", gap: "10px" },
-
-  registerBtn: {
-    padding: "9px 18px",
-    background: "#fff",
-    border: "1px solid #d1d5db",
-    borderRadius: "7px",
-    fontWeight: "bold",
-    fontSize: "14px",
-    cursor: "pointer",
-  },
-  emergencyBtn: {
-    padding: "9px 18px",
-    background: "#fff",
-    border: "1px solid #d1d5db",
-    borderRadius: "7px",
-    fontWeight: "bold",
-    fontSize: "14px",
-    cursor: "pointer",
-  },
-
-  // 필터
-  filterBar: {
-    display: "flex",
-    gap: "16px",
-    alignItems: "flex-end",
-    marginBottom: "18px",
-    padding: "14px 18px",
-    background: "#f8fafc",
-    borderRadius: "8px",
-    border: "1px solid #e5e7eb",
-    flexWrap: "wrap",
-  },
-  filterItem: { display: "flex", flexDirection: "column", gap: "4px" },
-  filterLabel: { fontSize: "12px", fontWeight: "600", color: "#6b7280" },
-  select: {
-    padding: "7px 10px",
-    border: "1px solid #d1d5db",
-    borderRadius: "6px",
-    fontSize: "14px",
-    minWidth: "140px",
-    background: "#fff",
-  },
-  searchInput: {
-    padding: "7px 10px",
-    border: "1px solid #d1d5db",
-    borderRadius: "6px",
-    fontSize: "14px",
-    minWidth: "140px",
-    background: "#fff",
-  },
-  resetBtn: {
-    alignSelf: "flex-end",
-    padding: "7px 16px",
-    background: "#fff",
-    border: "1px solid #d1d5db",
-    borderRadius: "6px",
-    fontSize: "13px",
-    cursor: "pointer",
-  },
-
-  // 캘린더 래퍼
-  calendarWrapper: {
-    background: "#fff",
-    border: "1px solid #e5e7eb",
-    borderRadius: "10px",
-    padding: "16px",
-  },
-  weekNav: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    marginBottom: "14px",
-  },
-  navBtn: {
-    padding: "6px 14px",
-    border: "1px solid #d1d5db",
-    borderRadius: "6px",
-    background: "#fff",
-    cursor: "pointer",
-    fontSize: "13px",
-  },
-  weekRange: { fontWeight: "bold", fontSize: "15px", color: "#1f2937" },
-
-  tableScroll: { overflowX: "auto" },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-    minWidth: "900px",
-    tableLayout: "fixed",
-  },
-
-  doctorHeader: {
-    width: "120px",
-    padding: "10px",
-    background: "#f1f5f9",
-    border: "1px solid #e5e7eb",
-    textAlign: "center",
-    fontSize: "13px",
-    fontWeight: "bold",
-    color: "#374151",
-  },
-  dateHeader: {
-    padding: "10px",
-    background: "#f8fafc",
-    border: "1px solid #e5e7eb",
-    textAlign: "center",
-    fontSize: "13px",
-    color: "#374151",
-  },
-  todayHeader: {},
-  dateLabel: { fontSize: "11px", color: "#6b7280", marginTop: "2px" },
-
-  doctorCell: {
-    padding: "10px",
-    border: "1px solid #e5e7eb",
-    verticalAlign: "middle",
-    background: "#fafafa",
-    textAlign: "center",
-  },
-  doctorName: { fontWeight: "bold", fontSize: "13px", color: "#1f2937" },
-  doctorId: { fontSize: "11px", color: "#9ca3af", marginTop: "2px" },
-
-  surgeryCell: {
-    padding: "6px",
-    border: "1px solid #e5e7eb",
-    verticalAlign: "top",
-    minHeight: "80px",
-    height: "auto",
-  },
-  todayCell: {},
-
-  // 스케줄 상태 뱃지
-  scheduleBadge: {
-    off: {
-      fontSize: "10px",
-      fontWeight: "bold",
-      color: "#b91c1c",
-      background: "#fee2e2",
-      borderRadius: "4px",
-      padding: "1px 5px",
-      marginBottom: "3px",
-      display: "inline-block",
-    },
-    temp: {
-      fontSize: "10px",
-      fontWeight: "bold",
-      color: "#92400e",
-      background: "#fef3c7",
-      borderRadius: "4px",
-      padding: "1px 5px",
-      marginBottom: "3px",
-      display: "inline-block",
-    },
-    on: {
-      fontSize: "10px",
-      fontWeight: "bold",
-      color: "#166534",
-      background: "#dcfce7",
-      borderRadius: "4px",
-      padding: "1px 5px",
-      marginBottom: "3px",
-      display: "inline-block",
-    },
-    none: {
-      fontSize: "10px",
-      color: "#9ca3af",
-      borderRadius: "4px",
-      padding: "1px 5px",
-      marginBottom: "3px",
-      display: "inline-block",
-    },
-  },
-
-  // 수술 카드
-  surgeryCard: {
-    borderRadius: "5px",
-    padding: "6px 8px",
-    marginBottom: "5px",
-    fontSize: "12px",
-    cursor: "default",
-  },
-  surgeryStatus: { fontWeight: "bold", fontSize: "11px", marginBottom: "2px" },
-  surgeryTime: { color: "#374151", fontWeight: "600", marginBottom: "2px" },
-  surgeryDesc: { color: "#4b5563", marginBottom: "2px", wordBreak: "break-all" },
-  surgeryPatient: { color: "#6b7280", fontSize: "11px" },
-  emptyCell: {
-    padding: "40px",
-    textAlign: "center",
-    color: "#9ca3af",
-    fontSize: "14px",
-  },
-
-};
-
-const detailStyles = {
-  wrap: { minWidth: "400px", display: "flex", flexDirection: "column", gap: "16px" },
-  title: { margin: "0 0 4px 0", fontSize: "18px", fontWeight: "bold" },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "100px 1fr",
-    gap: "10px 12px",
-    fontSize: "14px",
-  },
-  key: { color: "#6b7280", fontWeight: "600", alignSelf: "center" },
-  value: { color: "#1f2937", alignSelf: "center" },
-  btnRow: { display: "flex", gap: "8px", justifyContent: "flex-end", marginTop: "4px" },
-  closeBtn: {
-    padding: "8px 18px",
-    background: "#f3f4f6",
-    border: "1px solid #d1d5db",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontSize: "14px",
-  },
-  editBtn: {
-    padding: "8px 18px",
-    background: "#fff",
-    border: "1px solid #d1d5db",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontSize: "14px",
-    fontWeight: "bold",
-  },
-  cancelBtn: {
-    padding: "8px 18px",
-    background: "#fff",
-    border: "1px solid #d1d5db",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontSize: "14px",
-    fontWeight: "bold",
-  },
-};
