@@ -42,7 +42,7 @@ const PatientLayout = () => {
   };
 
   return (
-    <div className="bg-zinc-50">
+    <div className="min-h-screen bg-zinc-50">
       {/* Top nav */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-zinc-200">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
@@ -98,7 +98,7 @@ const PatientLayout = () => {
 
       {/* Footer */}
       <footer className="fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-200 bg-white">
-        <div className="max-w-5xl mx-auto px-4 py-5 flex flex-wrap gap-x-8 gap-y-3">
+        <div className="max-w-5xl mx-auto px-4 py-5 flex flex-wrap justify-center gap-x-8 gap-y-3">
           <span className="text-xs font-semibold text-zinc-700 mr-2">병원 안내</span>
           {FOOTER_INFO.map(({ icon: Icon, text }) => (
             <div key={text} className="flex items-center gap-1.5">

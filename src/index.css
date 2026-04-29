@@ -129,6 +129,11 @@
     }
 }
 
+/* 스크롤바 나타나도 레이아웃 안 밀리게 */
+html {
+  scrollbar-gutter: stable;
+}
+
 /* FullCalendar 선택 날짜 하이라이트 */
 .fc .fc-daygrid-day.selected-day {
   background-color: #dbeafe !important;

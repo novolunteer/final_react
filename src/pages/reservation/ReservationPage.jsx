@@ -76,7 +76,7 @@ const ReservationPage = () => {
   const selectClass = "w-full h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500";
 
   return (
-    <div className="max-w-lg mx-auto space-y-4 p-6">
+    <div className="max-w-lg mx-auto space-y-3 px-6 py-2">
 
       <div className="flex items-center gap-2">
         <CalendarCheck size={20} className="text-blue-600" />
@@ -84,7 +84,7 @@ const ReservationPage = () => {
       </div>
 
       {/* 예약 폼 */}
-      <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6 space-y-5">
+      <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-4 space-y-3">
         <div className="space-y-1.5">
           <Label>진료과</Label>
           <select className={selectClass} value={selectedDept} onChange={(e) => setSelectedDept(e.target.value)}>
@@ -159,7 +159,7 @@ const ReservationPage = () => {
 
         <div className="space-y-1.5">
           <Label>증상</Label>
-          <Textarea value={symptom} onChange={(e) => setSymptom(e.target.value)} rows={4} placeholder="증상을 자세히 입력해주세요" />
+          <Textarea value={symptom} onChange={(e) => setSymptom(e.target.value)} rows={3} placeholder="증상을 자세히 입력해주세요" />
         </div>
 
         <Button type="button" className="w-full cursor-pointer" onClick={submitHandler} disabled={!selectedDept || !selectedDate}>
@@ -168,8 +168,8 @@ const ReservationPage = () => {
       </div>
 
       {/* 안내 카드 2개 */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-2">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-white rounded-xl border border-zinc-200 p-3 space-y-1.5">
           <div className="flex items-center gap-1.5">
             <Info size={13} className="text-blue-500" />
             <span className="text-xs font-semibold text-zinc-700">예약 안내</span>
@@ -181,7 +181,7 @@ const ReservationPage = () => {
           </ul>
         </div>
 
-        <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
+        <div className="bg-white rounded-xl border border-zinc-200 p-3 space-y-1.5">
           <div className="flex items-center gap-1.5">
             <AlertCircle size={13} className="text-amber-500" />
             <span className="text-xs font-semibold text-zinc-700">취소 안내</span>

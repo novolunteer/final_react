@@ -24,7 +24,6 @@ const MEDICAL = [...DOCTORS, ...NURSES];
 const MENU = [
   { path: "/my-schedule",      label: "내 스케줄",  icon: Calendar,      roles: MEDICAL },
   { path: "/communication",    label: "공지사항",   icon: Megaphone },
-  { path: "/reservation",      label: "예약",       icon: CalendarCheck, roles: [...DOCTORS, "PATIENT", ...NURSES, ...ADMIN] },
   { path: "/medical",          label: "진료 관리",  icon: Stethoscope,   roles: DOCTORS },
   { path: "/reservationconfirm", label: "예약 확인", icon: ClipboardList, roles: [...DOCTORS, ...NURSES, ...ADMIN] },
   { path: "/reception",        label: "접수",       icon: UserCheck,     roles: [...DOCTORS, ...ADMIN] },
@@ -43,12 +42,6 @@ const MENU = [
     children: [
       { path: "/operation/schedule_policy",      label: "스케줄 설정", icon: Settings2,  roles: ["ADMIN"] },
       { path: "/operation/dept_schedule_policy", label: "부서별 정책", icon: LayoutList, roles: ["ADMIN"] },
-    ],
-  },
-  {
-    label: "관리자", icon: Shield,
-    children: [
-      { path: "/admin", label: "관리", icon: KeyRound, roles: ["ADMIN"] },
     ],
   },
   { path: "/chat",            label: "채팅",    icon: MessageSquare, roles: ["ADMIN", "DOCTOR", "NURSE", "MANAGER", "STAFF"] },
