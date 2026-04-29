@@ -91,14 +91,29 @@ const SurgeryForm = ({ formData, setFormData, onSubmit, onClose, isEdit, isEmerg
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex items-center gap-2">
-        {isEmergency && <Badge className="bg-red-100 text-red-700 hover:bg-red-100">응급</Badge>}
-        <p className="text-base font-semibold text-zinc-900">
-          {isEmergency ? "응급 수술 등록" : isEdit ? "수술 수정" : "수술 등록"}
-        </p>
+      {/* 제목 */}
+      <div className={cn(
+        "rounded-xl px-4 py-3 flex items-center gap-3",
+        isEmergency ? "bg-red-50 border border-red-200" : "bg-blue-50 border border-blue-100"
+      )}>
+        <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0",
+          isEmergency ? "bg-red-100" : "bg-blue-100")}>
+          <Scissors size={16} className={isEmergency ? "text-red-600" : "text-blue-600"} />
+        </div>
+        <div>
+          <p className="text-sm font-bold text-zinc-900">
+            {isEmergency ? "응급 수술 등록" : isEdit ? "수술 수정" : "수술 등록"}
+          </p>
+          <p className="text-xs text-zinc-500 mt-0.5">
+            {isEmergency ? "스케줄이 없어도 강제 등록됩니다." : "담당 의사의 근무 스케줄을 확인 후 등록하세요."}
+          </p>
+        </div>
+        {isEmergency && <Badge className="ml-auto bg-red-100 text-red-700 hover:bg-red-100">응급</Badge>}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      {/* 의사 선택 섹션 */}
+      <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 space-y-3">
+        <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">의사 선택</p>
         <div className="space-y-1.5">
           <Label>부서 필터</Label>
           <select value={filterDeptId} onChange={e => setFilterDeptId(e.target.value)} className={selectClass}>
@@ -106,33 +121,36 @@ const SurgeryForm = ({ formData, setFormData, onSubmit, onClose, isEdit, isEmerg
             {departmentList.map(d => <option key={d.departmentId} value={d.departmentId}>{d.departmentName}</option>)}
           </select>
         </div>
-
         <div className="space-y-1.5">
           <Label>담당 의사 <span className="text-red-500">*</span></Label>
           <select name="doctorId" value={formData.doctorId} onChange={handleChange} required className={selectClass}>
             <option value="">의사 선택</option>
-            {filteredDoctors.map(s => <option key={s.staffId} value={s.staffId}>{s.name} ({s.staffId})</option>)}
+            {filteredDoctors.map(s => <option key={s.staffId} value={s.staffId}>{s.name} (#{s.staffId})</option>)}
           </select>
         </div>
+      </div>
 
+      {/* 수술 일정 섹션 */}
+      <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 space-y-3">
+        <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">수술 일정</p>
         <div className="space-y-1.5">
           <Label>환자 ID <span className="text-red-500">*</span></Label>
           <Input type="number" name="patientId" value={formData.patientId} onChange={handleChange}
-            placeholder="환자 ID 입력" required min={1} />
+            placeholder="환자 ID를 입력하세요" required min={1} />
         </div>
-
         <div className="space-y-1.5">
           <Label>수술 시작 시간 <span className="text-red-500">*</span></Label>
           <input type="datetime-local" name="startTime" value={formData.startTime} onChange={handleChange}
-            required className={`${selectClass}`} />
+            required className={selectClass} />
         </div>
-
         <div className="space-y-1.5">
-          <Label>예상 시간 (시간) <span className="text-red-500">*</span></Label>
-          <Input type="number" name="durationHours" value={formData.durationHours} onChange={handleChange}
-            min={1} max={24} required />
+          <Label>예상 소요 시간</Label>
+          <div className="flex items-center gap-3">
+            <Input type="number" name="durationHours" value={formData.durationHours} onChange={handleChange}
+              min={1} max={24} required className="w-28" />
+            <span className="text-sm text-zinc-500">시간</span>
+          </div>
         </div>
-
         {isEdit && (
           <div className="space-y-1.5">
             <Label>상태</Label>
@@ -145,16 +163,20 @@ const SurgeryForm = ({ formData, setFormData, onSubmit, onClose, isEdit, isEmerg
         )}
       </div>
 
+      {/* 스케줄 경고 */}
       {scheduleWarning && (
-        <div className={cn("rounded-lg px-3 py-2.5 text-sm", warningClass)}>
-          {scheduleWarning.level === "error" ? "⛔ " : scheduleWarning.level === "warn" ? "⚠️ " : "✅ "}
-          {scheduleWarning.msg}
-          {isEmergency && scheduleWarning.level === "error" && (
-            <span className="ml-1.5 font-semibold">(응급 수술이므로 강제 등록 가능)</span>
-          )}
+        <div className={cn("rounded-lg px-3 py-2.5 text-sm flex items-start gap-2", warningClass)}>
+          <span className="shrink-0">{scheduleWarning.level === "error" ? "⛔" : scheduleWarning.level === "warn" ? "⚠️" : "✅"}</span>
+          <span>
+            {scheduleWarning.msg}
+            {isEmergency && scheduleWarning.level === "error" && (
+              <span className="ml-1.5 font-semibold">(응급 수술이므로 강제 등록 가능)</span>
+            )}
+          </span>
         </div>
       )}
 
+      {/* 수술 내용 */}
       <div className="space-y-1.5">
         <Label>수술 내용</Label>
         <Textarea name="description" value={formData.description} onChange={handleChange}
@@ -164,7 +186,7 @@ const SurgeryForm = ({ formData, setFormData, onSubmit, onClose, isEdit, isEmerg
       <div className="flex justify-end gap-2 pt-2 border-t border-zinc-100">
         <Button type="button" variant="outline" className="cursor-pointer" onClick={onClose}>취소</Button>
         <Button type="submit" disabled={isScheduleBlocked}
-          className={cn("cursor-pointer", isEmergency && "bg-red-600 hover:bg-red-700")}>
+          className={cn("cursor-pointer", isEmergency ? "bg-red-600 hover:bg-red-700" : "")}>
           {isEmergency ? "응급 등록" : isEdit ? "수정" : "등록"}
         </Button>
       </div>
