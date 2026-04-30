@@ -37,6 +37,7 @@ const ReservationConfirm = () => {
   const [debouncedName, setDebouncedName] = useState("");
   const [page, setPage]                 = useState(0);
   const [size]                          = useState(3);
+  const [patientId, setPatientId]=useState("");
 
   const calendarRef    = useRef(null);
   const isRowClickRef  = useRef(false);
@@ -150,7 +151,7 @@ const ReservationConfirm = () => {
   const handleRowClick = (item) => {
     const docId = item.doctorId ?? null;
     isRowClickRef.current = true;
-    setSelectedDept(item.departmentId); setSelectedDoc(docId); setSelectedRow(item.reservationId);
+    setSelectedDept(item.departmentId); setSelectedDoc(docId); setSelectedRow(item.reservationId); setPatientId(item.patientId);
     const date = getDate(item) ? dayjs(getDate(item)).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD');
     setSelectedDate(date); setTimeSlots([]); setSlotBlocked(false); setBlockMessage("");
     if (calendarRef.current) calendarRef.current.getApi().gotoDate(date);
@@ -161,7 +162,7 @@ const ReservationConfirm = () => {
     if (!selectedRow) return alert("예약할 행을 선택하세요!");
     const isNext = dayjs(currentMonth).isAfter(dayjs().endOf('month'));
     if (!isNext && !selectedDoc) return alert("이번 달 예약은 의사를 선택해야 합니다.");
-    const payload = { reservationId: selectedRow, reservationDate: `${selectedDate}T${hour}:00`, doctorId: selectedDoc || null, departmentId: selectedDept };
+    const payload = { reservationId: selectedRow, reservationDate: `${selectedDate}T${hour}:00`, doctorId: selectedDoc || null, departmentId: selectedDept, patientId: patientId || null};
     const req = status === "CONFIRMED" ? jwtAxios.put('/api/reservation', payload) : jwtAxios.post('/api/reservation/confirm', payload);
     req.then(() => {
       alert(status === "CONFIRMED" ? "예약 수정 완료!" : "예약 완료!");
