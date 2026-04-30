@@ -1,5 +1,4 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import hospitalBg from "../assets/hospital-image.jpg";
 import { useSelector, useDispatch } from "react-redux";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -43,15 +42,7 @@ const PatientLayout = () => {
   };
 
   return (
-    <div
-      className="h-screen overflow-y-auto flex flex-col"
-      style={{
-        backgroundImage: `url(${hospitalBg})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed',
-      }}
-    >
+    <div className="h-screen overflow-y-auto flex flex-col bg-zinc-50">
       {/* Top nav */}
       <header className="sticky top-0 z-50 shrink-0 bg-white border-b border-zinc-200">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
