@@ -116,9 +116,11 @@ const BillingList = ({ keyword }) => {
       alert("결제가 완료되었습니다.");
       queryClient.invalidateQueries({ queryKey: ["billingList"] });
       queryClient.invalidateQueries({ queryKey: ["paymentList"] });
+      closePaymentModal();
       navigate("/billing", { replace: true });
     }catch{
       alert("현금 결제 실패!");
+      closePaymentModal();
       navigate("/billing", { replace: true });
     } finally {
       setPaying(false);
