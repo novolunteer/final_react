@@ -32,6 +32,7 @@ const ReservationConfirm = () => {
   const [status, setStatus]             = useState("RECEIVED");
   const [currentMonth, setCurrentMonth] = useState(null);
   const [selectedRow, setSelectedRow]   = useState(null);
+  const [calendarRefreshKey, setCalendarRefreshKey] = useState(0);
   const [name, setName]                 = useState("");
   const [debouncedName, setDebouncedName] = useState("");
   const [page, setPage]                 = useState(0);
@@ -90,7 +91,7 @@ const ReservationConfirm = () => {
         extendedProps: { available: slot.available, blocked: !slot.available }
       })));
     }).catch(console.error);
-  }, [selectedDoc, currentMonth, selectedDept]);
+  }, [selectedDoc, currentMonth, selectedDept, calendarRefreshKey]);
 
   const fetchReservationList = ({ status, dept, name, page }) => {
     let url = "/api/reservation";
@@ -165,7 +166,10 @@ const ReservationConfirm = () => {
     req.then(() => {
       alert(status === "CONFIRMED" ? "예약 수정 완료!" : "예약 완료!");
       setSelectedRow(null);
+      // 슬롯 즉시 재조회
       loadSlots(selectedDate, selectedDoc, selectedDept);
+      // 캘린더 가능 인원 수 재조회 트리거
+      setCalendarRefreshKey(prev => prev + 1);
       queryClient.invalidateQueries({ queryKey: ['reservationList'] });
       if (selectedDoc) dispatch(setDoctorId(selectedDoc));
     }).catch(console.error);
