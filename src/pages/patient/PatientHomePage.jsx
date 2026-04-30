@@ -57,7 +57,7 @@ const PatientHomePage = () => {
       <div
         className="rounded-2xl px-8 py-10 text-white overflow-hidden"
         style={{
-          backgroundImage: `linear-gradient(to right, rgb(29, 78, 216) 35%, rgba(29, 78, 216, 0.75) 55%, rgba(29, 78, 216, 0.15) 80%), url(${hospitalImg})`,
+          backgroundImage: `linear-gradient(to right, rgb(29, 78, 216) 25%, rgba(29, 78, 216, 0.6) 45%, rgba(29, 78, 216, 0.05) 65%), url(${hospitalImg})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
