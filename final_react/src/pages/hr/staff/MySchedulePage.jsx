@@ -3,6 +3,7 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { getMySchedule } from "../../../api/hr/staffScheduleApi";
+import { getMySchedule, getMyScheduleDetail } from "../../../api/hr/staffScheduleApi";
 
 const TYPE_COLORS = {
   DAY: "#3b82f6",
@@ -34,6 +35,8 @@ const MySchedulePage = () => {
   const [currentMonth, setCurrentMonth] = useState(getTodayString());
   const [loading, setLoading] = useState(false);
   const calendarRef = useRef(null);
+  const [detail, setDetail] = useState({ reservationDtoList: [], surgeryDtoList: [] });
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const fetchSchedule = async (monthDate) => {
     setLoading(true);
@@ -70,6 +73,20 @@ const MySchedulePage = () => {
 
   const staffName = scheduleList[0]?.staffName ?? "";
   const departmentName = scheduleList[0]?.departmentName ?? "";
+
+  const handleDateClick = async (info) => {
+    setSelectedDate(info.dateStr);
+    setDetailLoading(true);
+    try {
+      const data = await getMyScheduleDetail(info.dateStr);
+      setDetail(data);
+    } catch (err) {
+      console.error("상세 조회 실패", err);
+      setDetail({ reservationDtoList: [], surgeryDtoList: [] });
+    } finally {
+      setDetailLoading(false);
+    }
+  };
 
   return (
     <div style={styles.container}>
@@ -131,6 +148,59 @@ const MySchedulePage = () => {
               </div>
             ))
           )}
+
+          <h4 style={styles.sectionTitle}>진료 예약</h4>
+          {detailLoading ? (
+            <p style={styles.empty}>불러오는 중...</p>
+          ) : detail.reservationDtoList?.length === 0 ? (
+            <p style={styles.empty}>예약 없음</p>
+          ) : (
+            detail.reservationDtoList?.map((r) => (
+              <div key={r.reservationId} style={styles.card}>
+                <div style={styles.cardBody}>
+                  <span style={styles.cardDept}>환자 #{r.patientId}</span>
+                  <span style={styles.cardTime}>
+                    {r.reservationDate ? new Date(r.reservationDate).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }) : ""}
+                  </span>
+                </div>
+                <div style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
+                  {r.status}
+                </div>
+              </div>
+            ))
+          )}
+
+          <h4 style={{ ...styles.sectionTitle, marginTop: "16px" }}>수술</h4>
+          {detailLoading ? (
+            <p style={styles.empty}>불러오는 중...</p>
+          ) : detail.surgeryDtoList?.length === 0 ? (
+            <p style={styles.empty}>수술 없음</p>
+          ) : (
+            detail.surgeryDtoList?.map((s) => (
+              <div key={s.surgeryId} style={styles.card}>
+                <div style={styles.cardBody}>
+                  <span style={styles.cardDept}>{s.description}</span>
+                  <span style={styles.cardTime}>
+                    {s.startTime ? new Date(s.startTime).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }) : ""}
+                  </span>
+                </div>
+                <div style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
+                  {s.status} {s.durationHours != null ? `· ${s.durationHours}시간` : ""}
+                </div>
+              </div>
+            ))
+          )}
+
+          <div style={styles.legend}>
+            {Object.entries(TYPE_COLORS).map(([code, color]) => (
+              <div key={code} style={styles.legendItem}>
+                <span style={{ ...styles.dot, backgroundColor: color }} />
+                <span>{code}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
 
           <div style={styles.legend}>
             {Object.entries(TYPE_COLORS).map(([code, color]) => (
@@ -216,5 +286,15 @@ const styles = {
     height: "10px",
     borderRadius: "50%",
     display: "inline-block",
+  },
+  sectionTitle: { 
+    fontSize: "13px", 
+    fontWeight: 600, 
+    margin: "8px 0", 
+    color: "#374151" 
+  },
+  cardTime: { 
+    color: "#6b7280", 
+    fontSize: "12px" 
   },
 };

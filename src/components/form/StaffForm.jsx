@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getRoleList } from "../../api/hr/roleApi";
+import { displayRole } from "../../utils/roleUtils";
 
 const initState = {
   staffId: "", email: "", password: "", departmentId: "",
@@ -39,6 +40,9 @@ const StaffForm = ({ onSubmit, onClose, initialData, departmentList = [], staffL
       setForm(initState); setSelectedManagerLabel(""); setManagerKeyword(""); setManagerSearchResult([]);
     }
   }, [initialData, staffList]);
+
+  const parentRoleNames = new Set(roleList.map(r => r.parentRoleName).filter(Boolean));
+  const assignableRoles = roleList.filter(r => !parentRoleNames.has(r.roleName));
 
   const selectedRole = roleList.find(r => String(r.roleId) === String(form.roleId));
   const isDoctorRole = selectedRole?.parentRoleName === "DOCTOR";
@@ -110,8 +114,8 @@ const StaffForm = ({ onSubmit, onClose, initialData, departmentList = [], staffL
             <Label>직급</Label>
             <select name="roleId" value={form.roleId} onChange={handleChange} className={selectClass}>
               <option value="">직급 선택</option>
-              {roleList.map(role => (
-                <option key={role.roleId} value={role.roleId}>{role.roleName}</option>
+              {assignableRoles.map(role => (
+                <option key={role.roleId} value={role.roleId}>{displayRole(role.roleName)}</option>
               ))}
             </select>
           </div>
@@ -188,7 +192,7 @@ const StaffForm = ({ onSubmit, onClose, initialData, departmentList = [], staffL
                   className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-zinc-50 transition-colors">
                   <div>
                     <p className="text-sm font-medium text-zinc-800">{staff.name || "-"}</p>
-                    <p className="text-xs text-zinc-400">ID: {staff.staffId} · {staff.roleName || "-"}</p>
+                    <p className="text-xs text-zinc-400">ID: {staff.staffId} · {displayRole(staff.roleName)}</p>
                   </div>
                 </div>
               ))
