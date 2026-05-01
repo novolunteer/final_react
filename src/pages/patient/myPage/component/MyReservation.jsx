@@ -1,5 +1,5 @@
 import { getMyReservations } from '@/api/patientApi';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -29,8 +29,9 @@ const MyReservation = () => {
   const [status, setStatus] = useState("");
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['reservation', page, sort, status],
+    queryKey: ['myReservation', page, sort, status],
     queryFn: () => getMyReservations(page, sort, status),
+    placeholderData: keepPreviousData,
   });
 
   const getStatus = (s) => STATUS_MAP[s] ?? { label: '알 수 없음', className: '' };
@@ -42,25 +43,31 @@ const MyReservation = () => {
         <h2 className="text-sm font-semibold text-zinc-700">예약 내역</h2>
       </div>
 
-      <div className="flex items-center gap-1.5 flex-wrap">
-        {STATUS_FILTERS.map((f) => (
-          <button
-            key={f.value}
-            type="button"
-            onClick={() => { setStatus(f.value); setPage(0); }}
-            className={`px-3 h-7 text-xs rounded-full border transition-colors cursor-pointer
-              ${status === f.value
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-white text-zinc-600 border-zinc-200 hover:border-blue-400 hover:text-blue-600'
-              }`}
-          >
-            {f.label}
-          </button>
-        ))}
+      {/* 필터 + 정렬 한 줄 — pills는 flex-1 overflow-x-auto로 스크롤, select는 shrink-0으로 항상 우측 고정 */}
+      <div className="flex items-center gap-2">
+        <div
+          className="flex gap-1 flex-1 overflow-x-auto"
+          style={{ scrollbarWidth: 'none' }}
+        >
+          {STATUS_FILTERS.map((f) => (
+            <button
+              key={f.value}
+              type="button"
+              onClick={() => { setStatus(f.value); setPage(0); }}
+              className={`shrink-0 px-3 h-7 text-xs rounded-full border transition-colors cursor-pointer
+                ${status === f.value
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-white text-zinc-600 border-zinc-200 hover:border-blue-400 hover:text-blue-600'
+                }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value)}
-          className="h-7 rounded-md border border-zinc-200 bg-white px-2 text-xs text-zinc-700 focus:outline-none"
+          className="shrink-0 h-7 rounded-md border border-zinc-200 bg-white px-2 text-xs text-zinc-700 focus:outline-none"
         >
           <option value="reservationId,desc">최신순</option>
           <option value="reservationId,asc">등록순</option>
@@ -75,7 +82,7 @@ const MyReservation = () => {
         ) : data?.content?.length === 0 ? (
           <p className="py-8 text-center text-sm text-zinc-400">예약 내역이 없습니다.</p>
         ) : (
-          data.content.map((d) => {
+          data?.content?.map((d) => {
             const s = getStatus(d.status);
             const canCancel = d.status === 'RECEIVED' || d.status === 'PENDING';
 
