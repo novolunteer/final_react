@@ -67,10 +67,10 @@ export const getMySchedule = async ({ startDate, endDate, page = 0, size = 30 } 
 };
 
 export const getMyScheduleDetail = async (date) => {
-  const response = await axiosInstance.get("/my/detail", {
+  const res = await jwtAxios.get(`${host}/my/detail`, {
     params: { today: date }
   });
-  return response.data;
+  return res.data;
 };
 
 
