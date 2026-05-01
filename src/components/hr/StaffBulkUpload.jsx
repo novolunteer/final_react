@@ -181,16 +181,6 @@ const StaffBulkUpload = ({open, onClose, onSuccess, departmentList = [], roleLis
             </div>
           )}
 
-          {roleList.length > 0 && (
-            <div style={{marginTop:'8px', fontSize:'12px', color:'#64748b', background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:'8px', padding:'10px 14px'}}>
-              <strong style={{display:'block', marginBottom:'6px', color:'#334155'}}>사용 가능한 roleId (직급)</strong>
-              <div style={{display:'flex', flexWrap:'wrap', gap:'6px'}}>
-                {roleList.map(role => (
-                  <span key={role.roleId} style={{background:'#e2e8f0', borderRadius:'4px', padding:'2px 8px'}}>{role.roleId}: {role.roleName}</span>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       )}
 

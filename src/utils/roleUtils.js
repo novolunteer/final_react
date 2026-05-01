@@ -1,4 +1,5 @@
 export const roleDisplayMap = {
+  DOCTOR:     '의사',
   RESIDENT:   '레지던트',
   FELLOW:     '전임의',
   PROFESSOR:  '교수',
@@ -8,3 +9,4 @@ export const roleDisplayMap = {
 };
 
 export const displayRole = (roleName) => roleDisplayMap[roleName] ?? roleName ?? '-';
+
