@@ -7,6 +7,7 @@ import CommonTable from "../../../components/common/CommonTable";
 import RegisterButton from "../../../components/common/RegisterButton";
 import SearchBar from "../../../components/common/SearchBar";
 import { getStaffList, registerStaff, updateStaff } from "../../../api/hr/staffApi";
+import { displayRole } from "../../../utils/roleUtils";
 import { getDepartmentList } from "../../../api/hr/departmentApi";
 import { getRoleList } from "../../../api/hr/roleApi";
 import StaffBulkUpload from "../../../components/hr/StaffBulkUpload";
@@ -47,7 +48,7 @@ const StaffPage = () => {
     { key: "userId",       title: "직원 ID" },
     { key: "departmentName", title: "부서명" },
     { key: "managerId",    title: "담당직원ID" },
-    { key: "roleName",     title: "직급" },
+    { key: "roleDisplayName", title: "직급" },
     { key: "name",         title: "이름" },
     { key: "phone",        title: "전화번호" },
     { key: "address",      title: "주소" },
@@ -67,7 +68,7 @@ const StaffPage = () => {
       const mapped = data.map(item => ({
         id: item.staffId, staffId: item.staffId, userId: item.userId,
         departmentId: item.departmentId, departmentName: item.departmentName,
-        managerId: item.managerId, roleId: item.roleId, roleName: item.roleName, name: item.name,
+        managerId: item.managerId, roleId: item.roleId, roleName: item.roleName, roleDisplayName: displayRole(item.roleName), name: item.name,
         phone: item.phone, address: item.address, isActive: item.isActive,
         isActiveText: item.isActive === "Y" ? "사용" : "비활성(퇴사)",
         action: (
