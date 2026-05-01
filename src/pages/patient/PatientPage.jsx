@@ -10,7 +10,15 @@ const PatientPage = () => {
     
   return (
     <div>
-        
+        <div>
+          <div>
+          
+          </div>
+          <div>
+            <div></div>
+            <div></div>
+          </div>
+        </div>
     </div>
   )
 }
