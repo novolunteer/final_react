@@ -66,4 +66,11 @@ export const getMySchedule = async ({ startDate, endDate, page = 0, size = 30 } 
     return res.data;
 };
 
+export const getMyScheduleDetail = async (date) => {
+  const response = await axiosInstance.get("/my/detail", {
+    params: { today: date }
+  });
+  return response.data;
+};
+
 
