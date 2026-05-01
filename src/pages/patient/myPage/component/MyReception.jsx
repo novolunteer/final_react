@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react'
 
 const MyReception = () => {
     const [page, setPage]=useState(0);
-    const [sort, setSort]=useState("treatedAt,desc");
+    const [sort, setSort]=useState("DESC");
     const [openPaymentList, setOpenPaymentList]=useState(false);
     const [paymentList, setPaymentList]=useState(null);
     const [paymentError, setPaymentError]=useState("");
@@ -83,8 +83,8 @@ const MyReception = () => {
                                     <div>
                                         <div>
                                             <select value={sort} onChange={(e) => setSort(e.target.value)}>
-                                                <option value="treatedAt,desc">최신순</option>
-                                                <option value="treatedAt,asc">등록순</option>
+                                                <option value="DESC">최신순</option>
+                                                <option value="ASC">등록순</option>
                                             </select>
                                         </div>
                                         {
