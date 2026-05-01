@@ -83,8 +83,8 @@ const MyReception = () => {
                                     <div>
                                         <div>
                                             <select value={sort} onChange={(e) => setSort(e.target.value)}>
-                                                <option value="receptionId,desc">최신순</option>
-                                                <option value="receptionId,asc">등록순</option>
+                                                <option value="treatedAt,desc">최신순</option>
+                                                <option value="treatedAt,asc">등록순</option>
                                             </select>
                                         </div>
                                         {

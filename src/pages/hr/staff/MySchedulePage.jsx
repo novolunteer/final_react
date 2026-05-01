@@ -8,29 +8,36 @@ import { Calendar } from "lucide-react";
 
 const TYPE_COLORS = {
   DAY:     "#0ea5e9",
-  NIGHT:   "#8b5cf6",
+  EVENING: "#8b5cf6",
+  NIGHT:   "#f97316",
   OFF:     "#f43f5e",
-  EVENING: "#f97316",
 };
 
 const TYPE_LABELS = {
   DAY:     "주간",
-  NIGHT:   "야간",
+  EVENING: "야간",
+  NIGHT:   "당직",
   OFF:     "휴무",
-  EVENING: "저녁",
 };
 
 const SHIFT_HOUR_RANGES = {
   DAY:     { start: 9,  end: 18 },
-  EVENING: { start: 18, end: 22 },
-  NIGHT:   { start: 22, end: 6  },
+  EVENING: { start: 15, end: 24 },
+  NIGHT:   { start: 0,  end: 9  },
   OFF:     null,
+};
+
+const SHIFT_DISPLAY_HOURS = {
+  DAY:     Array.from({ length: 9 }, (_, i) => 9  + i), // 09~17
+  EVENING: Array.from({ length: 9 }, (_, i) => 15 + i), // 15~23
+  NIGHT:   Array.from({ length: 9 }, (_, i) => i),       // 00~08
+  OFF:     [],
 };
 
 const isHourInShift = (hour, typeCode) => {
   if (typeCode === "DAY")     return hour >= 9  && hour < 18;
-  if (typeCode === "EVENING") return hour >= 18 && hour < 22;
-  if (typeCode === "NIGHT")   return hour >= 22 || hour < 6;
+  if (typeCode === "EVENING") return hour >= 15 && hour < 24;
+  if (typeCode === "NIGHT")   return hour >= 0  && hour < 9;
   return false;
 };
 
@@ -51,6 +58,8 @@ const getMonthRange = (dateStr) => {
   return { startDate: start, endDate: end };
 };
 
+const fmtHour = (h) => `${String(h % 24).padStart(2, "0")}:00`;
+
 const MySchedulePage = () => {
   const { name: authName } = useSelector((s) => s.auth);
   const [scheduleList, setScheduleList]     = useState([]);
@@ -58,9 +67,8 @@ const MySchedulePage = () => {
   const [currentMonth, setCurrentMonth]     = useState(getTodayString());
   const [loading, setLoading]               = useState(false);
   const [departmentName, setDepartmentName] = useState("");
-  const calendarRef  = useRef(null);
-  const timetableRef = useRef(null);
-  const [detail, setDetail]             = useState({ reservationDtoList: [], surgeryDtoList: [] });
+  const calendarRef = useRef(null);
+  const [detail, setDetail]               = useState({ reservationDtoList: [], surgeryDtoList: [] });
   const [detailLoading, setDetailLoading] = useState(false);
 
   const fetchSchedule = async (monthDate) => {
@@ -104,23 +112,23 @@ const MySchedulePage = () => {
     }
   };
 
-  // 날짜 변경 시 근무 시작 시간으로 자동 스크롤
-  useEffect(() => {
-    if (!timetableRef.current) return;
-    let targetHour = 8;
+  // 해당 날의 근무 시간대 + 이벤트 있는 시간만 추출
+  const displayHours = useMemo(() => {
+    const hours = new Set();
+    selectedDaySchedules.forEach(s => {
+      (SHIFT_DISPLAY_HOURS[s.typeCode] ?? []).forEach(h => hours.add(h));
+    });
+    // 근무 범위 밖 이벤트도 포함
+    (detail.reservationDtoList ?? []).forEach(r => {
+      if (r.reservationDate) hours.add(new Date(r.reservationDate).getHours());
+    });
+    (detail.surgeryDtoList ?? []).forEach(s => {
+      if (s.startTime) hours.add(new Date(s.startTime).getHours());
+    });
+    return Array.from(hours).sort((a, b) => a - b);
+  }, [selectedDaySchedules, detail]);
 
-    if (selectedDaySchedules.length > 0) {
-      const range = SHIFT_HOUR_RANGES[selectedDaySchedules[0].typeCode];
-      if (range) targetHour = Math.max(0, range.start - 1);
-    }
-
-    const firstReservHour = detail.reservationDtoList?.[0]?.reservationDate
-      ? new Date(detail.reservationDtoList[0].reservationDate).getHours()
-      : null;
-    if (firstReservHour !== null) targetHour = Math.max(0, firstReservHour - 1);
-
-    timetableRef.current.scrollTop = targetHour * 44;
-  }, [selectedDate, detail.reservationDtoList, selectedDaySchedules]);
+  const hasSchedule = selectedDaySchedules.length > 0;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-4">
@@ -161,115 +169,116 @@ const MySchedulePage = () => {
           />
         </div>
 
-        {/* 타임테이블 사이드패널 */}
-        <div
-          className="w-72 shrink-0 bg-white rounded-xl border border-zinc-200 shadow-sm flex flex-col overflow-hidden"
-          style={{ height: 560 }}
-        >
+        {/* 사이드 패널 */}
+        <div className="w-72 shrink-0 bg-white rounded-xl border border-zinc-200 shadow-sm flex flex-col overflow-hidden">
+
           {/* 패널 헤더 */}
           <div className="px-4 py-3 border-b border-zinc-100 shrink-0">
             <p className="text-sm font-semibold text-zinc-800 mb-2">{selectedDate}</p>
             <div className="flex flex-wrap gap-1.5">
-              {selectedDaySchedules.length === 0 ? (
+              {!hasSchedule ? (
                 <span className="text-xs text-zinc-400">근무 일정 없음</span>
               ) : (
-                selectedDaySchedules.map(item => (
-                  <span
-                    key={item.scheduleId}
-                    className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold text-white"
-                    style={{ backgroundColor: TYPE_COLORS[item.typeCode] ?? "#6b7280" }}
-                  >
-                    {item.typeName}
-                    {SHIFT_HOUR_RANGES[item.typeCode] && (
-                      <span className="font-normal opacity-80 ml-1">
-                        {item.typeCode === "NIGHT"
-                          ? "22:00 – 06:00"
-                          : `${String(SHIFT_HOUR_RANGES[item.typeCode].start).padStart(2,"0")}:00 – ${String(SHIFT_HOUR_RANGES[item.typeCode].end).padStart(2,"0")}:00`}
-                      </span>
-                    )}
-                  </span>
-                ))
+                selectedDaySchedules.map(item => {
+                  const range = SHIFT_HOUR_RANGES[item.typeCode];
+                  return (
+                    <span
+                      key={item.scheduleId}
+                      className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold text-white"
+                      style={{ backgroundColor: TYPE_COLORS[item.typeCode] ?? "#6b7280" }}
+                    >
+                      {item.typeName}
+                      {range && (
+                        <span className="font-normal opacity-80 ml-1">
+                          {fmtHour(range.start)} – {range.end === 24 ? "24:00" : fmtHour(range.end)}
+                        </span>
+                      )}
+                    </span>
+                  );
+                })
               )}
             </div>
           </div>
 
-          {/* 타임테이블 스크롤 영역 */}
-          <div ref={timetableRef} className="overflow-y-auto flex-1">
-            {detailLoading ? (
-              <div className="flex items-center justify-center h-full">
-                <span className="text-xs text-zinc-400">불러오는 중...</span>
-              </div>
-            ) : (
-              Array.from({ length: 24 }, (_, hour) => {
-                const shiftForHour = selectedDaySchedules.find(s => isHourInShift(hour, s.typeCode));
-                const reservations = (detail.reservationDtoList ?? []).filter(r =>
-                  r.reservationDate && new Date(r.reservationDate).getHours() === hour
-                );
-                const surgeries = (detail.surgeryDtoList ?? []).filter(s =>
-                  s.startTime && new Date(s.startTime).getHours() === hour
-                );
-                const hasEvents    = reservations.length > 0 || surgeries.length > 0;
-                const isActive     = !!shiftForHour;
-                const shiftColor   = isActive ? TYPE_COLORS[shiftForHour.typeCode] : null;
+          {/* 타임테이블 (근무 있는 날만) */}
+          {hasSchedule && (
+            <div className="overflow-y-auto" style={{ maxHeight: 460 }}>
+              {detailLoading ? (
+                <div className="flex items-center justify-center h-32">
+                  <span className="text-xs text-zinc-400">불러오는 중...</span>
+                </div>
+              ) : displayHours.length === 0 ? (
+                <div className="flex items-center justify-center h-24">
+                  <span className="text-xs text-zinc-400">일정 없음</span>
+                </div>
+              ) : (
+                displayHours.map(hour => {
+                  const shiftForHour = selectedDaySchedules.find(s => isHourInShift(hour, s.typeCode));
+                  const reservations = (detail.reservationDtoList ?? []).filter(r =>
+                    r.reservationDate && new Date(r.reservationDate).getHours() === hour
+                  );
+                  const surgeries = (detail.surgeryDtoList ?? []).filter(s =>
+                    s.startTime && new Date(s.startTime).getHours() === hour
+                  );
+                  const hasEvents  = reservations.length > 0 || surgeries.length > 0;
+                  const isActive   = !!shiftForHour;
+                  const shiftColor = isActive ? TYPE_COLORS[shiftForHour.typeCode] : null;
 
-                return (
-                  <div
-                    key={hour}
-                    className="flex border-b border-zinc-50 last:border-0"
-                    style={{
-                      minHeight: hasEvents ? undefined : 44,
-                      backgroundColor: isActive ? `${shiftColor}15` : undefined,
-                    }}
-                  >
-                    {/* 시간 라벨 */}
-                    <div className="w-10 shrink-0 flex items-start pt-3 justify-end pr-2">
-                      <span className="text-[10px] font-mono text-zinc-400 leading-none">
-                        {String(hour).padStart(2, "0")}
-                      </span>
+                  return (
+                    <div
+                      key={hour}
+                      className="flex border-b border-zinc-50 last:border-0"
+                      style={{
+                        minHeight: 44,
+                        backgroundColor: isActive ? `${shiftColor}15` : undefined,
+                      }}
+                    >
+                      {/* 시간 라벨 */}
+                      <div className="w-10 shrink-0 flex items-start pt-3 justify-end pr-2">
+                        <span className="text-[10px] font-mono text-zinc-400 leading-none">
+                          {String(hour).padStart(2, "0")}
+                        </span>
+                      </div>
+
+                      {/* 근무 컬러 바 */}
+                      <div
+                        className="w-1 shrink-0 self-stretch my-px rounded-full"
+                        style={{ backgroundColor: isActive ? shiftColor : "transparent" }}
+                      />
+
+                      {/* 이벤트 */}
+                      <div className={`flex-1 px-2 ${hasEvents ? "py-1.5 space-y-1" : ""}`}>
+                        {reservations.map(r => (
+                          <div
+                            key={r.reservationId}
+                            className="rounded-md px-2 py-1 text-[11px] flex items-center gap-1.5"
+                            style={{ backgroundColor: "#dbeafe", borderLeft: "3px solid #3b82f6" }}
+                          >
+                            <span className="font-semibold text-blue-700 shrink-0">진료</span>
+                            <span className="text-blue-600 truncate">
+                              {r.patientName ?? `환자 #${r.patientId}`}
+                            </span>
+                          </div>
+                        ))}
+                        {surgeries.map(s => (
+                          <div
+                            key={s.surgeryId}
+                            className="rounded-md px-2 py-1 text-[11px] flex items-center gap-1.5"
+                            style={{ backgroundColor: "#ffe4e6", borderLeft: "3px solid #f43f5e" }}
+                          >
+                            <span className="font-semibold text-rose-600 shrink-0">수술</span>
+                            <span className="text-rose-500 truncate">
+                              {s.patientName ?? s.description}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-
-                    {/* 근무 컬러 바 */}
-                    <div className="w-1 shrink-0 self-stretch my-px rounded-full"
-                         style={{ backgroundColor: isActive ? shiftColor : "transparent" }} />
-
-                    {/* 이벤트 */}
-                    <div className="flex-1 py-1.5 px-2 space-y-1">
-                      {reservations.map(r => (
-                        <div
-                          key={r.reservationId}
-                          className="rounded-md px-2 py-1 text-[11px] flex items-center gap-1.5"
-                          style={{ backgroundColor: "#dbeafe", borderLeft: "3px solid #3b82f6" }}
-                        >
-                          <span className="font-semibold text-blue-700">진료예약</span>
-                          <span className="text-blue-500">
-                            {new Date(r.reservationDate).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
-                          </span>
-                          {r.status && (
-                            <span className="ml-auto text-blue-400 opacity-70">{r.status}</span>
-                          )}
-                        </div>
-                      ))}
-                      {surgeries.map(s => (
-                        <div
-                          key={s.surgeryId}
-                          className="rounded-md px-2 py-1 text-[11px] flex items-center gap-1.5"
-                          style={{ backgroundColor: "#ffe4e6", borderLeft: "3px solid #f43f5e" }}
-                        >
-                          <span className="font-semibold text-rose-600">수술</span>
-                          <span className="text-rose-500 truncate">
-                            {s.description}
-                          </span>
-                          {s.durationHours != null && (
-                            <span className="ml-auto text-rose-400 shrink-0">{s.durationHours}h</span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
+                  );
+                })
+              )}
+            </div>
+          )}
 
           {/* 범례 */}
           <div className="px-4 py-2.5 border-t border-zinc-100 shrink-0">
@@ -282,7 +291,7 @@ const MySchedulePage = () => {
               ))}
               <div className="flex items-center gap-1">
                 <span className="w-3 h-2 rounded-sm shrink-0 bg-blue-200" style={{ borderLeft: "2px solid #3b82f6" }} />
-                <span className="text-[10px] text-zinc-500">진료예약</span>
+                <span className="text-[10px] text-zinc-500">진료</span>
               </div>
               <div className="flex items-center gap-1">
                 <span className="w-3 h-2 rounded-sm shrink-0 bg-rose-200" style={{ borderLeft: "2px solid #f43f5e" }} />
@@ -290,8 +299,8 @@ const MySchedulePage = () => {
               </div>
             </div>
           </div>
-        </div>
 
+        </div>
       </div>
     </div>
   );
