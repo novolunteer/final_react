@@ -42,23 +42,21 @@ const MyReservation = () => {
         <h2 className="text-sm font-semibold text-zinc-700">예약 내역</h2>
       </div>
 
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex gap-1 flex-wrap">
-          {STATUS_FILTERS.map((f) => (
-            <button
-              key={f.value}
-              type="button"
-              onClick={() => { setStatus(f.value); setPage(0); }}
-              className={`px-3 h-7 text-xs rounded-full border transition-colors cursor-pointer
-                ${status === f.value
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-zinc-600 border-zinc-200 hover:border-blue-400 hover:text-blue-600'
-                }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {STATUS_FILTERS.map((f) => (
+          <button
+            key={f.value}
+            type="button"
+            onClick={() => { setStatus(f.value); setPage(0); }}
+            className={`px-3 h-7 text-xs rounded-full border transition-colors cursor-pointer
+              ${status === f.value
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-zinc-600 border-zinc-200 hover:border-blue-400 hover:text-blue-600'
+              }`}
+          >
+            {f.label}
+          </button>
+        ))}
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value)}
@@ -69,20 +67,20 @@ const MyReservation = () => {
         </select>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {isLoading ? (
-          <p className="py-10 text-center text-sm text-zinc-400">불러오는 중...</p>
+          <p className="py-8 text-center text-sm text-zinc-400">불러오는 중...</p>
         ) : isError ? (
-          <p className="py-10 text-center text-sm text-red-400">예약 내역을 불러오지 못했습니다.</p>
+          <p className="py-8 text-center text-sm text-red-400">예약 내역을 불러오지 못했습니다.</p>
         ) : data?.content?.length === 0 ? (
-          <p className="py-10 text-center text-sm text-zinc-400">예약 내역이 없습니다.</p>
+          <p className="py-8 text-center text-sm text-zinc-400">예약 내역이 없습니다.</p>
         ) : (
           data.content.map((d) => {
             const s = getStatus(d.status);
             const canCancel = d.status === 'RECEIVED' || d.status === 'PENDING';
 
             return (
-              <div key={d.reservationId} className="rounded-xl border border-zinc-200 bg-white p-4 space-y-2">
+              <div key={d.reservationId} className="rounded-lg border border-zinc-200 bg-white px-3 py-2.5 space-y-1">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-zinc-800">{d.departmentName}</span>
@@ -92,13 +90,13 @@ const MyReservation = () => {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-7 text-xs text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 cursor-pointer"
+                      className="h-6 text-xs text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 cursor-pointer"
                     >
                       취소
                     </Button>
                   )}
                 </div>
-                <p className="text-sm text-zinc-600 line-clamp-2">{d.symptom}</p>
+                <p className="text-xs text-zinc-500 line-clamp-1">{d.symptom}</p>
                 <div className="flex items-center justify-between text-xs text-zinc-400">
                   <span>{d.doctorName}</span>
                   <span>{dayjs(d.createdAt).format("YYYY.MM.DD HH:mm")}</span>

@@ -44,7 +44,7 @@ const MyPageLayout = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 items-start">
         <div className="rounded-xl border border-zinc-200 bg-white p-5">
           <MyReservation />
         </div>
