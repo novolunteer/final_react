@@ -19,7 +19,7 @@ const MyReception = () => {
     });
 
     const paymentMutation=useMutation({
-        mutationFn: getMyPaymentList,
+        mutationFn: ({ page, sort, receptionId }) => getMyPaymentList(page, sort, receptionId),
         onSuccess: (response) => {
             setPaymentList(response);
         },
@@ -50,7 +50,9 @@ const MyReception = () => {
         });
     }, [paymentPage, paymentSort])
 
-    const closePaymentList=()=>{
+    const closePaymentList=(e)=>{
+        e.stopPropagation();
+        setReceptionId("");
         setOpenPaymentList(false);
         setPaymentList(null);
         setPaymentPage(0);
