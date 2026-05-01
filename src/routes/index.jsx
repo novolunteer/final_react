@@ -19,7 +19,6 @@ import ReservationConfirm from "../pages/reservation/ReservationConfirm";
 import InquiryChatBotPage from "../pages/InquiryChatbot/InquiryChatBotPage";
 import MedicalRecordPage from "../pages/medical/MedicalRecordPage";
 import ReceptionPage from "../pages/reception/ReceptionPage";
-import PatientPage from "../pages/patient/PatientPage";
 import SurgerySchedulePage from "../pages/surgery/SurgerySchedulePage";
 import BillingLayout from "../pages/billing/BillingLayout";
 import StaffPage from "../pages/hr/staff/StaffPage";
@@ -118,7 +117,6 @@ const Router = () => (
 
         {/* 비로그인 접근 가능 */}
         <Route path="/communication"   element={<CommunicationPage />} />
-        <Route path="/reservation"     element={<ReservationPage />} />
         <Route path="/reservationconfirm" element={<ReservationConfirm />} />
         <Route path="/inquiry/chatbot" element={<InquiryChatBotPage />} />
 
@@ -138,8 +136,11 @@ const Router = () => (
         <Route path="/operation/dept_schedule_policy" element={<StaffRoute allowedRoles={routeRoles["/operation/dept_schedule_policy"]}><DepartmentSchedulePolicyPage /></StaffRoute>} />
         <Route path="/admin"       element={<StaffRoute allowedRoles={routeRoles["/admin"]}><AdminPage /></StaffRoute>} />
         <Route path="/notification" element={<StaffRoute allowedRoles={routeRoles["/notification"]}><NotificationPage /></StaffRoute>} />
-        <Route path="/patient/mypage" element={<StaffRoute allowedRoles={routeRoles["/patient/mypage"]}><MyPageLayout/></StaffRoute>} />
-        <Route path="/patient/mypage/information" element={<StaffRoute allowedRoles={routeRoles["/patient/mypage/information"]}><MyInformatinPage/></StaffRoute>} />
+
+        {/* 환자 페이지 */}
+        <Route path="/reservation"     element={<ReservationPage />} />
+        <Route path="/patient/mypage" element={<MyPageLayout/>} />
+        <Route path="/patient/mypage/information" element={<MyInformatinPage/>} />
       </Route>
     </Routes>
   </BrowserRouter>

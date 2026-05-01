@@ -1,12 +1,21 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import MyReservation from './component/MyReservation';
 import MyReception from './component/MyReception';
 
 const MyPageLayout = () => {
-  const { userId, name, roles } = useSelector((s) => s.auth);
+  const { userId, name } = useSelector((s) => s.auth);
+  const accessToken=sessionStorage.getItem("accessToken");
+  const roles=sessionStorage.getItem("roles");
+
   const navigate=useNavigate();
+
+  useEffect(() => {
+    if(!accessToken || !roles.includes("PATIENT")) {
+        navigate("/login", {replace:true});
+    }
+  }, [])
 
   return (
     <div className='mypage-panel'>
