@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useNavigate, replace } from "react-router-dom";
+import { Outlet, NavLink, useNavigate, useLocation, replace } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -24,6 +24,8 @@ const PatientLayout = () => {
   const { userId, name, roles } = useSelector((s) => s.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const isHome = pathname === "/";
 
   const handleLogout = async () => {
     try { await jwtAxios.post("/logout"); } catch {}
@@ -92,7 +94,7 @@ const PatientLayout = () => {
       </header>
 
       {/* Page content */}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-8">
+      <main className={isHome ? "flex-1 w-full overflow-hidden" : "flex-1 max-w-5xl w-full mx-auto px-4 py-8"}>
         <Outlet />
       </main>
 
