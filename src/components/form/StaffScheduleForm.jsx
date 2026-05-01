@@ -23,13 +23,13 @@ const StaffScheduleForm = ({
   const [roleCategory, setRoleCategory]             = useState("doctor");
 
   const doctorRoleIds = useMemo(() =>
-    new Set(roleList.filter(r => r.parentRoleName === "DOCTOR").map(r => r.roleId)), [roleList]);
+    new Set(roleList.filter(r => r.parentRoleName === "DOCTOR").map(r => String(r.roleId))), [roleList]);
   const nurseRoleIds = useMemo(() =>
-    new Set(roleList.filter(r => r.roleName === "NURSE" || r.parentRoleName === "NURSE").map(r => r.roleId)), [roleList]);
+    new Set(roleList.filter(r => r.roleName === "NURSE" || r.parentRoleName === "NURSE").map(r => String(r.roleId))), [roleList]);
   const categoryRoleIds = roleCategory === "doctor" ? doctorRoleIds : nurseRoleIds;
 
   const categoryStaffList = useMemo(() =>
-    staffList.filter(s => categoryRoleIds.has(s.roleId)), [staffList, categoryRoleIds]);
+    staffList.filter(s => categoryRoleIds.has(String(s.roleId))), [staffList, categoryRoleIds]);
 
   const isDoctorCategory = roleCategory === "doctor";
   const selectedDepartment = departmentList.find(d => String(d.departmentId) === String(formData.departmentId));
