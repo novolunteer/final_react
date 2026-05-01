@@ -1,4 +1,5 @@
-import { replace, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import hospitalImg from "../../assets/hospital.jpg";
 import { useSelector } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,7 +54,14 @@ const PatientHomePage = () => {
   return (
     <div className="space-y-6">
       {/* 파란 배너 */}
-      <div className="rounded-2xl bg-linear-to-br from-blue-600 to-blue-800 px-8 py-10 text-white">
+      <div
+        className="rounded-2xl px-8 py-10 text-white overflow-hidden"
+        style={{
+          backgroundImage: `linear-gradient(to right, rgb(29, 78, 216) 25%, rgba(29, 78, 216, 0.6) 45%, rgba(29, 78, 216, 0.05) 65%), url(${hospitalImg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
         <p className="text-blue-200 text-sm font-medium mb-3">
           {name ? `${name} 님, 안녕하세요.` : "안녕하세요."}
         </p>
