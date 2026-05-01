@@ -4,20 +4,6 @@ import * as XLSX from 'xlsx';
 import CommonModal from '../common/CommonModal';
 import './StaffBulkUpload.css';
 
-
-const positionLabelMap = {
-  // 의사
-  '인턴': 'INTERN', '레지던트': 'RESIDENT', '전임의': 'FELLOW',
-  '전문의': 'SPECIALIST', '교수': 'PROFESSOR', '과장': 'HEAD_DOCTOR',
-  // 간호사 (공백 있음 / 없음 모두 허용)
-  '일반 간호사': 'NURSE',   '일반간호사': 'NURSE',
-  '책임 간호사': 'CHARGE_NURSE', '책임간호사': 'CHARGE_NURSE',
-  '수간호사': 'HEAD_NURSE', '간호부장': 'DIRECTOR_NURSE',
-  // 행정
-  '사원': 'STAFF', '팀장': 'MANAGER', '총관리자': 'ADMIN',
-};
-
-//프론트 유효성 검사
 function validateRow(row, validDeptNames = []) {
   const errors = [];
   if(!row.email) errors.push("이메일 누락");
@@ -26,14 +12,14 @@ function validateRow(row, validDeptNames = []) {
   if(!row.dept_name) errors.push("부서명 누락");
   else if(validDeptNames.length > 0 && !validDeptNames.includes(row.dept_name))
     errors.push(`존재하지 않는 부서명: "${row.dept_name}"`);
-  if(!row.position) errors.push("직무(직급) 누락");
+  if(!row.role_id || isNaN(Number(row.role_id))) errors.push("roleId 누락 또는 숫자 아님");
   if(!["Y", "N"].includes((row.is_active||"").toUpperCase())){
     errors.push("활성여부 Y 또는 N");
   }
   return errors;
 }
 
-const StaffBulkUpload = ({open, onClose, onSuccess, departmentList = []}) => {
+const StaffBulkUpload = ({open, onClose, onSuccess, departmentList = [], roleList = []}) => {
   const validDeptNames = departmentList.map(d => d.departmentName);
   const [step, setStep] = useState("upload");
   const [fileName, setFileName] = useState("");
@@ -43,7 +29,6 @@ const StaffBulkUpload = ({open, onClose, onSuccess, departmentList = []}) => {
   const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef();
 
-  //엑셀 파싱
   const parseExcel = (file) => {
     setFileName(file.name);
     const reader = new FileReader();
@@ -60,13 +45,12 @@ const StaffBulkUpload = ({open, onClose, onSuccess, departmentList = []}) => {
         }
 
         const mapped = data.map((raw)=>{
-          const rawPosition = String(raw["직무(직급)"] || "").trim();
           const row ={
             email     : String(raw["email"] || "").trim(),
             password  : String(raw["password"] || "").trim(),
             name      : String(raw["이름"] || "").trim(),
             dept_name : String(raw["부서명"] || "").trim(),
-            position  : positionLabelMap[rawPosition] || rawPosition,
+            role_id   : String(raw["roleId"] || "").trim(),
             phone     : String(raw["전화번호"] || "").trim(),
             address   : String(raw["주소"] || "").trim(),
             manager_id: String(raw["담당자 email"] || "").trim() || null,
@@ -103,29 +87,27 @@ const StaffBulkUpload = ({open, onClose, onSuccess, departmentList = []}) => {
     if(file) parseExcel(file);
   };
 
-  //템플릿 다운로드
   const downloadTemplete = () => {
     const ws = XLSX.utils.aoa_to_sheet([
-      ["email","password","이름","부서명","직무(직급)","전화번호","주소","담당자 email","활성여부(Y/N)"],
-      ["hong@hospital.com","password123","홍길동","내과","전문의","010-0000-0000","서울시 강남구","","Y"],
+      ["email","password","이름","부서명","roleId","전화번호","주소","담당자 email","활성여부(Y/N)"],
+      ["hong@hospital.com","password123","홍길동","내과","1","010-0000-0000","서울시 강남구","","Y"],
     ]);
-    ws["!cols"] = [24,14,10,10,12,14,20,24,12].map((w) => ({wch:w}));
+    ws["!cols"] = [24,14,10,10,8,14,20,24,12].map((w) => ({wch:w}));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,"직원등록");
     XLSX.writeFile(wb,"직원_일괄등록_템플릿.xlsx");
   };
 
-  //서버등록요청
   const handleSubmit = async() => {
     setLoading(true);
     try{
       const validRows = rows.filter((r)=> r._errors.length === 0)
-      .map(({ _errors, email, password, name, dept_name, position, phone, address, manager_id, is_active }) => ({
+      .map(({ _errors, email, password, name, dept_name, role_id, phone, address, manager_id, is_active }) => ({
         email,
         password,
         name,
         deptName: dept_name,
-        position,
+        roleId: Number(role_id),
         phone,
         address,
         managerId: manager_id || null,
@@ -137,7 +119,6 @@ const StaffBulkUpload = ({open, onClose, onSuccess, departmentList = []}) => {
       setResult(res.data);
       setStep("result");
 
-      //등록 완료 후 직원 목록 새로고침
       if (onSuccess) onSuccess();
     }catch(err){
       const msg = err?.response?.data?.message || err?.response?.data || "등록 중 오류가 발생했습니다.";
@@ -148,7 +129,6 @@ const StaffBulkUpload = ({open, onClose, onSuccess, departmentList = []}) => {
     }
   };
 
-  //모달 닫을 때 상태 초기화
   const handleClose = () => {
     setStep("upload");
     setRows([]);
@@ -176,7 +156,7 @@ const StaffBulkUpload = ({open, onClose, onSuccess, departmentList = []}) => {
           onClick={() => fileInputRef.current.click()}>
             <span className="bulk-upload__dropzone-icon">📂</span>
             <p>엑셀 파일을 클릭하거나 드래그하여 업로드</p>
-            <span className='bulk-upload_dropzone-sub'>.xslx, xls지원</span>
+            <span className='bulk-upload_dropzone-sub'>.xlsx, xls 지원</span>
           </div>
 
           <input
@@ -185,7 +165,7 @@ const StaffBulkUpload = ({open, onClose, onSuccess, departmentList = []}) => {
           accept='.xlsx,.xls'
           style={{display:"none"}}
           onChange={handleFileChange}/>
-          
+
           <button className="btn btn--outline" onClick={downloadTemplete}>
             📥 템플릿 다운로드
           </button>
@@ -200,7 +180,18 @@ const StaffBulkUpload = ({open, onClose, onSuccess, departmentList = []}) => {
               </div>
             </div>
           )}
-           </div>
+
+          {roleList.length > 0 && (
+            <div style={{marginTop:'8px', fontSize:'12px', color:'#64748b', background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:'8px', padding:'10px 14px'}}>
+              <strong style={{display:'block', marginBottom:'6px', color:'#334155'}}>사용 가능한 roleId (직급)</strong>
+              <div style={{display:'flex', flexWrap:'wrap', gap:'6px'}}>
+                {roleList.map(role => (
+                  <span key={role.roleId} style={{background:'#e2e8f0', borderRadius:'4px', padding:'2px 8px'}}>{role.roleId}: {role.roleName}</span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {/* 미리보기 */}
@@ -208,7 +199,6 @@ const StaffBulkUpload = ({open, onClose, onSuccess, departmentList = []}) => {
         <div className="bulk-upload__body">
             <p className="bulk-upload__filename">{fileName}</p>
 
-             {/* 통계 */}
             <div className="bulk-upload__stats">
               <div className="stat-card">
                 <span className="stat-card__label">전체</span>
@@ -224,13 +214,11 @@ const StaffBulkUpload = ({open, onClose, onSuccess, departmentList = []}) => {
               </div>
             </div>
 
-            {/* 오류 경고 */}
             {errorCount > 0 && (
               <div className="bulk-upload__warning">
                 ⚠️ {errorCount}개 행에 오류가 있습니다. 오류 행은 제외하고 등록됩니다.
               </div>
             )}
-             {/* 테이블 */}
             <div className="bulk-upload__table-wrap">
               <table className="bulk-upload__table">
                 <thead>
@@ -239,7 +227,7 @@ const StaffBulkUpload = ({open, onClose, onSuccess, departmentList = []}) => {
                     <th>email</th>
                     <th>이름</th>
                     <th>부서명</th>
-                    <th>직무/직급</th>
+                    <th>roleId</th>
                     <th>전화번호</th>
                     <th>주소</th>
                     <th>담당자 email</th>
@@ -258,7 +246,7 @@ const StaffBulkUpload = ({open, onClose, onSuccess, departmentList = []}) => {
                       <td>{row.email      || "-"}</td>
                       <td>{row.name       || "-"}</td>
                       <td>{row.dept_name  || "-"}</td>
-                      <td>{row.position   || "-"}</td>
+                      <td>{row.role_id    || "-"}</td>
                       <td>{row.phone      || "-"}</td>
                       <td className="td--ellipsis">{row.address || "-"}</td>
                       <td>{row.manager_id || "-"}</td>
@@ -279,7 +267,7 @@ const StaffBulkUpload = ({open, onClose, onSuccess, departmentList = []}) => {
                 </tbody>
               </table>
             </div>
-              
+
             <div className="bulk-upload__footer">
             <button className="btn btn--outline" onClick={() => setStep("upload")}>
               다시 선택
@@ -294,7 +282,7 @@ const StaffBulkUpload = ({open, onClose, onSuccess, departmentList = []}) => {
             </div>
           </div>
         )}
-        {/* ── STEP 3: 결과 ── */}
+
         {step === "result" && result && (
           <div className="bulk-upload__body">
             <div className="bulk-upload__stats">

@@ -8,6 +8,7 @@ import RegisterButton from "../../../components/common/RegisterButton";
 import SearchBar from "../../../components/common/SearchBar";
 import { getStaffList, registerStaff, updateStaff } from "../../../api/hr/staffApi";
 import { getDepartmentList } from "../../../api/hr/departmentApi";
+import { getRoleList } from "../../../api/hr/roleApi";
 import StaffBulkUpload from "../../../components/hr/StaffBulkUpload";
 import { Button } from "@/components/ui/button";
 import { Users } from "lucide-react";
@@ -19,6 +20,7 @@ const StaffPage = () => {
   const [open, setOpen]                         = useState(false);
   const [selectedStaff, setSelectedStaff]       = useState(null);
   const [bulkOpen, setBulkOpen]                 = useState(false);
+  const [roleList, setRoleList]                 = useState([]);
   const [searchKeyword, setSearchKeyword]       = useState("");
   const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
   const [searchModalOpen, setSearchModalOpen]   = useState(false);
@@ -45,7 +47,7 @@ const StaffPage = () => {
     { key: "userId",       title: "직원 ID" },
     { key: "departmentName", title: "부서명" },
     { key: "managerId",    title: "담당직원ID" },
-    { key: "position",     title: "직급" },
+    { key: "roleName",     title: "직급" },
     { key: "name",         title: "이름" },
     { key: "phone",        title: "전화번호" },
     { key: "address",      title: "주소" },
@@ -53,7 +55,10 @@ const StaffPage = () => {
     { key: "action",       title: "관리" },
   ];
 
-  useEffect(() => { loadStaffList(); loadDepartmentList(); }, []);
+  useEffect(() => {
+    loadStaffList(); loadDepartmentList();
+    getRoleList().then(setRoleList).catch(() => setRoleList([]));
+  }, []);
   useEffect(() => { setStaffList(sortedFilteredStaffList); }, [sortedFilteredStaffList]);
 
   const loadStaffList = async () => {
@@ -62,7 +67,7 @@ const StaffPage = () => {
       const mapped = data.map(item => ({
         id: item.staffId, staffId: item.staffId, userId: item.userId,
         departmentId: item.departmentId, departmentName: item.departmentName,
-        managerId: item.managerId, position: item.position, name: item.name,
+        managerId: item.managerId, roleId: item.roleId, roleName: item.roleName, name: item.name,
         phone: item.phone, address: item.address, isActive: item.isActive,
         isActiveText: item.isActive === "Y" ? "사용" : "비활성(퇴사)",
         action: (
@@ -103,7 +108,7 @@ const StaffPage = () => {
     const next = item.isActive === "Y" ? "N" : "Y";
     if (!window.confirm(item.isActive === "Y" ? "이 직원을 비활성(퇴사)처리하시겠습니까?" : "이 직원을 다시 활성화하시겠습니까?")) return;
     try {
-      await updateStaff({ staffId: item.staffId, userId: item.userId, departmentId: item.departmentId, managerId: item.managerId, position: item.position, name: item.name, phone: item.phone, address: item.address, isActive: next });
+      await updateStaff({ staffId: item.staffId, userId: item.userId, departmentId: item.departmentId, managerId: item.managerId, roleId: item.roleId, name: item.name, phone: item.phone, address: item.address, isActive: next });
       await loadStaffList();
     } catch (err) { console.error("활성 상태 변경 실패", err); alert("상태 변경 중 오류가 발생했습니다."); }
   };
@@ -167,7 +172,7 @@ const StaffPage = () => {
       </CommonModal>
 
       {/* 일괄등록 모달 */}
-      <StaffBulkUpload open={bulkOpen} onClose={() => setBulkOpen(false)} onSuccess={loadStaffList} departmentList={departmentList} />
+      <StaffBulkUpload open={bulkOpen} onClose={() => setBulkOpen(false)} onSuccess={loadStaffList} departmentList={departmentList} roleList={roleList} />
 
       {/* 동명이인 선택 모달 */}
       <CommonModal open={searchModalOpen} onClose={() => setSearchModalOpen(false)}>

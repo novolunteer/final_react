@@ -38,7 +38,7 @@ const StaffScheduleForm = ({
     return staffList.filter(s => {
       const matchDept = formData.departmentId ? String(s.departmentId) === String(formData.departmentId) : true;
       if (!kw) return matchDept;
-      const t = `${s.staffId||""} ${s.name||""} ${s.position||""}`.replace(/\s/g,"").toLowerCase();
+      const t = `${s.staffId||""} ${s.name||""} ${s.roleName||""}`.replace(/\s/g,"").toLowerCase();
       return matchDept && t.includes(kw);
     });
   };

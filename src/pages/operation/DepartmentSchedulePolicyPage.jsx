@@ -52,7 +52,7 @@ const DepartmentSchedulePolicyPage = () => {
 
   const handleSubmit = async (data) => {
     try {
-      if (selectedPolicy) await updateDepartmentSchedulePolicy(data.departmentId, data);
+      if (selectedPolicy) await updateDepartmentSchedulePolicy(selectedPolicy.policyId, data);
       else                await registerDepartmentSchedulePolicy(data);
       await loadPolicyList();
       handleClose();
@@ -63,10 +63,10 @@ const DepartmentSchedulePolicyPage = () => {
     if (!window.confirm(item.isActive ? "이 정책을 비활성 처리하시겠습니까?" : "이 정책을 다시 활성화하시겠습니까?")) return;
     try {
       if (item.isActive) {
-        await deactivateDepartmentSchedulePolicy(item.departmentId);
+        await deactivateDepartmentSchedulePolicy(item.policyId);
       } else {
-        await updateDepartmentSchedulePolicy(item.departmentId, {
-          departmentId: item.departmentId, departmentName: item.departmentName,
+        await updateDepartmentSchedulePolicy(item.policyId, {
+          roleId: item.roleId, departmentId: item.departmentId,
           jobType: item.jobType, shiftTypes: item.shiftTypes, minStaffMap: item.minStaffMap,
           maxConsecutiveNight: item.maxConsecutiveNight, blockNightToDay: item.blockNightToDay,
           blockNightToEvening: item.blockNightToEvening, maxWorkDaysPerWeek: item.maxWorkDaysPerWeek,

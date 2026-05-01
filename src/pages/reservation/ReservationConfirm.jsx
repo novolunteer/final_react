@@ -50,7 +50,7 @@ const ReservationConfirm = () => {
   }, [name]);
 
   useEffect(() => {
-    jwtAxios.get('/api/department/by-category?category=DOCTOR')
+    jwtAxios.get('/api/department/list')
       .then(res => setDepartment(res.data.content ?? res.data ?? []))
       .catch(console.error);
   }, []);
