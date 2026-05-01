@@ -1,5 +1,6 @@
 import { getMyReservations } from '@/api/patientApi';
 import { useQuery } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import React, { useState } from 'react'
 
 const statusMap={
@@ -60,7 +61,7 @@ const MyReservation = () => {
                                 const canCancel=status === "신청" || status === "가예약";
 
                                 return (
-                                    <div>
+                                    <div key={d.reservationId}>
                                         <div>
                                             <span>{d.departmentName}</span><span>{status}</span>
                                             {
@@ -73,19 +74,19 @@ const MyReservation = () => {
                                             <p>{d.symptom}</p>
                                         </div>
                                         <div>
-                                            <span>{d.doctorName}</span><span>{d.createdAt}</span>
+                                            <span>{d.doctorName}</span><span>{dayjs(d.createdAt).format("YYYY년 MM월 DD일 HH시 mm분 ss초")}</span>
                                         </div>
                                     </div>
                                 )
                             })
-                        )}    
+                        )}
+                        <div>
+                            <button type='button' disabled={data?.first} onClick={() => setPage((p) => p - 1)}>이전</button>
+                            <span>{data?.number !== null ? data?.number + 1 : ""}</span>
+                            <button type='button' disabled={data?.last} onClick={() => setPage((p) => p + 1)}>다음</button>
+                        </div>  
                     </div>
                 )}
-            </div>
-            <div>
-                <button type='button' disabled={data?.first} onClick={() => setPage((p) => p - 1)}>이전</button>
-                <span>{data?.number !== null ? data?.number : ""}</span>
-                <button type='button' disabled={data?.last} onClick={() => setPage((p) => p + 1)}>다음</button>
             </div>
         </div>
     </div>
