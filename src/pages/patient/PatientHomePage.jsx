@@ -65,17 +65,15 @@ const PatientHomePage = () => {
         }
       `}</style>
 
-      {/* 레이아웃 패딩(px-4 py-8) 상쇄 → 사진이 컨테이너 꽉 채움 */}
-      <div className="-mx-4 -my-8">
-        <div
-          className="relative overflow-hidden"
-          style={{
-            backgroundImage: `url(${hospitalImg})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            height: "calc(100vh - 56px)",   /* 헤더 h-14 = 56px */
-          }}
-        >
+      <div
+        className="relative overflow-hidden"
+        style={{
+          backgroundImage: `url(${hospitalImg})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          height: "calc(100vh - 56px)",   /* 헤더 h-14 = 56px */
+        }}
+      >
           {/* 그라디언트 오버레이 */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/5 to-black/50" />
 
@@ -136,7 +134,6 @@ const PatientHomePage = () => {
             })}
           </div>
         </div>
-      </div>
     </>
   );
 };
