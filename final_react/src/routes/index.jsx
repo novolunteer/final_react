@@ -53,6 +53,14 @@ const routeRoles = {
   "/inquiry/chatbot": null,
 };
 
+// 로그인 여부만 체크 - MainLayout 감싸기용
+const ProtectedLayout = () => {
+  const token = sessionStorage.getItem("accessToken");
+  if (!token) return <Navigate to="/login" replace />;
+  return <MainLayout />;
+};
+
+// 권한 체크 - 각 페이지용
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const token = sessionStorage.getItem("accessToken");
 
@@ -70,7 +78,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     }
   }
 
-  return children ?? <Outlet />;
+  return children;
 };
 
 const RoleBasedHome = () => {
@@ -91,18 +99,12 @@ const Router = () => {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<RoleBasedHome />} />
-        {/* 인증 불필요 */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/join" element={<JoinPage />} />
         <Route path="/social/login/naver" element={<NaverJoin />} />
         <Route path="/social/login/kakao" element={<KakaoJoin />} />
 
-        {/* 인증 필요 */}
-        <Route element={
-          <ProtectedRoute allowedRoles={null}>
-            <MainLayout />
-          </ProtectedRoute>
-        }>
+        <Route element={<ProtectedLayout />}>
           <Route path="/dashboard" element={<ProtectedRoute allowedRoles={routeRoles["/dashboard"]}><DashboardPage /></ProtectedRoute>} />
           <Route path="/patient" element={<ProtectedRoute allowedRoles={routeRoles["/patient"]}><PatientPage /></ProtectedRoute>} />
           <Route path="/my-schedule" element={<ProtectedRoute allowedRoles={routeRoles["/my-schedule"]}><MySchedulePage /></ProtectedRoute>} />
