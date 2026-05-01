@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import MainLayout from "../layout/MainLayout";
 import AdminPage from "../pages/admin/AdminPage";
@@ -25,7 +25,6 @@ import JoinPage from "../pages/join/JoinPage";
 import NaverJoin from "../pages/login/social/NaverJoin";
 import SurgerySchedulePage from "../pages/surgery/SurgerySchedulePage";
 import KakaoJoin from "../pages/login/social/KakaoJoin";
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 
 const DOCTORS = ["INTERN", "RESIDENT", "FELLOW", "SPECIALIST", "PROFESSOR", "HEAD_DOCTOR"];
 const NURSES = ["NURSE", "CHARGE_NURSE", "HEAD_NURSE", "DIRECTOR_NURSE"];
