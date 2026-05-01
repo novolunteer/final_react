@@ -7,8 +7,8 @@ export const getDepartmentSchedulePolicyList = async () => {
   return res.data;
 };
 
-export const getDepartmentSchedulePolicy = async (departmentId) => {
-  const res = await jwtAxios.get(`${host}/${departmentId}`);
+export const getDepartmentSchedulePolicy = async (policyId) => {
+  const res = await jwtAxios.get(`${host}/${policyId}`);
   return res.data;
 };
 
@@ -17,13 +17,12 @@ export const registerDepartmentSchedulePolicy = async (data) => {
   return res.data;
 };
 
-export const updateDepartmentSchedulePolicy = async (departmentId, data) => {
-  const res = await jwtAxios.put(`${host}/${departmentId}`, data);
+export const updateDepartmentSchedulePolicy = async (policyId, data) => {
+  const res = await jwtAxios.put(`${host}/${policyId}`, data);
   return res.data;
 };
 
-// 비활성화 (softDelete: isActive=false)
-export const deactivateDepartmentSchedulePolicy = async (departmentId) => {
-  const res = await jwtAxios.delete(`${host}/${departmentId}`);
+export const deactivateDepartmentSchedulePolicy = async (policyId) => {
+  const res = await jwtAxios.delete(`${host}/${policyId}`);
   return res.data;
 };

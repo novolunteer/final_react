@@ -3,25 +3,11 @@ import CommonModal from "../common/CommonModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getRoleList } from "../../api/hr/roleApi";
 
 const initState = {
   staffId: "", email: "", password: "", departmentId: "",
-  managerId: "", position: "", name: "", phone: "", address: "", isActive: "Y",
-};
-
-const positionOptionsMap = {
-  DOCTOR: [
-    { value: "RESIDENT",    label: "레지던트" },
-    { value: "FELLOW",      label: "전임의" },
-    { value: "PROFESSOR",   label: "교수" },
-  ],
-  NURSE: [
-    { value: "NURSE",          label: "간호사" },
-    { value: "HEAD_NURSE",     label: "수간호사" },
-  ],
-  ADMIN: [
-    { value: "ADMIN",   label: "관리자" },
-  ],
+  managerId: "", roleId: "", name: "", phone: "", address: "", isActive: "Y",
 };
 
 const selectClass = "w-full h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed";
@@ -32,13 +18,18 @@ const StaffForm = ({ onSubmit, onClose, initialData, departmentList = [], staffL
   const [managerKeyword, setManagerKeyword]       = useState("");
   const [managerSearchResult, setManagerSearchResult] = useState([]);
   const [selectedManagerLabel, setSelectedManagerLabel] = useState("");
+  const [roleList, setRoleList] = useState([]);
+
+  useEffect(() => {
+    getRoleList().then(setRoleList).catch(() => setRoleList([]));
+  }, []);
 
   useEffect(() => {
     if (initialData) {
       setForm({
         staffId: initialData.staffId || "", email: "", password: "",
         departmentId: initialData.departmentId || "", managerId: initialData.managerId || "",
-        position: initialData.position || "", name: initialData.name || "",
+        roleId: initialData.roleId || "", name: initialData.name || "",
         phone: initialData.phone || "", address: initialData.address || "",
         isActive: initialData.isActive ?? "Y",
       });
@@ -49,16 +40,24 @@ const StaffForm = ({ onSubmit, onClose, initialData, departmentList = [], staffL
     }
   }, [initialData, staffList]);
 
+  const selectedRole = roleList.find(r => String(r.roleId) === String(form.roleId));
+  const isDoctorRole = selectedRole?.parentRoleName === "DOCTOR";
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === "departmentId") { setForm(p => ({ ...p, departmentId: value, position: "" })); return; }
+    if (name === "roleId") {
+      const role = roleList.find(r => String(r.roleId) === value);
+      const isDoctor = role?.parentRoleName === "DOCTOR";
+      setForm(p => ({ ...p, roleId: value, departmentId: isDoctor ? p.departmentId : "" }));
+      return;
+    }
     setForm(p => ({ ...p, [name]: value }));
   };
 
   const handleManagerSearch = () => {
     const kw = managerKeyword.trim().replace(/\s/g, "").toLowerCase();
     setManagerSearchResult(staffList.filter(s => {
-      const t = `${s.staffId||""} ${s.name||""} ${s.position||""}`.replace(/\s/g,"").toLowerCase();
+      const t = `${s.staffId||""} ${s.name||""} ${s.roleName||""}`.replace(/\s/g,"").toLowerCase();
       return !kw || t.includes(kw);
     }));
   };
@@ -71,18 +70,16 @@ const StaffForm = ({ onSubmit, onClose, initialData, departmentList = [], staffL
     handleCloseManagerModal();
   };
 
-  const selectedDept      = departmentList.find(d => Number(d.departmentId) === Number(form.departmentId));
-  const departmentCategory = selectedDept?.departmentCategory || "";
-  const positionOptions   = positionOptionsMap[departmentCategory] || [];
-
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isDoctorRole && !form.departmentId) { alert("의사 직급은 부서 선택이 필수입니다."); return; }
     onSubmit({
       staffId: form.staffId ? Number(form.staffId) : null,
       email: form.email || null, password: form.password || null,
-      departmentId: form.departmentId ? Number(form.departmentId) : null,
+      departmentId: isDoctorRole && form.departmentId ? Number(form.departmentId) : null,
       managerId: form.managerId ? Number(form.managerId) : null,
-      position: form.position, name: form.name, phone: form.phone,
+      roleId: form.roleId ? Number(form.roleId) : null,
+      name: form.name, phone: form.phone,
       address: form.address, isActive: form.isActive,
     });
     setForm(initState); setSelectedManagerLabel(""); setManagerKeyword(""); setManagerSearchResult([]);
@@ -110,24 +107,26 @@ const StaffForm = ({ onSubmit, onClose, initialData, departmentList = [], staffL
           )}
 
           <div className="space-y-1.5">
-            <Label>부서명</Label>
-            <select name="departmentId" value={form.departmentId} onChange={handleChange} disabled={!!initialData} className={selectClass}>
-              <option value="">부서 선택</option>
-              {departmentList.map(dept => (
-                <option key={dept.departmentId} value={dept.departmentId}>{dept.departmentName}</option>
+            <Label>직급</Label>
+            <select name="roleId" value={form.roleId} onChange={handleChange} className={selectClass}>
+              <option value="">직급 선택</option>
+              {roleList.map(role => (
+                <option key={role.roleId} value={role.roleId}>{role.roleName}</option>
               ))}
             </select>
           </div>
 
-          <div className="space-y-1.5">
-            <Label>직급</Label>
-            <select name="position" value={form.position} onChange={handleChange} className={selectClass}>
-              <option value="">직급 선택</option>
-              {positionOptions.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
+          {isDoctorRole && (
+            <div className="space-y-1.5">
+              <Label>부서명 <span className="text-red-500">*</span></Label>
+              <select name="departmentId" value={form.departmentId} onChange={handleChange} disabled={!!initialData} className={selectClass}>
+                <option value="">부서 선택</option>
+                {departmentList.map(dept => (
+                  <option key={dept.departmentId} value={dept.departmentId}>{dept.departmentName}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="space-y-1.5">
             <Label>이름</Label>
@@ -189,7 +188,7 @@ const StaffForm = ({ onSubmit, onClose, initialData, departmentList = [], staffL
                   className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-zinc-50 transition-colors">
                   <div>
                     <p className="text-sm font-medium text-zinc-800">{staff.name || "-"}</p>
-                    <p className="text-xs text-zinc-400">ID: {staff.staffId} · {staff.position || "-"}</p>
+                    <p className="text-xs text-zinc-400">ID: {staff.staffId} · {staff.roleName || "-"}</p>
                   </div>
                 </div>
               ))

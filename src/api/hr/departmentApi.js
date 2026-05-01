@@ -8,7 +8,7 @@ export const getDepartmentList= async()=>{
 };
 
 export const getDoctorDepartmentList = async () => {
-    const res = await jwtAxios.get(`${host}/by-category?category=DOCTOR`);
+    const res = await jwtAxios.get(`${host}/list`);
     return res.data.content ?? res.data ?? [];
 };
 
