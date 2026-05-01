@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import hospitalImg from "../../assets/hospital.jpg";
+import hospitalImg from "../../assets/mainhospital.webp";
 import { useSelector } from "react-redux";
 import { CalendarCheck, Bot, Megaphone, ArrowRight } from "lucide-react";
 
@@ -70,29 +70,35 @@ const PatientHomePage = () => {
         style={{
           backgroundImage: `url(${hospitalImg})`,
           backgroundSize: "cover",
-          backgroundPosition: "center",
-          height: "calc(100vh - 56px)",   /* 헤더 h-14 = 56px */
+          backgroundPosition: "center top",
+          backgroundRepeat: "no-repeat",
+          height: "calc(100vh - 56px)",
         }}
       >
-          {/* 그라디언트 오버레이 */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/5 to-black/50" />
+          {/* 왼쪽 텍스트 영역만 살짝 어둡게 */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background: "linear-gradient(to right, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.2) 40%, transparent 65%)",
+            }}
+          />
 
           {/* 인사말 + 헤드라인 */}
-          <div className="relative z-10 px-16 pt-16 text-white">
-            <p className="text-blue-200 text-sm font-medium mb-4">
+          <div className="relative z-10 px-16 pt-14 text-white">
+            <p className="text-blue-200 text-sm font-semibold mb-4">
               {name ? `${name} 님, 안녕하세요.` : "안녕하세요."}
             </p>
             <h1 className="text-5xl font-black leading-tight mb-4">
               편리한 진료,<br />스마트한 건강 관리
             </h1>
-            <p className="text-white/60 text-base leading-relaxed">
+            <p className="text-white/75 text-base leading-relaxed">
               진료 예약부터 AI 의료 문의, 공지 확인까지<br />
               필요한 서비스를 한 곳에서 이용하세요.
             </p>
           </div>
 
-          {/* 카드 3개 — 사진 위에 떠있는 별도 카드 */}
-          <div className="absolute bottom-14 left-0 right-0 z-20 flex justify-center gap-5 px-10">
+          {/* 카드 3개 — 바닥에서 위로 띄움 */}
+          <div className="absolute bottom-28 left-0 right-0 z-20 flex justify-center gap-5 px-10">
             {FEATURE_CARDS.map((card) => {
               const Icon = card.icon;
               return (
