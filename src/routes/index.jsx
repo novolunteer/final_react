@@ -31,7 +31,55 @@ import DepartmentSchedulePolicyPage from "../pages/operation/DepartmentScheduleP
 import AdminPage from "../pages/admin/AdminPage";
 import NotificationPage from "../pages/notification/NotificationPage";
 import ChatLayout from "../pages/chat/Layout/ChatLayout";
+import MyPageLayout from "@/pages/patient/myPage/MyPageLayout";
+import MyInformatinPage from "@/pages/patient/myPage/MyInformatinPage";
 
+const DOCTORS = ["INTERN", "RESIDENT", "FELLOW", "SPECIALIST", "PROFESSOR", "HEAD_DOCTOR"];
+const NURSES = ["NURSE", "CHARGE_NURSE", "HEAD_NURSE", "DIRECTOR_NURSE"];
+const ADMIN_STAFF = ["STAFF", "MANAGER", "ADMIN"];
+
+const routeRoles = {
+  "/dashboard":     null,
+  "/my-schedule":   [...DOCTORS, "DOCTOR", ...NURSES, "NURSE"],
+  "/medical":       [...DOCTORS],
+  "/reception":     [...DOCTORS, ...ADMIN_STAFF],
+  "/patient":       [...DOCTORS, ...NURSES, ...ADMIN_STAFF],
+  "/surgery":       ["HEAD_NURSE", "PROFESSOR"],
+  "/billing":       [...ADMIN_STAFF],
+  "/chat":          ["ADMIN", "DOCTOR", "NURSE", "MANAGER", "STAFF"],
+  "/staff":         [...ADMIN_STAFF],
+  "/department":    [...ADMIN_STAFF],
+  "/staff_schedule":["HEAD_NURSE", "PROFESSOR", "ADMIN", "MANAGER"],
+  "/operation/schedule_policy":      ["ADMIN"],
+  "/operation/dept_schedule_policy": ["ADMIN"],
+  "/admin":         ["ADMIN"],
+  "/notification":  null,
+  "/patient/mypage": ["PATIENT"],
+  "/patient/mypage/information": ["PATIENT"]
+
+  // 아래는 비로그인도 접근 가능 (routeRoles에 없으면 PatientLayout에서 처리)
+};
+
+// Staff 전용 페이지 권한 체크
+const StaffRoute = ({ children, allowedRoles }) => {
+  const token = sessionStorage.getItem("accessToken");
+
+  if (!token) return <Navigate to="/login" replace />;
+
+  if (allowedRoles) {
+    try {
+      const decoded = jwtDecode(token);
+      const roles = decoded.roles || [];
+      if (!allowedRoles.some(role => roles.includes(role))) {
+        return <Navigate to="/" replace />;
+      }
+    } catch (e) {
+      return <Navigate to="/login" replace />;
+    }
+  }
+
+  return children;
+};
 
 const RoleBasedHome = () => {
   const token = sessionStorage.getItem("accessToken");
@@ -42,11 +90,9 @@ const RoleBasedHome = () => {
       if (roles.length > 0 && !roles.every((r) => r === "PATIENT")) return <Navigate to="/my-schedule" replace />;
     } catch {}
   }
-  // 비로그인 or 환자 → 홈(3카드) 페이지 그대로 표시
   return <PatientHomePage />;
 };
 
-// Picks the right layout based on role
 const LayoutWrapper = () => {
   const { roles } = useSelector((s) => s.auth);
   const token = sessionStorage.getItem("accessToken");
@@ -62,43 +108,38 @@ const LayoutWrapper = () => {
 const Router = () => (
   <BrowserRouter>
     <Routes>
-      {/* No-layout pages */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/join" element={<JoinPage />} />
       <Route path="/social/login/naver" element={<NaverJoin />} />
       <Route path="/social/login/kakao" element={<KakaoJoin />} />
 
-      {/* Role-based layout wraps everything else */}
       <Route element={<LayoutWrapper />}>
         <Route path="/" element={<RoleBasedHome />} />
 
-        {/* Shared */}
+        {/* 비로그인 접근 가능 */}
         <Route path="/communication"   element={<CommunicationPage />} />
         <Route path="/reservation"     element={<ReservationPage />} />
         <Route path="/reservationconfirm" element={<ReservationConfirm />} />
         <Route path="/inquiry/chatbot" element={<InquiryChatBotPage />} />
 
-        {/* Staff / Medical */}
-        <Route path="/dashboard"   element={<DashboardPage />} />
-        <Route path="/my-schedule" element={<MySchedulePage />} />
-        <Route path="/medical"     element={<MedicalRecordPage />} />
-        <Route path="/reception"   element={<ReceptionPage />} />
-        <Route path="/patient"     element={<PatientPage />} />
-        <Route path="/surgery"     element={<SurgerySchedulePage />} />
-        <Route path="/billing"     element={<BillingLayout />} />
-        <Route path="/chat"        element={<ChatLayout />} />
-
-        {/* HR */}
-        <Route path="/staff"          element={<StaffPage />} />
-        <Route path="/department"     element={<DepartmentPage />} />
-        <Route path="/staff_schedule" element={<StaffSchedulePage />} />
-
-        {/* Operations */}
-        <Route path="/operation/schedule_policy"      element={<Schedule_policyPage />} />
-        <Route path="/operation/dept_schedule_policy" element={<DepartmentSchedulePolicyPage />} />
-
-        {/* Admin */}
-        <Route path="/admin" element={<AdminPage />} />
+        {/* 로그인 + 권한 필요 */}
+        <Route path="/dashboard"   element={<StaffRoute allowedRoles={routeRoles["/dashboard"]}><DashboardPage /></StaffRoute>} />
+        <Route path="/my-schedule" element={<StaffRoute allowedRoles={routeRoles["/my-schedule"]}><MySchedulePage /></StaffRoute>} />
+        <Route path="/medical"     element={<StaffRoute allowedRoles={routeRoles["/medical"]}><MedicalRecordPage /></StaffRoute>} />
+        <Route path="/reception"   element={<StaffRoute allowedRoles={routeRoles["/reception"]}><ReceptionPage /></StaffRoute>} />
+        <Route path="/patient"     element={<StaffRoute allowedRoles={routeRoles["/patient"]}><PatientPage /></StaffRoute>} />
+        <Route path="/surgery"     element={<StaffRoute allowedRoles={routeRoles["/surgery"]}><SurgerySchedulePage /></StaffRoute>} />
+        <Route path="/billing"     element={<StaffRoute allowedRoles={routeRoles["/billing"]}><BillingLayout /></StaffRoute>} />
+        <Route path="/chat"        element={<StaffRoute allowedRoles={routeRoles["/chat"]}><ChatLayout /></StaffRoute>} />
+        <Route path="/staff"          element={<StaffRoute allowedRoles={routeRoles["/staff"]}><StaffPage /></StaffRoute>} />
+        <Route path="/department"     element={<StaffRoute allowedRoles={routeRoles["/department"]}><DepartmentPage /></StaffRoute>} />
+        <Route path="/staff_schedule" element={<StaffRoute allowedRoles={routeRoles["/staff_schedule"]}><StaffSchedulePage /></StaffRoute>} />
+        <Route path="/operation/schedule_policy"      element={<StaffRoute allowedRoles={routeRoles["/operation/schedule_policy"]}><Schedule_policyPage /></StaffRoute>} />
+        <Route path="/operation/dept_schedule_policy" element={<StaffRoute allowedRoles={routeRoles["/operation/dept_schedule_policy"]}><DepartmentSchedulePolicyPage /></StaffRoute>} />
+        <Route path="/admin"       element={<StaffRoute allowedRoles={routeRoles["/admin"]}><AdminPage /></StaffRoute>} />
+        <Route path="/notification" element={<StaffRoute allowedRoles={routeRoles["/notification"]}><NotificationPage /></StaffRoute>} />
+        <Route path="/patient/mypage" element={<StaffRoute allowedRoles={routeRoles["/patient/mypage"]}><MyPageLayout/></StaffRoute>} />
+        <Route path="/patient/mypage/information" element={<StaffRoute allowedRoles={routeRoles["/patient/mypage/information"]}><MyInformatinPage/></StaffRoute>} />
       </Route>
     </Routes>
   </BrowserRouter>

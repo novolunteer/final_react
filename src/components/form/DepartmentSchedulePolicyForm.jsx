@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getDepartmentList } from "../../api/hr/departmentApi";
+import { getRoleList } from "../../api/hr/roleApi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +11,7 @@ const SHIFT_LABEL   = { DAY: "데이", EVENING: "이브닝", NIGHT: "나이트",
 const SHIFT_COLOR   = { DAY: "bg-sky-50 border-sky-200 text-sky-700", EVENING: "bg-amber-50 border-amber-200 text-amber-700", NIGHT: "bg-violet-50 border-violet-200 text-violet-700", OFF: "bg-rose-50 border-rose-200 text-rose-700" };
 
 const initState = {
-  departmentId: "", departmentName: "", jobType: "", shiftTypes: [], minStaffMap: {},
+  roleId: "", departmentId: "", jobType: "", shiftTypes: [], minStaffMap: {},
   maxConsecutiveNight: "", blockNightToDay: false, blockNightToEvening: false,
   maxWorkDaysPerWeek: "", isActive: true,
 };
@@ -20,17 +21,21 @@ const selectClass = "w-full h-9 rounded-md border border-zinc-200 bg-white px-3 
 const DepartmentSchedulePolicyForm = ({ onSubmit, onClose, initialData }) => {
   const [form, setForm]                   = useState(initState);
   const [departmentList, setDepartmentList] = useState([]);
+  const [roleList, setRoleList]           = useState([]);
 
   useEffect(() => {
     getDepartmentList()
       .then(data => setDepartmentList(Array.isArray(data) ? data : []))
       .catch(() => setDepartmentList([]));
+    getRoleList()
+      .then(data => setRoleList(Array.isArray(data) ? data : []))
+      .catch(() => setRoleList([]));
   }, []);
 
   useEffect(() => {
     setForm(initialData ? {
+      roleId:              initialData.roleId ?? "",
       departmentId:        initialData.departmentId ?? "",
-      departmentName:      initialData.departmentName ?? "",
       jobType:             initialData.jobType ?? "",
       shiftTypes:          initialData.shiftTypes ?? [],
       minStaffMap:         initialData.minStaffMap ?? {},
@@ -46,9 +51,9 @@ const DepartmentSchedulePolicyForm = ({ onSubmit, onClose, initialData }) => {
     const { name, value, type, checked } = e.target;
     if (type === "checkbox" && name !== "shiftTypes") { setForm(p => ({ ...p, [name]: checked })); return; }
     if (name === "isActive") { setForm(p => ({ ...p, isActive: value === "true" })); return; }
-    if (name === "departmentId") {
-      const found = departmentList.find(d => String(d.departmentId) === value);
-      setForm(p => ({ ...p, departmentId: value, departmentName: found?.departmentName || "", jobType: found?.departmentCategory || "" }));
+    if (name === "roleId") {
+      const found = roleList.find(r => String(r.roleId) === value);
+      setForm(p => ({ ...p, roleId: value, jobType: found?.roleName || "" }));
       return;
     }
     setForm(p => ({ ...p, [name]: value }));
@@ -71,12 +76,13 @@ const DepartmentSchedulePolicyForm = ({ onSubmit, onClose, initialData }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!form.departmentId)            { alert("부서를 선택하세요"); return; }
-    if (!form.jobType.trim())          { alert("직무유형을 입력하세요"); return; }
-    if (form.shiftTypes.length === 0)  { alert("허용 근무유형을 하나 이상 선택하세요"); return; }
+    if (!form.roleId)                      { alert("직급(Role)을 선택하세요"); return; }
+    if (form.shiftTypes.length === 0)      { alert("허용 근무유형을 하나 이상 선택하세요"); return; }
     onSubmit({
-      departmentId: Number(form.departmentId), departmentName: form.departmentName,
-      jobType: form.jobType.trim(), shiftTypes: form.shiftTypes, minStaffMap: form.minStaffMap,
+      roleId: Number(form.roleId),
+      departmentId: form.departmentId ? Number(form.departmentId) : null,
+      jobType: form.jobType,
+      shiftTypes: form.shiftTypes, minStaffMap: form.minStaffMap,
       maxConsecutiveNight: form.maxConsecutiveNight !== "" ? Number(form.maxConsecutiveNight) : null,
       blockNightToDay: form.blockNightToDay, blockNightToEvening: form.blockNightToEvening,
       maxWorkDaysPerWeek: form.maxWorkDaysPerWeek !== "" ? Number(form.maxWorkDaysPerWeek) : null,
@@ -98,11 +104,11 @@ const DepartmentSchedulePolicyForm = ({ onSubmit, onClose, initialData }) => {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <Label>부서 <span className="text-red-500">*</span></Label>
-            <select name="departmentId" value={form.departmentId} onChange={handleChange}
+            <Label>직급 (Role) <span className="text-red-500">*</span></Label>
+            <select name="roleId" value={form.roleId} onChange={handleChange}
               disabled={isEdit} className={selectClass}>
-              <option value="">부서 선택</option>
-              {departmentList.map(d => <option key={d.departmentId} value={d.departmentId}>{d.departmentName}</option>)}
+              <option value="">직급 선택</option>
+              {roleList.map(r => <option key={r.roleId} value={r.roleId}>{r.roleName}</option>)}
             </select>
           </div>
 
@@ -110,6 +116,15 @@ const DepartmentSchedulePolicyForm = ({ onSubmit, onClose, initialData }) => {
             <Label>직무유형</Label>
             <input type="text" name="jobType" value={form.jobType} readOnly
               className="w-full h-9 rounded-md border border-zinc-200 bg-zinc-100 px-3 text-sm text-zinc-500 cursor-not-allowed" />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>부서 <span className="text-xs text-zinc-400">(의사 진료과만 선택)</span></Label>
+            <select name="departmentId" value={form.departmentId} onChange={handleChange}
+              disabled={isEdit} className={selectClass}>
+              <option value="">부서 선택 (선택사항)</option>
+              {departmentList.map(d => <option key={d.departmentId} value={d.departmentId}>{d.departmentName}</option>)}
+            </select>
           </div>
 
           <div className="space-y-1.5">
