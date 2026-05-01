@@ -6,7 +6,7 @@ export const getMyReservations=async(page, sort, status) => {
         params: {
             page,
             sort,
-            size: 10,
+            size: 5,
             ...(status && {status})
         }
     });
@@ -19,7 +19,7 @@ export const getMyReceptions=async(page, sort) => {
         params: {
             page,
             sort,
-            size: 10
+            size: 5
         }
     });
 

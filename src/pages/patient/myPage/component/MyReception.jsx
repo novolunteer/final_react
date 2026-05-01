@@ -70,21 +70,21 @@ const MyReception = () => {
         </select>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {isLoading ? (
-          <p className="py-10 text-center text-sm text-zinc-400">불러오는 중...</p>
+          <p className="py-8 text-center text-sm text-zinc-400">불러오는 중...</p>
         ) : isError ? (
-          <p className="py-10 text-center text-sm text-red-400">접수 내역을 불러오지 못했습니다.</p>
+          <p className="py-8 text-center text-sm text-red-400">접수 내역을 불러오지 못했습니다.</p>
         ) : data?.content?.length === 0 ? (
-          <p className="py-10 text-center text-sm text-zinc-400">접수 내역이 없습니다.</p>
+          <p className="py-8 text-center text-sm text-zinc-400">접수 내역이 없습니다.</p>
         ) : (
           data?.content.map((d) => {
             const isOpen = openPaymentList && receptionId === Number(d.receptionId);
 
             return (
-              <div key={d.receptionId} className="rounded-xl border border-zinc-200 bg-white overflow-hidden">
+              <div key={d.receptionId} className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
                 <div
-                  className="p-4 space-y-2 cursor-pointer hover:bg-zinc-50 transition-colors"
+                  className="px-3 py-2.5 space-y-1 cursor-pointer hover:bg-zinc-50 transition-colors"
                   onClick={() => handleCardClick(d.receptionId)}
                 >
                   <div className="flex items-center justify-between">
@@ -99,7 +99,7 @@ const MyReception = () => {
                       : <ChevronDown size={14} className="text-zinc-400" />
                     }
                   </div>
-                  <p className="text-sm text-zinc-600 line-clamp-2">{d.symptom}</p>
+                  <p className="text-xs text-zinc-500 line-clamp-1">{d.symptom}</p>
                   <div className="flex items-center justify-between text-xs text-zinc-400">
                     <span>{d.doctorName}</span>
                     <span>{dayjs(d.receptionDate).format("YYYY.MM.DD")}</span>
