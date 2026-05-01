@@ -133,7 +133,6 @@ const Router = () => (
         <Route path="/operation/dept_schedule_policy" element={<StaffRoute allowedRoles={routeRoles["/operation/dept_schedule_policy"]}><DepartmentSchedulePolicyPage /></StaffRoute>} />
         <Route path="/admin"       element={<StaffRoute allowedRoles={routeRoles["/admin"]}><AdminPage /></StaffRoute>} />
         <Route path="/notification" element={<StaffRoute allowedRoles={routeRoles["/notification"]}><NotificationPage /></StaffRoute>} />
-        <Route path="/patient/mypage" element={<ProtectedRoute allowedRoles={routeRoles["/patient/mypage"]}><PatientPage/></ProtectedRoute>} />
       </Route>
     </Routes>
   </BrowserRouter>
