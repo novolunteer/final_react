@@ -126,6 +126,7 @@ const Router = () => {
           <Route path="/inquiry/chatbot" element={<ProtectedRoute allowedRoles={routeRoles["/inquiry/chatbot"]}><InquiryChatBotPage /></ProtectedRoute>} />
         </Route>
       </Routes>
+      {/* git actions push test */ }
     </BrowserRouter>
   );
 };
