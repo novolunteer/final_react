@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import hospitalImg from "../../assets/hospital.jpg";
+import hospitalImg from "../../assets/mainhospital.webp";
 import { useSelector } from "react-redux";
 import { CalendarCheck, Bot, Megaphone, ArrowRight } from "lucide-react";
 
@@ -74,8 +74,6 @@ const PatientHomePage = () => {
           height: "calc(100vh - 56px)",   /* 헤더 h-14 = 56px */
         }}
       >
-          {/* 그라디언트 오버레이 */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/5 to-black/50" />
 
           {/* 인사말 + 헤드라인 */}
           <div className="relative z-10 px-16 pt-16 text-white">
