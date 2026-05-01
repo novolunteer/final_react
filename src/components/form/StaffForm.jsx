@@ -7,7 +7,7 @@ import { getRoleList } from "../../api/hr/roleApi";
 import { displayRole } from "../../utils/roleUtils";
 
 const initState = {
-  staffId: "", email: "", password: "", departmentId: "",
+  staffId: "", userId: "", email: "", password: "", departmentId: "",
   managerId: "", roleId: "", name: "", phone: "", address: "", isActive: "Y",
 };
 
@@ -28,7 +28,8 @@ const StaffForm = ({ onSubmit, onClose, initialData, departmentList = [], staffL
   useEffect(() => {
     if (initialData) {
       setForm({
-        staffId: initialData.staffId || "", email: "", password: "",
+        staffId: initialData.staffId || "", userId: initialData.userId || "",
+        email: "", password: "",
         departmentId: initialData.departmentId || "", managerId: initialData.managerId || "",
         roleId: initialData.roleId || "", name: initialData.name || "",
         phone: initialData.phone || "", address: initialData.address || "",
@@ -81,13 +82,15 @@ const StaffForm = ({ onSubmit, onClose, initialData, departmentList = [], staffL
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!form.roleId) { alert("직급을 선택해주세요."); return; }
     if (isDoctorRole && !form.departmentId) { alert("의사 직급은 부서 선택이 필수입니다."); return; }
     onSubmit({
       staffId: form.staffId ? Number(form.staffId) : null,
+      userId: form.userId || null,
       email: form.email || null, password: form.password || null,
       departmentId: isDoctorRole && form.departmentId ? Number(form.departmentId) : null,
       managerId: form.managerId ? Number(form.managerId) : null,
-      roleId: form.roleId ? Number(form.roleId) : null,
+      roleId: Number(form.roleId),
       name: form.name, phone: form.phone,
       address: form.address, isActive: form.isActive,
     });
