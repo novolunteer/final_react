@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import { getMySchedule } from "../../../api/hr/staffScheduleApi";
+import { getMySchedule, getMyScheduleDetail } from "../../../api/hr/staffScheduleApi";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "lucide-react";
 
@@ -46,6 +46,8 @@ const MySchedulePage = () => {
   const [loading, setLoading]           = useState(false);
   const [departmentName, setDepartmentName] = useState("");
   const calendarRef = useRef(null);
+  const [detail, setDetail] = useState({ reservationDtoList: [], surgeryDtoList: [] });
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const fetchSchedule = async (monthDate) => {
     setLoading(true);
@@ -74,6 +76,20 @@ const MySchedulePage = () => {
   const selectedDaySchedules = useMemo(() =>
     scheduleList.filter((item) => item.workDate === selectedDate),
     [scheduleList, selectedDate]);
+
+  const handleDateClick = async (info) => {
+    setSelectedDate(info.dateStr);
+    setDetailLoading(true);
+    try {
+      const data = await getMyScheduleDetail(info.dateStr);
+      setDetail(data);
+    } catch (err) {
+      console.error("상세 조회 실패", err);
+      setDetail({ reservationDtoList: [], surgeryDtoList: [] });
+    } finally {
+      setDetailLoading(false);
+    }
+  };
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-4">
@@ -106,53 +122,104 @@ const MySchedulePage = () => {
               const m   = `${mid.getFullYear()}-${String(mid.getMonth() + 1).padStart(2, "0")}-01`;
               setCurrentMonth(m);
             }}
-            dateClick={(info) => setSelectedDate(info.dateStr)}
+            dateClick={handleDateClick}
             height="auto"
             fixedWeekCount={false}
             dayMaxEvents={3}
           />
         </div>
 
-        {/* 사이드 패널 */}
-        <div className="w-60 shrink-0 bg-white rounded-xl border border-zinc-200 p-4 shadow-sm space-y-4">
-          <p className="text-sm font-semibold text-zinc-800">{selectedDate} 일정</p>
-
-          {selectedDaySchedules.length === 0 ? (
-            <p className="text-xs text-zinc-400">해당 날짜에 스케줄이 없습니다.</p>
+       {/* 사이드 패널 */}
+      <div className="w-60 shrink-0 bg-white rounded-xl border border-zinc-200 p-4 shadow-sm space-y-4">
+        <p className="text-sm font-semibold text-zinc-800">{selectedDate} 일정</p>
+      
+        {selectedDaySchedules.length === 0 ? (
+          <p className="text-xs text-zinc-400">해당 날짜에 스케줄이 없습니다.</p>
+        ) : (
+          <div className="space-y-2">
+            {selectedDaySchedules.map((item) => (
+              <div key={item.scheduleId} className="rounded-lg border border-zinc-200 p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <span
+                    className="px-2 py-0.5 rounded text-xs font-medium text-white"
+                    style={{ backgroundColor: TYPE_COLORS[item.typeCode] ?? "#6b7280" }}
+                  >
+                    {item.typeName}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-zinc-700">{item.departmentName}</span>
+                  <span className="text-zinc-400">{STATUS_LABEL[item.status] ?? item.status}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      
+        {/* 진료 예약 */}
+        <div className="pt-3 border-t border-zinc-100">
+          <p className="text-xs font-semibold text-zinc-500 mb-2">진료 예약</p>
+          {detailLoading ? (
+            <p className="text-xs text-zinc-400">불러오는 중...</p>
+          ) : detail.reservationDtoList?.length === 0 ? (
+            <p className="text-xs text-zinc-400">예약 없음</p>
           ) : (
             <div className="space-y-2">
-              {selectedDaySchedules.map((item) => (
-                <div key={item.scheduleId} className="rounded-lg border border-zinc-200 p-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span
-                      className="px-2 py-0.5 rounded text-xs font-medium text-white"
-                      style={{ backgroundColor: TYPE_COLORS[item.typeCode] ?? "#6b7280" }}
-                    >
-                      {item.typeName}
+              {detail.reservationDtoList?.map((r) => (
+                <div key={r.reservationId} className="rounded-lg border border-zinc-200 p-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-medium text-zinc-700">환자 #{r.patientId}</span>
+                    <span className="text-zinc-400">
+                      {r.reservationDate ? new Date(r.reservationDate).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }) : ""}
                     </span>
                   </div>
+                  <div className="text-xs text-zinc-400 mt-1">{r.status}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      
+        {/* 수술 */}
+        <div className="pt-3 border-t border-zinc-100">
+          <p className="text-xs font-semibold text-zinc-500 mb-2">수술</p>
+          {detailLoading ? (
+            <p className="text-xs text-zinc-400">불러오는 중...</p>
+          ) : detail.surgeryDtoList?.length === 0 ? (
+            <p className="text-xs text-zinc-400">수술 없음</p>
+          ) : (
+            <div className="space-y-2">
+              {detail.surgeryDtoList?.map((s) => (
+                <div key={s.surgeryId} className="rounded-lg border border-zinc-200 p-3">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-zinc-700">{item.departmentName}</span>
-                    <span className="text-zinc-400">{STATUS_LABEL[item.status] ?? item.status}</span>
+                    <span className="font-medium text-zinc-700">{s.description}</span>
+                    <span className="text-zinc-400">
+                      {s.startTime ? new Date(s.startTime).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }) : ""}
+                    </span>
+                  </div>
+                  <div className="text-xs text-zinc-400 mt-1">
+                    {s.status}{s.durationHours != null ? ` · ${s.durationHours}시간` : ""}
                   </div>
                 </div>
               ))}
             </div>
           )}
-
-          {/* 범례 */}
-          <div className="pt-3 border-t border-zinc-100">
-            <p className="text-xs font-semibold text-zinc-400 mb-2">범례</p>
-            <div className="flex flex-wrap gap-2">
-              {Object.entries(TYPE_COLORS).map(([code, color]) => (
-                <div key={code} className="flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: color }} />
-                  <span className="text-xs text-zinc-500">{TYPE_LABELS[code] ?? code}</span>
-                </div>
-              ))}
-            </div>
+        </div>
+      
+        {/* 범례 */}
+        <div className="pt-3 border-t border-zinc-100">
+          <p className="text-xs font-semibold text-zinc-400 mb-2">범례</p>
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(TYPE_COLORS).map(([code, color]) => (
+              <div key={code} className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: color }} />
+                <span className="text-xs text-zinc-500">{TYPE_LABELS[code] ?? code}</span>
+              </div>
+            ))}
           </div>
         </div>
+      </div>
+        
       </div>
     </div>
   );
