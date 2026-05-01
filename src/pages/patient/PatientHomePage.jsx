@@ -22,7 +22,7 @@ const FEATURE_CARDS = [
     description: "궁금한 점을 AI 챗봇에게\n언제든지 물어보세요.",
     bg: "rgba(109, 40, 217, 0.93)",
     isReservation: false,
-    delay: 120,
+    delay: 130,
   },
   {
     path: "/communication",
@@ -32,7 +32,7 @@ const FEATURE_CARDS = [
     description: "병원 공지 및 이벤트 소식을\n빠르게 확인하세요.",
     bg: "rgba(180, 83, 9, 0.93)",
     isReservation: false,
-    delay: 240,
+    delay: 260,
   },
 ];
 
@@ -55,73 +55,86 @@ const PatientHomePage = () => {
     <>
       <style>{`
         @keyframes slideUp {
-          from { opacity: 0; transform: translateY(70px); }
+          from { opacity: 0; transform: translateY(80px); }
           to   { opacity: 1; transform: translateY(0); }
         }
         .hero-card {
           opacity: 0;
-          animation: slideUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          animation: slideUp 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          transition: filter 0.2s ease, transform 0.2s ease;
         }
-        .hero-card:hover { filter: brightness(1.12); }
       `}</style>
 
-      <div
-        className="relative rounded-2xl overflow-hidden"
-        style={{
-          backgroundImage: `url(${hospitalImg})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          height: "calc(100vh - 120px)",
-          minHeight: "520px",
-        }}
-      >
-        {/* 그라디언트 오버레이 */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/70" />
+      {/* 레이아웃 패딩(px-4 py-8) 상쇄 → 사진이 컨테이너 꽉 채움 */}
+      <div className="-mx-4 -my-8">
+        <div
+          className="relative overflow-hidden"
+          style={{
+            backgroundImage: `url(${hospitalImg})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            height: "calc(100vh - 56px)",   /* 헤더 h-14 = 56px */
+          }}
+        >
+          {/* 그라디언트 오버레이 */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/5 to-black/50" />
 
-        {/* 인사말 + 헤드라인 */}
-        <div className="relative z-10 px-10 pt-12 text-white">
-          <p className="text-blue-200 text-sm font-medium mb-4">
-            {name ? `${name} 님, 안녕하세요.` : "안녕하세요."}
-          </p>
-          <h1 className="text-4xl font-bold leading-snug mb-4">
-            편리한 진료,<br />스마트한 건강 관리
-          </h1>
-          <p className="text-white/60 text-sm leading-relaxed">
-            진료 예약부터 AI 의료 문의, 공지 확인까지<br />
-            필요한 서비스를 한 곳에서 이용하세요.
-          </p>
-        </div>
+          {/* 인사말 + 헤드라인 */}
+          <div className="relative z-10 px-16 pt-16 text-white">
+            <p className="text-blue-200 text-sm font-medium mb-4">
+              {name ? `${name} 님, 안녕하세요.` : "안녕하세요."}
+            </p>
+            <h1 className="text-5xl font-black leading-tight mb-4">
+              편리한 진료,<br />스마트한 건강 관리
+            </h1>
+            <p className="text-white/60 text-base leading-relaxed">
+              진료 예약부터 AI 의료 문의, 공지 확인까지<br />
+              필요한 서비스를 한 곳에서 이용하세요.
+            </p>
+          </div>
 
-        {/* 슬라이드업 카드 3개 */}
-        <div className="absolute bottom-0 left-0 right-0 z-20 grid grid-cols-3">
-          {FEATURE_CARDS.map((card) => {
-            const Icon = card.icon;
-            return (
-              <div
-                key={card.path}
-                className="hero-card cursor-pointer group p-7 flex flex-col justify-between transition-all duration-200"
-                style={{
-                  background: card.bg,
-                  minHeight: "210px",
-                  animationDelay: `${card.delay}ms`,
-                }}
-                onClick={() => handleCardClick(card)}
-              >
-                <div>
-                  <p className="text-white/50 text-xs font-medium mb-1 tracking-wider uppercase">
-                    {card.subtitle}
-                  </p>
-                  <h2 className="text-white text-2xl font-bold mb-3">{card.title}</h2>
-                  <p className="text-white/70 text-sm leading-relaxed whitespace-pre-line">
-                    {card.description}
-                  </p>
+          {/* 카드 3개 — 사진 위에 떠있는 별도 카드 */}
+          <div className="absolute bottom-14 left-0 right-0 z-20 flex justify-center gap-5 px-10">
+            {FEATURE_CARDS.map((card) => {
+              const Icon = card.icon;
+              return (
+                <div
+                  key={card.path}
+                  className="hero-card cursor-pointer group flex flex-col justify-between"
+                  style={{
+                    background: card.bg,
+                    flex: "1 1 0",
+                    maxWidth: "290px",
+                    minHeight: "260px",
+                    padding: "28px",
+                    animationDelay: `${card.delay}ms`,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.filter = "brightness(1.13)";
+                    e.currentTarget.style.transform = "translateY(-6px)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.filter = "";
+                    e.currentTarget.style.transform = "";
+                  }}
+                  onClick={() => handleCardClick(card)}
+                >
+                  <div>
+                    <p className="text-white/50 text-xs font-semibold mb-2 tracking-widest uppercase">
+                      {card.subtitle}
+                    </p>
+                    <h2 className="text-white text-2xl font-bold mb-3">{card.title}</h2>
+                    <p className="text-white/70 text-sm leading-relaxed whitespace-pre-line">
+                      {card.description}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 text-white/65 text-sm mt-6 group-hover:text-white group-hover:gap-3 transition-all duration-200">
+                    바로가기 <ArrowRight size={14} />
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5 text-white/70 text-sm mt-5 group-hover:text-white group-hover:gap-3 transition-all duration-200">
-                  바로가기 <ArrowRight size={14} />
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     </>
