@@ -98,7 +98,11 @@ const Router = () => {
         <Route path="/social/login/kakao" element={<KakaoJoin />} />
 
         {/* 인증 필요 */}
-        <Route element={<MainLayout />}>
+        <Route element={
+          <ProtectedRoute allowedRoles={null}>
+            <MainLayout />
+          </ProtectedRoute>
+        }>
           <Route path="/dashboard" element={<ProtectedRoute allowedRoles={routeRoles["/dashboard"]}><DashboardPage /></ProtectedRoute>} />
           <Route path="/patient" element={<ProtectedRoute allowedRoles={routeRoles["/patient"]}><PatientPage /></ProtectedRoute>} />
           <Route path="/my-schedule" element={<ProtectedRoute allowedRoles={routeRoles["/my-schedule"]}><MySchedulePage /></ProtectedRoute>} />
