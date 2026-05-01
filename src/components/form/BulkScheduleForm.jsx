@@ -18,23 +18,27 @@ const BulkScheduleForm = ({
   const [staffKeyword, setStaffKeyword] = useState("");
   const [roleCategory, setRoleCategory] = useState("doctor");
 
-  const doctorRoleIds = useMemo(() =>
-    new Set(roleList.filter(r => r.parentRoleName === "DOCTOR").map(r => String(r.roleId))), [roleList]);
-  const nurseRoleIds = useMemo(() =>
-    new Set(roleList.filter(r => r.roleName === "NURSE" || r.parentRoleName === "NURSE").map(r => String(r.roleId))), [roleList]);
+  const doctorRoleNames = useMemo(() =>
+    new Set(roleList.filter(r => r.parentRoleName === "DOCTOR").map(r => r.roleName)), [roleList]);
+  const nurseRoleNames = useMemo(() =>
+    new Set(roleList.filter(r => r.roleName === "NURSE" || r.parentRoleName === "NURSE").map(r => r.roleName)), [roleList]);
 
-  const categoryRoleIds = roleCategory === "doctor" ? doctorRoleIds : nurseRoleIds;
+  const categoryRoleNames = roleCategory === "doctor" ? doctorRoleNames : nurseRoleNames;
 
   const isDoctorCategory = roleCategory === "doctor";
 
   const filteredStaffList = useMemo(() =>
     staffList.filter(s => {
-      if (!categoryRoleIds.has(String(s.roleId))) return false;
-      const matchKw   = (s.name||"").includes(staffKeyword);
+      if (!categoryRoleNames.has(s.roleName)) return false;
+      const kw = staffKeyword.trim();
+      const matchKw = !kw ||
+        (s.name||"").includes(kw) ||
+        String(s.staffId).includes(kw) ||
+        (s.roleName||"").includes(kw);
       const matchDept = isDoctorCategory && formData.departmentId
         ? String(s.departmentId) === String(formData.departmentId) : true;
       return matchKw && matchDept;
-    }), [staffList, categoryRoleIds, staffKeyword, formData.departmentId, isDoctorCategory]);
+    }), [staffList, categoryRoleNames, staffKeyword, formData.departmentId, isDoctorCategory]);
 
   const handleCategoryChange = (cat) => {
     setRoleCategory(cat);
