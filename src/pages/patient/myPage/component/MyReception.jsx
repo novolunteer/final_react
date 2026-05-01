@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react'
 
 const MyReception = () => {
     const [page, setPage]=useState(0);
-    const [sort, setSort]=useState("receptionId,desc");
+    const [sort, setSort]=useState("treatedAt,desc");
     const [openPaymentList, setOpenPaymentList]=useState(false);
     const [paymentList, setPaymentList]=useState(null);
     const [paymentError, setPaymentError]=useState("");
