@@ -128,7 +128,8 @@ const MySchedulePage = () => {
     return Array.from(hours).sort((a, b) => a - b);
   }, [selectedDaySchedules, detail]);
 
-  const hasSchedule = selectedDaySchedules.length > 0;
+  const hasSchedule   = selectedDaySchedules.length > 0;
+  const hasTimetable  = selectedDaySchedules.some(s => s.typeCode !== "OFF");
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-4">
@@ -200,8 +201,8 @@ const MySchedulePage = () => {
             </div>
           </div>
 
-          {/* 타임테이블 (근무 있는 날만) */}
-          {hasSchedule && (
+          {/* 타임테이블 (근무 있는 날만, 휴무 제외) */}
+          {hasTimetable && (
             <div className="overflow-y-auto" style={{ maxHeight: 460 }}>
               {detailLoading ? (
                 <div className="flex items-center justify-center h-32">
@@ -256,7 +257,7 @@ const MySchedulePage = () => {
                           >
                             <span className="font-semibold text-blue-700 shrink-0">진료</span>
                             <span className="text-blue-600 truncate">
-                              {r.patientName ?? `환자 #${r.patientId}`}
+                              {r.name}
                             </span>
                           </div>
                         ))}
@@ -268,7 +269,7 @@ const MySchedulePage = () => {
                           >
                             <span className="font-semibold text-rose-600 shrink-0">수술</span>
                             <span className="text-rose-500 truncate">
-                              {s.patientName ?? s.description}
+                              {s.name}
                             </span>
                           </div>
                         ))}
