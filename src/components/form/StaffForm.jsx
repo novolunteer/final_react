@@ -41,8 +41,13 @@ const StaffForm = ({ onSubmit, onClose, initialData, departmentList = [], staffL
     }
   }, [initialData, staffList]);
 
-  const parentRoleNames = new Set(roleList.map(r => r.parentRoleName).filter(Boolean));
-  const assignableRoles = roleList.filter(r => !parentRoleNames.has(r.roleName));
+    const ASSIGNABLE_PARENT_ROLES = new Set(["NURSE"]);
+    const parentRoleNames = new Set(
+      roleList
+        .map(r => r.parentRoleName)
+        .filter(name => name && !ASSIGNABLE_PARENT_ROLES.has(name))
+    );
+    const assignableRoles = roleList.filter(r => !parentRoleNames.has(r.roleName));
 
   const selectedRole = roleList.find(r => String(r.roleId) === String(form.roleId));
   const isDoctorRole = selectedRole?.parentRoleName === "DOCTOR";
