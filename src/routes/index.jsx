@@ -124,6 +124,7 @@ const Router = () => {
           <Route path="/notification" element={<ProtectedRoute allowedRoles={routeRoles["/notification"]}><NotificationPage /></ProtectedRoute>} />
           <Route path="/chat" element={<ProtectedRoute allowedRoles={routeRoles["/chat"]}><ChatLayout /></ProtectedRoute>} />
           <Route path="/inquiry/chatbot" element={<ProtectedRoute allowedRoles={routeRoles["/inquiry/chatbot"]}><InquiryChatBotPage /></ProtectedRoute>} />
+          <Route path="/patient/mypage" element={<ProtectedRoute allowedRoles={routeRoles["/patient/mypage"]}><PatientPage/></ProtectedRoute>} />
         </Route>
       </Routes>
       {/* git actions push test */ }
