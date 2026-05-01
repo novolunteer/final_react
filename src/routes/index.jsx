@@ -31,6 +31,8 @@ import DepartmentSchedulePolicyPage from "../pages/operation/DepartmentScheduleP
 import AdminPage from "../pages/admin/AdminPage";
 import NotificationPage from "../pages/notification/NotificationPage";
 import ChatLayout from "../pages/chat/Layout/ChatLayout";
+import MyPageLayout from "@/pages/patient/myPage/MyPageLayout";
+import MyInformatinPage from "@/pages/patient/myPage/MyInformatinPage";
 
 const DOCTORS = ["INTERN", "RESIDENT", "FELLOW", "SPECIALIST", "PROFESSOR", "HEAD_DOCTOR"];
 const NURSES = ["NURSE", "CHARGE_NURSE", "HEAD_NURSE", "DIRECTOR_NURSE"];
@@ -52,6 +54,9 @@ const routeRoles = {
   "/operation/dept_schedule_policy": ["ADMIN"],
   "/admin":         ["ADMIN"],
   "/notification":  null,
+  "/patient/mypage": ["PATIENT"],
+  "/patient/mypage/information": ["PATIENT"]
+
   // 아래는 비로그인도 접근 가능 (routeRoles에 없으면 PatientLayout에서 처리)
 };
 
@@ -133,6 +138,8 @@ const Router = () => (
         <Route path="/operation/dept_schedule_policy" element={<StaffRoute allowedRoles={routeRoles["/operation/dept_schedule_policy"]}><DepartmentSchedulePolicyPage /></StaffRoute>} />
         <Route path="/admin"       element={<StaffRoute allowedRoles={routeRoles["/admin"]}><AdminPage /></StaffRoute>} />
         <Route path="/notification" element={<StaffRoute allowedRoles={routeRoles["/notification"]}><NotificationPage /></StaffRoute>} />
+        <Route path="/patient/mypage" element={<StaffRoute allowedRoles={routeRoles["/patient/mypage"]}><MyPageLayout/></StaffRoute>} />
+        <Route path="/patient/mypage/information" element={<StaffRoute allowedRoles={routeRoles["/patient/mypage/information"]}><MyInformatinPage/></StaffRoute>} />
       </Route>
     </Routes>
   </BrowserRouter>

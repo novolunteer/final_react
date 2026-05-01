@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import { Outlet, NavLink, useNavigate, replace } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -76,7 +76,7 @@ const PatientLayout = () => {
           {/* User / Auth */}
           <div className="flex items-center gap-3 shrink-0">
             {name && (
-              <span className="text-sm text-zinc-500 hidden sm:block">{name} 님</span>
+              <span className="text-sm text-zinc-500 hidden sm:block" onClick={() => navigate("/patient/mypage", {replace:true})}>{name} 님</span>
             )}
             {userId ? (
               <Button variant="outline" size="sm" onClick={handleLogout}>
