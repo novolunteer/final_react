@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Bot } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const initialForm = {
-  departmentId: "", startDate: "", endDate: "",
+  departmentId: "", roleCategory: "nurse",
+  startDate: "", endDate: "",
   minStaffDay: 2, minStaffEvening: 1, minStaffNight: 1,
   maxConsecutiveNight: 3, blockNightToDay: true, blockNightToEvening: false,
   maxWorkDaysPerWeek: 5, extraCondition: "",
@@ -13,6 +15,11 @@ const initialForm = {
 
 const selectClass = "w-full h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50";
 const inputClass  = "h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50";
+
+const ROLE_TABS = [
+  { key: "nurse",  label: "간호계열" },
+  { key: "doctor", label: "의사계열" },
+];
 
 const Section = ({ title, children }) => (
   <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 space-y-3">
@@ -24,19 +31,26 @@ const Section = ({ title, children }) => (
 const AutoScheduleConditionForm = ({ onSubmit, onClose, departmentList = [], isLoading = false }) => {
   const [formData, setFormData] = useState(initialForm);
 
+  const isDoctorCategory = formData.roleCategory === "doctor";
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(p => ({ ...p, [name]: type==="checkbox" ? checked : value }));
+    setFormData(p => ({ ...p, [name]: type === "checkbox" ? checked : value }));
+  };
+
+  const handleCategoryChange = (cat) => {
+    setFormData(p => ({ ...p, roleCategory: cat, departmentId: "" }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.departmentId) { alert("부서를 선택해주세요"); return; }
-    if (!formData.startDate)    { alert("시작일을 선택해주세요"); return; }
-    if (!formData.endDate)      { alert("종료일을 선택해주세요"); return; }
+    if (isDoctorCategory && !formData.departmentId) { alert("부서를 선택해주세요"); return; }
+    if (!formData.startDate) { alert("시작일을 선택해주세요"); return; }
+    if (!formData.endDate)   { alert("종료일을 선택해주세요"); return; }
     if (formData.startDate > formData.endDate) { alert("시작일은 종료일보다 늦을 수 없습니다"); return; }
     onSubmit({
-      departmentId: Number(formData.departmentId),
+      departmentId: isDoctorCategory && formData.departmentId ? Number(formData.departmentId) : null,
+      roleCategory: formData.roleCategory,
       startDate: formData.startDate, endDate: formData.endDate,
       minStaffMap: { DAY: Number(formData.minStaffDay), EVENING: Number(formData.minStaffEvening), NIGHT: Number(formData.minStaffNight) },
       maxConsecutiveNight: Number(formData.maxConsecutiveNight),
@@ -56,15 +70,29 @@ const AutoScheduleConditionForm = ({ onSubmit, onClose, departmentList = [], isL
         </div>
       </div>
 
+      {/* 직종 탭 */}
+      <div className="flex rounded-lg border border-zinc-200 overflow-hidden">
+        {ROLE_TABS.map(tab => (
+          <button key={tab.key} type="button" onClick={() => handleCategoryChange(tab.key)} disabled={isLoading}
+            className={cn("flex-1 py-1.5 text-xs font-medium transition-colors",
+              formData.roleCategory === tab.key ? "bg-blue-600 text-white" : "text-zinc-600 hover:bg-zinc-50"
+            )}>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       {/* 기본 설정 */}
       <Section title="기본 설정">
-        <div className="space-y-1.5">
-          <Label>부서 <span className="text-red-500">*</span></Label>
-          <select name="departmentId" value={formData.departmentId} onChange={handleChange} disabled={isLoading} className={selectClass}>
-            <option value="">부서 선택</option>
-            {departmentList.map(d => <option key={d.departmentId} value={d.departmentId}>{d.departmentName}</option>)}
-          </select>
-        </div>
+        {isDoctorCategory && (
+          <div className="space-y-1.5">
+            <Label>부서 <span className="text-red-500">*</span></Label>
+            <select name="departmentId" value={formData.departmentId} onChange={handleChange} disabled={isLoading} className={selectClass}>
+              <option value="">부서 선택</option>
+              {departmentList.map(d => <option key={d.departmentId} value={d.departmentId}>{d.departmentName}</option>)}
+            </select>
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label>시작일 <span className="text-red-500">*</span></Label>

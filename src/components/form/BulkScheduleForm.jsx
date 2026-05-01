@@ -2,31 +2,57 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 const selectClass = "w-full h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
 
+const ROLE_TABS = [
+  { key: "doctor", label: "의사계열" },
+  { key: "nurse",  label: "간호계열" },
+];
+
 const BulkScheduleForm = ({
   formData, setFormData, onSubmit, onClose,
-  departmentList = [], staffList = [], scheduleTypeList = [],
+  departmentList = [], staffList = [], scheduleTypeList = [], roleList = [],
 }) => {
   const [staffKeyword, setStaffKeyword] = useState("");
+  const [roleCategory, setRoleCategory] = useState("doctor");
+
+  const doctorRoleIds = useMemo(() =>
+    new Set(roleList.filter(r => r.parentRoleName === "DOCTOR").map(r => r.roleId)), [roleList]);
+  const nurseRoleIds = useMemo(() =>
+    new Set(roleList.filter(r => r.roleName === "NURSE" || r.parentRoleName === "NURSE").map(r => r.roleId)), [roleList]);
+
+  const categoryRoleIds = roleCategory === "doctor" ? doctorRoleIds : nurseRoleIds;
+
+  const isDoctorCategory = roleCategory === "doctor";
 
   const filteredStaffList = useMemo(() =>
     staffList.filter(s => {
+      if (!categoryRoleIds.has(s.roleId)) return false;
       const matchKw   = (s.name||"").includes(staffKeyword);
-      const matchDept = formData.departmentId ? String(s.departmentId)===String(formData.departmentId) : true;
+      const matchDept = isDoctorCategory && formData.departmentId
+        ? String(s.departmentId) === String(formData.departmentId) : true;
       return matchKw && matchDept;
-    }), [staffList, staffKeyword, formData.departmentId]);
+    }), [staffList, categoryRoleIds, staffKeyword, formData.departmentId, isDoctorCategory]);
+
+  const handleCategoryChange = (cat) => {
+    setRoleCategory(cat);
+    setFormData(p => ({ ...p, departmentId: "", staffIds: [] }));
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === "departmentId") {
+      setFormData(p => ({ ...p, departmentId: value, staffIds: [] })); return;
+    }
     setFormData(p => ({ ...p, [name]: value }));
   };
 
   const handleStaffCheck = (staffId) => {
     setFormData(p => {
       const cur = p.staffIds || [];
-      return { ...p, staffIds: cur.includes(staffId) ? cur.filter(id => id!==staffId) : [...cur, staffId] };
+      return { ...p, staffIds: cur.includes(staffId) ? cur.filter(id => id !== staffId) : [...cur, staffId] };
     });
   };
 
@@ -36,13 +62,16 @@ const BulkScheduleForm = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.departmentId)               { alert("부서를 선택해주세요"); return; }
-    if (!formData.staffIds?.length)           { alert("직원을 한 명 이상 선택해주세요"); return; }
-    if (!formData.startDate)                  { alert("시작일을 선택해주세요"); return; }
-    if (!formData.endDate)                    { alert("종료일을 선택해주세요"); return; }
-    if (formData.startDate > formData.endDate){ alert("시작일은 종료일보다 늦을 수 없습니다"); return; }
-    if (!formData.scheduleTypeId)             { alert("근무유형을 선택해주세요"); return; }
-    onSubmit(formData);
+    if (isDoctorCategory && !formData.departmentId) { alert("부서를 선택해주세요"); return; }
+    if (!formData.staffIds?.length)            { alert("직원을 한 명 이상 선택해주세요"); return; }
+    if (!formData.startDate)                   { alert("시작일을 선택해주세요"); return; }
+    if (!formData.endDate)                     { alert("종료일을 선택해주세요"); return; }
+    if (formData.startDate > formData.endDate) { alert("시작일은 종료일보다 늦을 수 없습니다"); return; }
+    if (!formData.scheduleTypeId)              { alert("근무유형을 선택해주세요"); return; }
+    onSubmit({
+      ...formData,
+      departmentId: isDoctorCategory && formData.departmentId ? formData.departmentId : null,
+    });
   };
 
   const selectedCount = (formData.staffIds||[]).length;
@@ -52,18 +81,30 @@ const BulkScheduleForm = ({
     <form onSubmit={handleSubmit} className="space-y-5">
       <p className="text-base font-semibold text-zinc-900">스케줄 일괄등록</p>
 
-      <div className="grid grid-cols-2 gap-4">
-        {/* 부서 */}
-        <div className="space-y-1.5">
-          <Label>부서</Label>
-          <select name="departmentId" value={formData.departmentId||""} onChange={handleChange} className={selectClass}>
-            <option value="">부서 선택</option>
-            {departmentList.map(d => <option key={d.departmentId} value={d.departmentId}>{d.departmentName}</option>)}
-          </select>
-        </div>
+      {/* 직종 탭 */}
+      <div className="flex rounded-lg border border-zinc-200 overflow-hidden">
+        {ROLE_TABS.map(tab => (
+          <button key={tab.key} type="button" onClick={() => handleCategoryChange(tab.key)}
+            className={cn("flex-1 py-1.5 text-xs font-medium transition-colors",
+              roleCategory === tab.key ? "bg-blue-600 text-white" : "text-zinc-600 hover:bg-zinc-50"
+            )}>
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-        {/* 직원 검색 */}
-        <div className="space-y-1.5">
+      <div className="grid grid-cols-2 gap-4">
+        {isDoctorCategory && (
+          <div className="space-y-1.5">
+            <Label>부서 <span className="text-red-500">*</span></Label>
+            <select name="departmentId" value={formData.departmentId||""} onChange={handleChange} className={selectClass}>
+              <option value="">부서 선택</option>
+              {departmentList.map(d => <option key={d.departmentId} value={d.departmentId}>{d.departmentName}</option>)}
+            </select>
+          </div>
+        )}
+
+        <div className={cn("space-y-1.5", !isDoctorCategory && "col-span-2")}>
           <Label>직원 검색</Label>
           <Input value={staffKeyword} onChange={e => setStaffKeyword(e.target.value)} placeholder="직원명 검색" />
         </div>
@@ -94,7 +135,7 @@ const BulkScheduleForm = ({
                 <input type="checkbox" checked={(formData.staffIds||[]).includes(staff.staffId)}
                   onChange={() => handleStaffCheck(staff.staffId)} className="accent-blue-600" />
                 <span className="text-sm text-zinc-800">{staff.name}</span>
-                <span className="text-xs text-zinc-400 ml-auto">{staff.departmentName}</span>
+                <span className="text-xs text-zinc-400 ml-auto">{staff.departmentName || staff.roleName || "-"}</span>
               </label>
             ))
           )}
@@ -102,19 +143,14 @@ const BulkScheduleForm = ({
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        {/* 시작일 */}
         <div className="space-y-1.5">
           <Label>시작일</Label>
           <input type="date" name="startDate" value={formData.startDate||""} onChange={handleChange} className={selectClass} />
         </div>
-
-        {/* 종료일 */}
         <div className="space-y-1.5">
           <Label>종료일</Label>
           <input type="date" name="endDate" value={formData.endDate||""} onChange={handleChange} className={selectClass} />
         </div>
-
-        {/* 근무유형 */}
         <div className="space-y-1.5">
           <Label>근무유형</Label>
           <select name="scheduleTypeId" value={formData.scheduleTypeId||""} onChange={handleChange} className={selectClass}>
@@ -126,8 +162,6 @@ const BulkScheduleForm = ({
             ))}
           </select>
         </div>
-
-        {/* 상태 */}
         <div className="space-y-1.5">
           <Label>상태</Label>
           <select name="status" value={formData.status||""} onChange={handleChange} className={selectClass}>

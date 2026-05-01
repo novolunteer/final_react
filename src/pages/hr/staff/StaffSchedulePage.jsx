@@ -26,6 +26,7 @@ import {
 } from "../../../api/hr/staffScheduleApi";
 import { getStaffList } from "../../../api/hr/staffApi";
 import { getDepartmentList } from "../../../api/hr/departmentApi";
+import { getRoleList } from "../../../api/hr/roleApi";
 import { getSchedulePolicyList } from "../../../api/hr/schedulePolicyApi";
 
 const initialForm     = { scheduleId: "", departmentId: "", staffId: "", workDate: "", scheduleTypeId: "", status: "TEMP" };
@@ -65,6 +66,7 @@ const StaffSchedulePage = () => {
   const [departmentList, setDepartmentList]   = useState([]);
   const [staffList, setStaffList]             = useState([]);
   const [scheduleTypeList, setScheduleTypeList] = useState([]);
+  const [roleList, setRoleList]               = useState([]);
   const [searchKeyword, setSearchKeyword]     = useState("");
   const [selectedDepartmentId, setSelectedDepartmentId]   = useState("");
   const [selectedScheduleTypeId, setSelectedScheduleTypeId] = useState("");
@@ -174,8 +176,8 @@ const StaffSchedulePage = () => {
 
   const fetchInitData = async () => {
     try {
-      const [s, d, st, sT] = await Promise.all([getScheduleList(), getDepartmentList(), getStaffList(), getSchedulePolicyList()]);
-      setScheduleList(s || []); setDepartmentList(d || []); setStaffList(st || []); setScheduleTypeList(sT || []);
+      const [s, d, st, sT, rL] = await Promise.all([getScheduleList(), getDepartmentList(), getStaffList(), getSchedulePolicyList(), getRoleList()]);
+      setScheduleList(s || []); setDepartmentList(d || []); setStaffList(st || []); setScheduleTypeList(sT || []); setRoleList(rL || []);
     } catch { alert("데이터를 불러오는 중 오류가 발생했습니다"); }
   };
 
@@ -402,13 +404,13 @@ const StaffSchedulePage = () => {
       <CommonModal open={open} onClose={handleClose} title={isEdit ? "스케줄 수정" : "스케줄 등록"}>
         <StaffScheduleForm formData={formData} setFormData={setFormData} onSubmit={handleSubmit}
           onClose={handleClose} departmentList={departmentList} staffList={staffList}
-          scheduleTypeList={scheduleTypeList} isEdit={isEdit} />
+          scheduleTypeList={scheduleTypeList} roleList={roleList} isEdit={isEdit} />
       </CommonModal>
 
       {/* 일괄 등록 모달 */}
       <CommonModal open={bulkOpen} onClose={handleBulkClose} title="스케줄 일괄등록">
         <BulkScheduleForm formData={bulkFormData} setFormData={setBulkFormData} onSubmit={handleBulkSubmit}
-          onClose={handleBulkClose} departmentList={departmentList} staffList={staffList} scheduleTypeList={scheduleTypeList} />
+          onClose={handleBulkClose} departmentList={departmentList} staffList={staffList} scheduleTypeList={scheduleTypeList} roleList={roleList} />
       </CommonModal>
 
       {/* AI 자동 스케줄 모달 */}

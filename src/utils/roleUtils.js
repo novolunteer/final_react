@@ -5,7 +5,7 @@ export const roleDisplayMap = {
   PROFESSOR:  '교수',
   NURSE:      '간호사',
   HEAD_NURSE: '수간호사',
-  ADMIN:      '원무과',
+  ADMIN:      '관리자',
 };
 
 export const displayRole = (roleName) => roleDisplayMap[roleName] ?? roleName ?? '-';
