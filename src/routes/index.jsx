@@ -1,107 +1,133 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
-
-import StaffLayout from "../layout/StaffLayout";
-import PatientLayout from "../layout/PatientLayout";
-
-import LoginPage from "../pages/login/LoginPage";
-import JoinPage from "../pages/join/JoinPage";
-import NaverJoin from "../pages/login/social/NaverJoin";
-import KakaoJoin from "../pages/login/social/KakaoJoin";
-
-import PatientHomePage from "../pages/patient/PatientHomePage";
-import DashboardPage from "../pages/dashboard/DashboardPage";
+import MainLayout from "../layout/MainLayout";
+import AdminPage from "../pages/admin/AdminPage";
 import CommunicationPage from "../pages/communication/CommunicationPage";
-import ReservationPage from "../pages/reservation/ReservationPage";
-import ReservationConfirm from "../pages/reservation/ReservationConfirm";
-import InquiryChatBotPage from "../pages/InquiryChatbot/InquiryChatBotPage";
-import MedicalRecordPage from "../pages/medical/MedicalRecordPage";
-import ReceptionPage from "../pages/reception/ReceptionPage";
+import DashboardPage from "../pages/dashboard/DashboardPage";
 import PatientPage from "../pages/patient/PatientPage";
-import SurgerySchedulePage from "../pages/surgery/SurgerySchedulePage";
-import BillingLayout from "../pages/billing/BillingLayout";
+import ReservationPage from "../pages/reservation/ReservationPage";
+import ReceptionPage from "../pages/reception/ReceptionPage";
+import MedicalRecordPage from "../pages/medical/MedicalRecordPage";
 import StaffPage from "../pages/hr/staff/StaffPage";
+import NotificationPage from "../pages/notification/NotificationPage";
+import LoginPage from "../pages/login/LoginPage";
+import ChatLayout from "../pages/chat/Layout/ChatLayout";
+import ReservationConfirm from "../pages/reservation/ReservationConfirm";
 import DepartmentPage from "../pages/hr/department/DepartmentPage";
-import StaffSchedulePage from "../pages/hr/staff/StaffSchedulePage";
-import MySchedulePage from "../pages/hr/staff/MySchedulePage";
 import Schedule_policyPage from "../pages/operation/Schedule_PolicyPage";
 import DepartmentSchedulePolicyPage from "../pages/operation/DepartmentSchedulePolicyPage";
-import AdminPage from "../pages/admin/AdminPage";
-import NotificationPage from "../pages/notification/NotificationPage";
-import ChatLayout from "../pages/chat/Layout/ChatLayout";
+import StaffSchedulePage from "../pages/hr/staff/StaffSchedulePage";
+import MySchedulePage from "../pages/hr/staff/MySchedulePage";
+import InquiryChatBotPage from "../pages/InquiryChatbot/InquiryChatBotPage";
+import BillingLayout from "../pages/billing/BillingLayout";
+import JoinPage from "../pages/join/JoinPage";
+import NaverJoin from "../pages/login/social/NaverJoin";
+import SurgerySchedulePage from "../pages/surgery/SurgerySchedulePage";
+import KakaoJoin from "../pages/login/social/KakaoJoin";
 
+const DOCTORS = ["INTERN", "RESIDENT", "FELLOW", "SPECIALIST", "PROFESSOR", "HEAD_DOCTOR"];
+const NURSES = ["NURSE", "CHARGE_NURSE", "HEAD_NURSE", "DIRECTOR_NURSE"];
+const ADMIN_STAFF = ["STAFF", "MANAGER", "ADMIN"];
+const MEDICAL_ROLES = ["DOCTOR", "NURSE", ...DOCTORS, ...NURSES];
+
+const routeRoles = {
+  "/dashboard":     null,
+  "/patient":       null,
+  "/my-schedule":   [...MEDICAL_ROLES],
+  "/reservation":   [...DOCTORS, "PATIENT", ...NURSES, ...ADMIN_STAFF],
+  "/reservationconfirm": [...DOCTORS, ...NURSES, ...ADMIN_STAFF],
+  "/reception":     [...DOCTORS, ...ADMIN_STAFF],
+  "/medical":       [...DOCTORS],
+  "/billing":       [...ADMIN_STAFF],
+  "/staff":         [...ADMIN_STAFF],
+  "/department":    [...ADMIN_STAFF],
+  "/staff_schedule":["HEAD_NURSE", "PROFESSOR", "ADMIN", "MANAGER"],
+  "/surgery":       ["HEAD_NURSE", "PROFESSOR"],
+  "/operation/schedule_policy":      ["ADMIN"],
+  "/operation/dept_schedule_policy": ["ADMIN"],
+  "/admin":         ["ADMIN"],
+  "/communication": null,
+  "/notification":  null,
+  "/chat":          ["ADMIN", "DOCTOR", "NURSE", "MANAGER", "STAFF"],
+  "/inquiry/chatbot": null,
+};
+
+// 로그인 여부만 체크 - MainLayout 감싸기용
+const ProtectedLayout = () => {
+  const token = sessionStorage.getItem("accessToken");
+  if (!token) return <Navigate to="/login" replace />;
+  return <MainLayout />;
+};
+
+// 권한 체크 - 각 페이지용
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const token = sessionStorage.getItem("accessToken");
+
+  if (!token) return <Navigate to="/login" replace />;
+
+  if (allowedRoles) {
+    try {
+      const decoded = jwtDecode(token);
+      const roles = decoded.roles || [];
+      if (!allowedRoles.some(role => roles.includes(role))) {
+        return <Navigate to="/" replace />;
+      }
+    } catch (e) {
+      return <Navigate to="/login" replace />;
+    }
+  }
+
+  return children;
+};
 
 const RoleBasedHome = () => {
   const token = sessionStorage.getItem("accessToken");
-  if (token) {
-    try {
-      const { roles = [] } = jwtDecode(token);
-      if (roles.includes("ADMIN")) return <Navigate to="/communication" replace />;
-      if (roles.length > 0 && !roles.every((r) => r === "PATIENT")) return <Navigate to="/my-schedule" replace />;
-    } catch {}
-  }
-  // 비로그인 or 환자 → 홈(3카드) 페이지 그대로 표시
-  return <PatientHomePage />;
+  if (!token) return <Navigate to="/login" replace />;
+  try {
+    const decoded = jwtDecode(token);
+    const roles = decoded.roles || [];
+    if (roles.some((r) => MEDICAL_ROLES.includes(r))) {
+      return <Navigate to="/my-schedule" replace />;
+    }
+  } catch (e) {}
+  return <Navigate to="/communication" replace />;
 };
 
-// Picks the right layout based on role
-const LayoutWrapper = () => {
-  const { roles } = useSelector((s) => s.auth);
-  const token = sessionStorage.getItem("accessToken");
-
-  const isStaff =
-    token &&
-    Array.isArray(roles) &&
-    roles.some((r) => r !== "PATIENT");
-
-  return isStaff ? <StaffLayout /> : <PatientLayout />;
-};
-
-const Router = () => (
-  <BrowserRouter>
-    <Routes>
-      {/* No-layout pages */}
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/join" element={<JoinPage />} />
-      <Route path="/social/login/naver" element={<NaverJoin />} />
-      <Route path="/social/login/kakao" element={<KakaoJoin />} />
-
-      {/* Role-based layout wraps everything else */}
-      <Route element={<LayoutWrapper />}>
+const Router = () => {
+  return (
+    <BrowserRouter>
+      <Routes>
         <Route path="/" element={<RoleBasedHome />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/join" element={<JoinPage />} />
+        <Route path="/social/login/naver" element={<NaverJoin />} />
+        <Route path="/social/login/kakao" element={<KakaoJoin />} />
 
-        {/* Shared */}
-        <Route path="/communication"   element={<CommunicationPage />} />
-        <Route path="/reservation"     element={<ReservationPage />} />
-        <Route path="/reservationconfirm" element={<ReservationConfirm />} />
-        <Route path="/inquiry/chatbot" element={<InquiryChatBotPage />} />
-
-        {/* Staff / Medical */}
-        <Route path="/dashboard"   element={<DashboardPage />} />
-        <Route path="/my-schedule" element={<MySchedulePage />} />
-        <Route path="/medical"     element={<MedicalRecordPage />} />
-        <Route path="/reception"   element={<ReceptionPage />} />
-        <Route path="/patient"     element={<PatientPage />} />
-        <Route path="/surgery"     element={<SurgerySchedulePage />} />
-        <Route path="/billing"     element={<BillingLayout />} />
-        <Route path="/chat"        element={<ChatLayout />} />
-
-        {/* HR */}
-        <Route path="/staff"          element={<StaffPage />} />
-        <Route path="/department"     element={<DepartmentPage />} />
-        <Route path="/staff_schedule" element={<StaffSchedulePage />} />
-
-        {/* Operations */}
-        <Route path="/operation/schedule_policy"      element={<Schedule_policyPage />} />
-        <Route path="/operation/dept_schedule_policy" element={<DepartmentSchedulePolicyPage />} />
-
-        {/* Admin */}
-        <Route path="/admin" element={<AdminPage />} />
-      </Route>
-    </Routes>
-  </BrowserRouter>
-);
+        <Route element={<ProtectedLayout />}>
+          <Route path="/dashboard" element={<ProtectedRoute allowedRoles={routeRoles["/dashboard"]}><DashboardPage /></ProtectedRoute>} />
+          <Route path="/patient" element={<ProtectedRoute allowedRoles={routeRoles["/patient"]}><PatientPage /></ProtectedRoute>} />
+          <Route path="/my-schedule" element={<ProtectedRoute allowedRoles={routeRoles["/my-schedule"]}><MySchedulePage /></ProtectedRoute>} />
+          <Route path="/reservation" element={<ProtectedRoute allowedRoles={routeRoles["/reservation"]}><ReservationPage /></ProtectedRoute>} />
+          <Route path="/reservationconfirm" element={<ProtectedRoute allowedRoles={routeRoles["/reservationconfirm"]}><ReservationConfirm /></ProtectedRoute>} />
+          <Route path="/reception" element={<ProtectedRoute allowedRoles={routeRoles["/reception"]}><ReceptionPage /></ProtectedRoute>} />
+          <Route path="/medical" element={<ProtectedRoute allowedRoles={routeRoles["/medical"]}><MedicalRecordPage /></ProtectedRoute>} />
+          <Route path="/billing" element={<ProtectedRoute allowedRoles={routeRoles["/billing"]}><BillingLayout /></ProtectedRoute>} />
+          <Route path="/staff" element={<ProtectedRoute allowedRoles={routeRoles["/staff"]}><StaffPage /></ProtectedRoute>} />
+          <Route path="/department" element={<ProtectedRoute allowedRoles={routeRoles["/department"]}><DepartmentPage /></ProtectedRoute>} />
+          <Route path="/staff_schedule" element={<ProtectedRoute allowedRoles={routeRoles["/staff_schedule"]}><StaffSchedulePage /></ProtectedRoute>} />
+          <Route path="/surgery" element={<ProtectedRoute allowedRoles={routeRoles["/surgery"]}><SurgerySchedulePage /></ProtectedRoute>} />
+          <Route path="/operation/schedule_policy" element={<ProtectedRoute allowedRoles={routeRoles["/operation/schedule_policy"]}><Schedule_policyPage /></ProtectedRoute>} />
+          <Route path="/operation/dept_schedule_policy" element={<ProtectedRoute allowedRoles={routeRoles["/operation/dept_schedule_policy"]}><DepartmentSchedulePolicyPage /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute allowedRoles={routeRoles["/admin"]}><AdminPage /></ProtectedRoute>} />
+          <Route path="/communication" element={<ProtectedRoute allowedRoles={routeRoles["/communication"]}><CommunicationPage /></ProtectedRoute>} />
+          <Route path="/notification" element={<ProtectedRoute allowedRoles={routeRoles["/notification"]}><NotificationPage /></ProtectedRoute>} />
+          <Route path="/chat" element={<ProtectedRoute allowedRoles={routeRoles["/chat"]}><ChatLayout /></ProtectedRoute>} />
+          <Route path="/inquiry/chatbot" element={<ProtectedRoute allowedRoles={routeRoles["/inquiry/chatbot"]}><InquiryChatBotPage /></ProtectedRoute>} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
+};
 
 export default Router;
