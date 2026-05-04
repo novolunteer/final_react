@@ -1,10 +1,11 @@
-import { getMyReservations } from '@/api/patientApi';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { cancelReservation, getMyReservations } from '@/api/patientApi';
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CalendarDays } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const STATUS_MAP = {
   RECEIVED:  { label: '신청',      className: 'bg-blue-100 text-blue-700 hover:bg-blue-100' },
@@ -28,11 +29,37 @@ const MyReservation = () => {
   const [sort, setSort] = useState("reservationId,desc");
   const [status, setStatus] = useState("");
 
+  const navigate=useNavigate();
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ['myReservation', page, sort, status],
     queryFn: () => getMyReservations(page, sort, status),
     placeholderData: keepPreviousData,
   });
+
+  const cancelMutation=useMutation({
+    mutationFn: cancelReservation,
+    onSuccess: (result) => {
+      if(result.status === "CANCELED"){
+        const reservationId=Number(result.reservationId);
+
+        alert(reservationId + "번 예약을 취소했습니다.");
+        navigate("/patient/mypage", {replace:true});
+      }
+    },
+    onError: () => {
+      alert("예약을 취소할 수 없습니다.");
+    }
+  });
+
+  const cancel=(reservationId, status)=>{
+    if(!reservationId || !status){
+      alert("예약 정보를 읽을 수 없습니다.");
+      return;
+    }
+
+    cancelMutation.mutate({ reservationId, status });
+  }
 
   const getStatus = (s) => STATUS_MAP[s] ?? { label: '알 수 없음', className: '' };
 
@@ -98,6 +125,7 @@ const MyReservation = () => {
                       size="sm"
                       variant="outline"
                       className="h-6 text-xs text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 cursor-pointer"
+                      onClick={() => cancel(d.reservationId, d.status)}
                     >
                       취소
                     </Button>
@@ -105,7 +133,7 @@ const MyReservation = () => {
                 </div>
                 <p className="text-xs text-zinc-500 line-clamp-1">{d.symptom}</p>
                 <div className="flex items-center justify-between text-xs text-zinc-400">
-                  <span>{d.doctorName}</span>
+                  <span>{d.doctorName !== null ? d.doctorName:"미지정"}</span>
                   <span>{dayjs(d.createdAt).format("YYYY.MM.DD HH:mm")}</span>
                 </div>
               </div>

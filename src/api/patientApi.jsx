@@ -14,6 +14,11 @@ export const getMyReservations=async(page, sort, status) => {
     return res.data;
 }
 
+export const cancelReservation=async(param)=>{
+    const res=await jwtAxios.put(`${API_BASE_URL}/api/patient/reservation/cancel`, param);
+    return res.data;
+}
+
 export const getMyReceptions=async(page, sort) => {
     const res=await jwtAxios.get(`${API_BASE_URL}/api/patient/reception`, {
         params: {
