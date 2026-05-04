@@ -75,14 +75,6 @@ const PatientHomePage = () => {
           height: "calc(100vh - 56px)",
         }}
       >
-          {/* 왼쪽 텍스트 영역만 살짝 어둡게 */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background: "linear-gradient(to right, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.2) 40%, transparent 65%)",
-            }}
-          />
-
           {/* 인사말 + 헤드라인 */}
           <div className="relative z-10 px-16 pt-14 text-white">
             <p className="text-blue-200 text-sm font-semibold mb-4">
