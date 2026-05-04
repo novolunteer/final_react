@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import hospitalImg from "../../assets/mainhospital.webp";
+import hospitalImg from "../../assets/hosp.PNG";
 import { useSelector } from "react-redux";
 import { CalendarCheck, Bot, Megaphone, ArrowRight } from "lucide-react";
 
@@ -70,7 +70,7 @@ const PatientHomePage = () => {
         style={{
           backgroundImage: `url(${hospitalImg})`,
           backgroundSize: "cover",
-          backgroundPosition: "center top",
+          backgroundPosition: "center 40%",
           backgroundRepeat: "no-repeat",
           height: "calc(100vh - 56px)",
         }}
