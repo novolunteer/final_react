@@ -3,7 +3,7 @@ import jwtAxios, { API_BASE_URL } from "../jwtAxios";
 const host="/api/staff_schedule";
 
 export const getScheduleList=async()=>{
-    const res=await jwtAxios.get(`${host}/list?size=1000`);
+    const res=await jwtAxios.get(`${host}/list?size=200`);
     return res.data?.content ?? res.data;
 };
 
