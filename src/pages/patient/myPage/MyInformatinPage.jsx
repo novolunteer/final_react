@@ -66,18 +66,28 @@ const MyInformatinPage = () => {
     }
   });
 
+  const resetAll = () => {
+    setEmail(""); setPassword(""); setName(""); setRrn(""); setPhone(""); setAddress(""); setNewPassword("");
+    SetEmailCheckResult(""); setEmailChecked(false);
+    setPasswordCheckResult(""); setPasswordChecked(false);
+    setOpenNewEmailBox(false); setOpenNewNameBox(false); setOpenNewPhoneBox(false); setOpenNewAddressBox(false);
+    setOpenPasswordModal(false);
+  };
+
   const updateInfoMutation=useMutation({
     mutationFn: updateMyInformation,
     onSuccess: (result) => {
       if(result.value == null){
         const key=result.key;
         alert(key + "수정 성공!");
+        resetAll();
         queryClient.invalidateQueries({queryKey: ['myInformation']});
         navigate("/patient/mypage/information", {replace:true});
       } else {
         const key=result.key;
         const value=result.value;
         alert(key + " 항목을 " + value + " 으로 수정 성공!");
+        resetAll();
         queryClient.invalidateQueries({queryKey: ['myInformation']});
         navigate("/patient/mypage/information", {replace:true});
       }
