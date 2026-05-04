@@ -1,5 +1,5 @@
 import { cancelReservation, getMyReservations } from '@/api/patientApi';
-import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +30,7 @@ const MyReservation = () => {
   const [status, setStatus] = useState("");
 
   const navigate=useNavigate();
+  const queryClient=useQueryClient();
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['myReservation', page, sort, status],
@@ -44,6 +45,7 @@ const MyReservation = () => {
         const reservationId=Number(result.reservationId);
 
         alert(reservationId + "번 예약을 취소했습니다.");
+        queryClient.invalidateQueries({queryKey: ['myReservation']});
         navigate("/patient/mypage", {replace:true});
       }
     },
