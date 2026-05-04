@@ -101,7 +101,7 @@ const MyInformatinPage = () => {
     }
   })
 
-  const info=data?.content;
+  const info=data;
 
   const isLocal = info?.isLocal && (info?.socialAccounts === null || info?.socialAccounts?.length === 0);
   const onlySocial = info?.onlySocial && info?.socialAccounts !== null && info?.socialAccounts?.length > 0 && (info?.email === null || info?.email === "");
@@ -157,7 +157,7 @@ const MyInformatinPage = () => {
         <div className="rounded-xl border border-zinc-200 bg-white px-5 py-8 text-center text-sm text-red-500">
           내 정보를 불러오지 못했습니다.
         </div>
-      ) : !data?.content ? (
+      ) : !data ? (
         <div className="rounded-xl border border-zinc-200 bg-white px-5 py-8 text-center text-sm text-zinc-500">
           내 정보가 존재하지 않습니다.
         </div>
