@@ -103,7 +103,7 @@ const MyInformatinPage = () => {
 
   const info=data?.content;
 
-  const isLocal = info.isLocal && (info.socialAccounts === null || info.socialAccounts.length === 0);
+  const isLocal = info.Local && (info.socialAccounts === null || info.socialAccounts.length === 0);
   const onlySocial = info.onlySocial && info.socialAccounts !== null && info.socialAccounts.length > 0 && (info.email === null || info.email === "");
   const hasSocial = info.hasSocial && info.email !== null && info.socialAccounts !== null && info.socialAccounts.length > 0;
 

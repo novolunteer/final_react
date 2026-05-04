@@ -78,7 +78,12 @@ const PatientLayout = () => {
           {/* User / Auth */}
           <div className="flex items-center gap-3 shrink-0">
             {name && (
-              <span className="text-sm text-zinc-500 hidden sm:block" onClick={() => navigate("/patient/mypage", {replace:true})}>{name} 님</span>
+              <span
+                className="text-sm text-zinc-500 hidden sm:block cursor-pointer hover:text-blue-600 hover:underline underline-offset-2 transition-colors"
+                onClick={() => navigate("/patient/mypage", { replace: true })}
+              >
+                {name} 님
+              </span>
             )}
             {userId ? (
               <Button variant="outline" size="sm" onClick={handleLogout}>
