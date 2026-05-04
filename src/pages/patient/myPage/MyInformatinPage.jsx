@@ -53,7 +53,7 @@ const MyInformatinPage = () => {
   const passwordCheckMutation=useMutation({
     mutationFn: checkPassword,
     onSuccess: (result) => {
-      if(result === "true"){
+      if(result === "true" || result === true){
         setPasswordCheckResult("비밀번호가 일치합니다.");
         setPasswordChecked(true);
       } else {
