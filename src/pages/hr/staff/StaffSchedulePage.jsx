@@ -37,6 +37,14 @@ const getTodayString = () => {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 };
 
+const getMonthRange = (date = new Date()) => {
+  const y = date.getFullYear();
+  const m = date.getMonth();
+  const start = `${y}-${String(m+1).padStart(2,"0")}-01`;
+  const end   = `${y}-${String(m+1).padStart(2,"0")}-${String(new Date(y, m+1, 0).getDate()).padStart(2,"0")}`;
+  return { startDate: start, endDate: end };
+};
+
 const DepartmentScheduleGroup = ({ departmentName, items, columns, deptTableData }) => {
   const { pagedData, page, setPage, totalPages } = usePagination(items, 5);
   return (
@@ -176,15 +184,20 @@ const StaffSchedulePage = () => {
 
   const fetchInitData = async () => {
     try {
-      const [s, d, st, sT, rL] = await Promise.all([getScheduleList(), getDepartmentList(), getStaffList(), getSchedulePolicyList(), getRoleList()]);
+      const { startDate, endDate } = getMonthRange();
+      const [s, d, st, sT, rL] = await Promise.all([getScheduleList(startDate, endDate), getDepartmentList(), getStaffList(), getSchedulePolicyList(), getRoleList()]);
       setScheduleList(s || []); setDepartmentList(d || []); setStaffList(st || []); setScheduleTypeList(sT || []); setRoleList(rL || []);
-      console.log("[roleList]", rL);
-      console.log("[staffList sample]", (st||[]).slice(0,5).map(s=>({staffId:s.staffId, name:s.name, roleName:s.roleName})));
     } catch { alert("데이터를 불러오는 중 오류가 발생했습니다"); }
   };
 
-  const fetchScheduleData = async () => {
-    try { setScheduleList((await getScheduleList()) || []); } catch (e) { console.error(e); }
+  const fetchScheduleData = async (startDate, endDate) => {
+    try {
+      if (!startDate || !endDate) {
+        const calDate = calendarRef.current?.getApi().getDate() ?? new Date();
+        ({ startDate, endDate } = getMonthRange(calDate));
+      }
+      setScheduleList((await getScheduleList(startDate, endDate)) || []);
+    } catch (e) { console.error(e); }
   };
 
   const hasDuplicateSchedule = (target) =>
@@ -364,6 +377,11 @@ const StaffSchedulePage = () => {
               events={events}
               headerToolbar={{ right: "prev,next myToday", center: "title", left: "" }}
               customButtons={{ myToday: { text: "오늘", click: handleToday } }}
+              datesSet={info => {
+                const mid = new Date((info.start.getTime() + info.end.getTime()) / 2);
+                const { startDate, endDate } = getMonthRange(mid);
+                fetchScheduleData(startDate, endDate);
+              }}
               dateClick={info => setSelectedDate(info.dateStr)}
               dayCellClassNames={info => {
                 const d = info.date;
