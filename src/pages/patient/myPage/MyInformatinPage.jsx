@@ -215,15 +215,17 @@ const MyInformatinPage = () => {
           </div>
 
           {/* 비밀번호 */}
-          <div className="px-5 py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-zinc-400 mb-0.5">비밀번호</p>
-                <p className="text-sm font-medium text-zinc-900">••••••••</p>
+          {!onlySocial && (
+            <div className="px-5 py-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-zinc-400 mb-0.5">비밀번호</p>
+                  <p className="text-sm font-medium text-zinc-900">••••••••</p>
+                </div>
+                <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => setOpenPasswordModal(true)}>비밀번호 재설정</Button>
               </div>
-              <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => setOpenPasswordModal(true)}>비밀번호 재설정</Button>
             </div>
-          </div>
+          )}
 
           {/* 이름 */}
           <div className="px-5 py-4 space-y-3">
