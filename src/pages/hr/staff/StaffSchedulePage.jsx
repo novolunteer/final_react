@@ -178,6 +178,8 @@ const StaffSchedulePage = () => {
     try {
       const [s, d, st, sT, rL] = await Promise.all([getScheduleList(), getDepartmentList(), getStaffList(), getSchedulePolicyList(), getRoleList()]);
       setScheduleList(s || []); setDepartmentList(d || []); setStaffList(st || []); setScheduleTypeList(sT || []); setRoleList(rL || []);
+      console.log("[roleList]", rL);
+      console.log("[staffList sample]", (st||[]).slice(0,5).map(s=>({staffId:s.staffId, name:s.name, roleName:s.roleName})));
     } catch { alert("데이터를 불러오는 중 오류가 발생했습니다"); }
   };
 
