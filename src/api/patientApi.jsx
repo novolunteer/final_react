@@ -67,7 +67,7 @@ export const updateMyInformation=async(param) => {
 export const removeMySocialAccount=async(param) => {
     const res=await jwtAxios.delete(`${API_BASE_URL}/api/patient/remove/social`, {
         params: {
-            provider
+            provider: param.provider
         }
     });
 
