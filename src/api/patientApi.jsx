@@ -48,3 +48,28 @@ export const getMyInformation=async() => {
     const res=await jwtAxios.get(`${API_BASE_URL}/api/patient/information`);
     return res.data;
 }
+
+export const checkPassword=async(password) => {
+    const res=await jwtAxios.get(`${API_BASE_URL}/api/patient/check/password`, {
+        params : {
+            password
+        }
+    });
+
+    return res.data;
+}
+
+export const updateMyInformation=async(param) => {
+    const res=await jwtAxios.put(`${API_BASE_URL}/api/patient/information/update`, param);
+    return res.data;
+}
+
+export const removeMySocialAccount=async(param) => {
+    const res=await jwtAxios.delete(`${API_BASE_URL}/api/patient/remove/social`, {
+        params: {
+            provider
+        }
+    });
+
+    return res.data;
+}
