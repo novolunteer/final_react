@@ -95,6 +95,16 @@ const StaffSchedulePage = () => {
     [...scheduleTypeList].sort((a,b) => (a.typeName||"").localeCompare(b.typeName||"","ko")),
     [scheduleTypeList]);
 
+  const allDepartmentsForFilter = useMemo(() => {
+    const deptMap = new Map();
+    departmentList.forEach(d => deptMap.set(String(d.departmentId), d));
+    staffList.forEach(s => {
+      if (s.departmentId && s.departmentName && !deptMap.has(String(s.departmentId)))
+        deptMap.set(String(s.departmentId), { departmentId: s.departmentId, departmentName: s.departmentName });
+    });
+    return [...deptMap.values()].sort((a,b) => (a.departmentName||"").localeCompare(b.departmentName||"","ko"));
+  }, [departmentList, staffList]);
+
   const filteredScheduleList = useMemo(() => {
     let r = scheduleList;
     if (searchKeyword.trim()) r = r.filter(i => (i.staffName||"").includes(searchKeyword.trim()));
@@ -176,19 +186,22 @@ const StaffSchedulePage = () => {
 
   useEffect(() => { fetchInitData(); }, []);
   useEffect(() => {
-    if (viewMode === "week" && !selectedDepartmentId && sortedDepartmentList.length > 0)
-      setSelectedDepartmentId(String(sortedDepartmentList[0].departmentId));
-  }, [viewMode, selectedDepartmentId, sortedDepartmentList]);
+    if (viewMode === "week" && !selectedDepartmentId && allDepartmentsForFilter.length > 0)
+      setSelectedDepartmentId(String(allDepartmentsForFilter[0].departmentId));
+  }, [viewMode, selectedDepartmentId, allDepartmentsForFilter]);
 
   const fetchInitData = async () => {
     try {
-      const [s, d, st, sT, rL] = await Promise.all([getScheduleList(), getDepartmentList(), getStaffList(), getSchedulePolicyList(), getRoleList()]);
-      setScheduleList(s || []); setDepartmentList(d || []); setStaffList(st || []); setScheduleTypeList(sT || []); setRoleList(rL || []);
+      const [d, st, sT, rL] = await Promise.all([getDepartmentList(), getStaffList(), getSchedulePolicyList(), getRoleList()]);
+      setDepartmentList(d || []); setStaffList(st || []); setScheduleTypeList(sT || []); setRoleList(rL || []);
     } catch { alert("데이터를 불러오는 중 오류가 발생했습니다"); }
   };
 
-  const fetchScheduleData = async () => {
-    try { setScheduleList((await getScheduleList()) || []); } catch (e) { console.error(e); }
+  const fetchScheduleData = async (startDate, endDate) => {
+    const start = startDate ?? calendarRange.start;
+    const end = endDate ?? calendarRange.end;
+    const size = Math.max(500, (staffList.length || 30) * 31);
+    try { setScheduleList((await getScheduleList(start, end, size)) || []); } catch (e) { console.error(e); }
   };
 
   const hasDuplicateSchedule = (target) =>
@@ -279,12 +292,12 @@ const StaffSchedulePage = () => {
   const handleMonthView = () => { setViewMode("month"); setSelectedDepartmentId(""); };
   const handleWeekView  = () => {
     setViewMode("week");
-    if (sortedDepartmentList.length > 0) setSelectedDepartmentId(p => p || String(sortedDepartmentList[0].departmentId));
+    if (allDepartmentsForFilter.length > 0) setSelectedDepartmentId(p => p || String(allDepartmentsForFilter[0].departmentId));
   };
   const handleResetAll = () => {
     const t = getTodayString();
     setSearchKeyword(""); setSelectedDate(t); setSelectedScheduleTypeId("");
-    setSelectedDepartmentId(viewMode==="week" && sortedDepartmentList.length>0 ? String(sortedDepartmentList[0].departmentId) : "");
+    setSelectedDepartmentId(viewMode==="week" && allDepartmentsForFilter.length>0 ? String(allDepartmentsForFilter[0].departmentId) : "");
   };
 
   const deptTableData = (list) => list.map(item => ({
@@ -335,7 +348,7 @@ const StaffSchedulePage = () => {
         <SearchBar value={searchKeyword} onChange={e => setSearchKeyword(e.target.value)} showButton={false} placeholder="직원 이름 검색" />
         <select value={selectedDepartmentId} onChange={e => setSelectedDepartmentId(e.target.value)} className={selectClass}>
           {viewMode === "month" && <option value="">전체부서</option>}
-          {sortedDepartmentList.map(d => <option key={d.departmentId} value={d.departmentId}>{d.departmentName}</option>)}
+          {allDepartmentsForFilter.map(d => <option key={d.departmentId} value={d.departmentId}>{d.departmentName}</option>)}
         </select>
         <select value={selectedScheduleTypeId} onChange={e => setSelectedScheduleTypeId(e.target.value)} className={selectClass}>
           <option value="">전체 유형</option>
@@ -373,7 +386,10 @@ const StaffSchedulePage = () => {
                 const y = mid.getFullYear();
                 const m = String(mid.getMonth() + 1).padStart(2, "0");
                 const lastDay = new Date(mid.getFullYear(), mid.getMonth() + 1, 0).getDate();
-                setCalendarRange({ start: `${y}-${m}-01`, end: `${y}-${m}-${String(lastDay).padStart(2,"0")}` });
+                const start = `${y}-${m}-01`;
+                const end = `${y}-${m}-${String(lastDay).padStart(2,"0")}`;
+                setCalendarRange({ start, end });
+                fetchScheduleData(start, end);
               }}
               dateClick={info => setSelectedDate(info.dateStr)}
               dayCellClassNames={info => {
