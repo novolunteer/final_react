@@ -18,12 +18,9 @@ const MainLayout = () => {
       ? JSON.parse(data.message)
       : data.message;
       
-      const formatDate = (d) => d ? d.toString().split("T")[0] : "";
-      const startDate = formatDate(msg.startDate);
-      const endDate = formatDate(msg.endDate);
-      const dateText = startDate && endDate
-        ? (startDate === endDate ? startDate : `${startDate} ~ ${endDate}`)
-        : msg.data;
+      const dateText = msg.startDate && msg.endDate
+      ? (msg.startDate === msg.endDate ? msg.startDate : `${msg.startDate} ~ ${msg.endDate}`)
+      : msg.data;
 
       toast.info(`📅 ${dateText} ${msg.message}`,{
         autoClose : 5000,
