@@ -369,9 +369,11 @@ const StaffSchedulePage = () => {
               headerToolbar={{ right: "prev,next myToday", center: "title", left: "" }}
               customButtons={{ myToday: { text: "오늘", click: handleToday } }}
               datesSet={info => {
-                const start = info.startStr.slice(0, 10);
-                const end   = info.endStr.slice(0, 10);
-                setCalendarRange({ start, end });
+                const mid = new Date((info.start.getTime() + info.end.getTime()) / 2);
+                const y = mid.getFullYear();
+                const m = String(mid.getMonth() + 1).padStart(2, "0");
+                const lastDay = new Date(mid.getFullYear(), mid.getMonth() + 1, 0).getDate();
+                setCalendarRange({ start: `${y}-${m}-01`, end: `${y}-${m}-${String(lastDay).padStart(2,"0")}` });
               }}
               dateClick={info => setSelectedDate(info.dateStr)}
               dayCellClassNames={info => {
