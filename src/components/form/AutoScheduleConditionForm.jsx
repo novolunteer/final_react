@@ -6,6 +6,7 @@ import { Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const initialForm = {
+  policyId: "",
   departmentId: "", roleCategory: "nurse",
   startDate: "", endDate: "",
   minStaffDay: 2, minStaffEvening: 1, minStaffNight: 1,
@@ -28,7 +29,7 @@ const Section = ({ title, children }) => (
   </div>
 );
 
-const AutoScheduleConditionForm = ({ onSubmit, onClose, departmentList = [], isLoading = false }) => {
+const AutoScheduleConditionForm = ({ onSubmit, onClose, departmentList = [], policyId=[], isLoading = false }) => {
   const [formData, setFormData] = useState(initialForm);
 
   const isDoctorCategory = formData.roleCategory === "doctor";
@@ -49,6 +50,7 @@ const AutoScheduleConditionForm = ({ onSubmit, onClose, departmentList = [], isL
     if (!formData.endDate)   { alert("종료일을 선택해주세요"); return; }
     if (formData.startDate > formData.endDate) { alert("시작일은 종료일보다 늦을 수 없습니다"); return; }
     onSubmit({
+      policyId: Number(formData.policyId),
       departmentId: isDoctorCategory && formData.departmentId ? Number(formData.departmentId) : null,
       roleCategory: formData.roleCategory,
       startDate: formData.startDate, endDate: formData.endDate,
@@ -84,6 +86,18 @@ const AutoScheduleConditionForm = ({ onSubmit, onClose, departmentList = [], isL
 
       {/* 기본 설정 */}
       <Section title="기본 설정">
+          {/* 정책 선택 - 항상 보이게 */}
+          <div className="space-y-1.5">
+            <Label>스케줄 정책 <span className="text-red-500">*</span></Label>
+            <select name="policyId" value={formData.policyId} onChange={handleChange} className={selectClass}>
+              <option value="">정책 선택</option>
+              {policyList.map(p => (
+                <option key={p.policyId} value={p.policyId}>
+                  {p.departmentName || p.jobType}
+                </option>
+              ))}
+            </select>
+          </div>
         {isDoctorCategory && (
           <div className="space-y-1.5">
             <Label>부서 <span className="text-red-500">*</span></Label>

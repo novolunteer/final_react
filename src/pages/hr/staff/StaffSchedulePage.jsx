@@ -27,7 +27,7 @@ import {
 import { getStaffList } from "../../../api/hr/staffApi";
 import { getDepartmentList } from "../../../api/hr/departmentApi";
 import { getRoleList } from "../../../api/hr/roleApi";
-import { getSchedulePolicyList } from "../../../api/hr/schedulePolicyApi";
+import { getSchedulePolicyList, getPolicyList } from "../../../api/hr/schedulePolicyApi";
 
 const initialForm     = { scheduleId: "", departmentId: "", staffId: "", workDate: "", scheduleTypeId: "", status: "TEMP" };
 const initialBulkForm = { departmentId: "", staffIds: [], startDate: "", endDate: "", scheduleTypeId: "", status: "TEMP" };
@@ -86,6 +86,7 @@ const StaffSchedulePage = () => {
   const [autoConfirmLoading, setAutoConfirmLoading] = useState(false);
   const [selectedIds, setSelectedIds]         = useState([]);
   const calendarRef = useRef(null);
+  const [policyList, setPolicyList] = useState([]);
 
   const sortedDepartmentList = useMemo(() =>
     [...departmentList].sort((a,b) => (a.departmentName||"").localeCompare(b.departmentName||"","ko")),
@@ -195,8 +196,15 @@ const StaffSchedulePage = () => {
 
   const fetchInitData = async () => {
     try {
-      const [d, st, sT, rL] = await Promise.all([getDepartmentList(), getStaffList(), getSchedulePolicyList(), getRoleList()]);
-      setDepartmentList(d || []); setStaffList(st || []); setScheduleTypeList(sT || []); setRoleList(rL || []);
+      const [d, st, sT, rL, pL] = await Promise.all([
+        getDepartmentList(), getStaffList(), getSchedulePolicyList(), getRoleList(),
+      getolicyList()
+    ]);
+      setDepartmentList(d || []); 
+      setStaffList(st || []); 
+      setScheduleTypeList(sT || []); 
+      setRoleList(rL || []);
+      setPolicyList(pL || []);
     } catch { alert("데이터를 불러오는 중 오류가 발생했습니다"); }
   };
 
@@ -450,8 +458,12 @@ const StaffSchedulePage = () => {
 
       {/* AI 자동 스케줄 모달 */}
       <CommonModal open={autoOpen} onClose={!autoLoading ? handleAutoClose : undefined} title="자동 스케줄 조건 설정">
-        <AutoScheduleConditionForm onSubmit={handleAutoSubmit} onClose={handleAutoClose}
-          departmentList={departmentList} isLoading={autoLoading} />
+        <AutoScheduleConditionForm 
+        onSubmit={handleAutoSubmit} 
+        onClose={handleAutoClose}
+        departmentList={departmentList} 
+        policyList={policyList}
+        isLoading={autoLoading} />
       </CommonModal>
 
       {/* AI 결과 리뷰 모달 */}

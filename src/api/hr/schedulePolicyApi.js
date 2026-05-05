@@ -21,3 +21,7 @@ export const updateSchedulePolicy = async(scheduleTypeId, schedulePolicyData)=>{
     const res = await jwtAxios.put(`${host}/${scheduleTypeId}`, schedulePolicyData);
     return res.data;
 };
+export const getPolicyList = async () => {
+    const res = await jwtAxios.get(`/api/schedule-policy/list`);
+    return res.data;
+};
