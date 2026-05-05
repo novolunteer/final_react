@@ -45,6 +45,7 @@ const MENU = [
     ],
   },
   { path: "/chat",            label: "채팅",    icon: MessageSquare, roles: ["ADMIN", "DOCTOR", "NURSE", "MANAGER", "STAFF"] },
+  { path: "/inquiry/chatbot",         label: "챗봇 관리", icon: Bot,          roles: ADMIN },
 ];
 
 const StaffLayout = () => {
