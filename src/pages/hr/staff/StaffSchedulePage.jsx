@@ -200,7 +200,7 @@ const StaffSchedulePage = () => {
   const fetchScheduleData = async (startDate, endDate) => {
     const start = startDate ?? calendarRange.start;
     const end = endDate ?? calendarRange.end;
-    const size = Math.max(500, (staffList.length || 30) * 31);
+    const size = staffList.length > 0 ? Math.max(200, staffList.length * 31) : 500;
     try { setScheduleList((await getScheduleList(start, end, size)) || []); } catch (e) { console.error(e); }
   };
 
