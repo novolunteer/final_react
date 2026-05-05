@@ -381,8 +381,11 @@ const StaffSchedulePage = () => {
               events={events}
               headerToolbar={{ right: "prev,next myToday", center: "title", left: "" }}
               customButtons={{ myToday: { text: "오늘", click: handleToday } }}
-             datesSet={info => {
-                const currentDate = calendarRef.current?.getApi().getDate();
+              datesSet={info => {
+                const calApi = calendarRef.current?.getApi();
+                const currentDate = calApi ? calApi.getDate() : new Date(
+                  (info.start.getTime() + info.end.getTime()) / 2
+                );
                 const y = currentDate.getFullYear();
                 const m = String(currentDate.getMonth() + 1).padStart(2, "0");
                 const lastDay = new Date(y, currentDate.getMonth() + 1, 0).getDate();
