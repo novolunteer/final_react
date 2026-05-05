@@ -114,13 +114,15 @@ const StaffSchedulePage = () => {
     return r;
   }, [scheduleList, searchKeyword, selectedDate, selectedDepartmentId, selectedScheduleTypeId]);
 
-  const allGroupedScheduleList = useMemo(() =>
-    filteredScheduleList.reduce((acc, item) => {
-      const k = item.departmentName || "미지정 부서";
+  const allGroupedScheduleList = useMemo(() => {
+    const staffMap = new Map(staffList.map(s => [String(s.staffId), s]));
+    return filteredScheduleList.reduce((acc, item) => {
+      const k = item.departmentName || staffMap.get(String(item.staffId))?.departmentName || "미지정 부서";
       if (!acc[k]) acc[k] = [];
       acc[k].push(item);
       return acc;
-    }, {}), [filteredScheduleList]);
+    }, {});
+  }, [filteredScheduleList, staffList]);
 
   const departmentNames = useMemo(() => Object.keys(allGroupedScheduleList), [allGroupedScheduleList]);
   const { pagedData: pagedDeptNames, page: schedulePage, setPage: setSchedulePage, totalPages: scheduleTotalPages } = usePagination(departmentNames, 2);
@@ -143,8 +145,9 @@ const StaffSchedulePage = () => {
     if (selectedDepartmentId) r = r.filter(i => String(i.departmentId) === String(selectedDepartmentId));
     if (selectedScheduleTypeId) r = r.filter(i => String(i.scheduleTypeId) === String(selectedScheduleTypeId));
     r = r.filter(i => ids.has(String(i.staffId)));
+    const staffMap = new Map(staffList.map(s => [String(s.staffId), s]));
     return r.reduce((acc, item) => {
-      const k = item.departmentName || "미지정 부서";
+      const k = item.departmentName || staffMap.get(String(item.staffId))?.departmentName || "미지정 부서";
       if (!acc[k]) acc[k] = [];
       acc[k].push(item);
       return acc;
