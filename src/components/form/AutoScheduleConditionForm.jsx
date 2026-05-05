@@ -29,7 +29,7 @@ const Section = ({ title, children }) => (
   </div>
 );
 
-const AutoScheduleConditionForm = ({ onSubmit, onClose, departmentList = [], policyId=[], isLoading = false }) => {
+const AutoScheduleConditionForm = ({ onSubmit, onClose, departmentList = [], policyList=[], isLoading = false }) => {
   const [formData, setFormData] = useState(initialForm);
 
   const isDoctorCategory = formData.roleCategory === "doctor";
