@@ -48,21 +48,86 @@ const InquiryChatBotPage = () => {
     const trimmed = question.trim();
     if (!trimmed) { alert("질문을 입력하세요."); return; }
     if (askLoading) return;
+
     setAskLoading(true);
     setMessages((prev) => [...prev, { role: 'USER', content: trimmed }]);
     setQuestion("");
+
     try {
       const res  = await fetch(`${API_BASE_URL}/ai/chatbot/chat`, {
         method: 'POST',
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: trimmed }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.detail || "문의 요청 실패!");
-      const aiText = data?.answer || data?.block_reason || data?.error || "답변을 가져오지 못했습니다.";
-      setMessages((prev) => [...prev, { role: 'AI', content: aiText }]);
+
+      if (!res.ok) {
+        const data=await res.json;
+        throw new Error(data?.detail || "문의 요청 실패!");
+      }
+
+      //빈 AI 메시지 먼저 추가 후 로딩 점 제거
+      setMessages((prev) => [...prev, {role:'AI', content:''}]);
+      setAskLoading(false);
+
+      const reader=res.body.getReader();
+      const decoder=new TextDecoder();
+      let buffer='';
+
+      while(true){
+        const { done, value } = await reader.read();
+        if(done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines=buffer.split('\n');
+        buffer=lines.pop() ?? ''; //불완전한 마지막 줄은 버퍼에 유지
+
+        for(const line of lines){
+          if(!line.startsWith('data')) continue;
+
+          try{
+            const data=JSON.parse(line.slice(6));
+
+            //토큰 수신 -> 마지막 AI 메시지에 이어 붙이기
+            if(data.token){
+              setMessages((prev) => {
+                const updated=[...prev];
+                const last=updated[updated.length - 1];
+
+                updated[updated.length - 1]={...last, content: last.content + data.token};
+
+                return updated;
+              });
+            }
+
+            //BLOCKED/NEEDS_CLARIFICATION 등 토큰 없이 끝나는 경우
+            if(data.done && data.answer){
+              setMessages((prev) => {
+                const updated=[...prev];
+                const last=updated[updated.length - 1];
+
+                if(last.role === 'AI' && last.content === ''){
+                  updated[updated.length - 1]={...last, content: data.answer};
+                }
+
+                return updated;
+              });
+            }
+          } catch {}
+        }
+      }
     } catch (error) {
-      setMessages((prev) => [...prev, { role: 'AI', content: error.message || "오류가 발생했습니다. 잠시 후 다시 시도해주세요." }]);
+      setMessages((prev) => {
+        const updated=[...prev];
+        const last=updated[updated.length - 1];
+
+        //빈 AI 메시지가 있으면 오류 메시지로 교체
+        if(last?.role === 'AI' && last.content === ''){
+          updated[updated.length - 1] = {...last, content: error.message || "오류가 발생했습니다. 잠시 후 다시 시도해주세요."};
+          return updated;
+        }
+
+        return [...updated, {role:'AI', content:error.message || '오류가 발생했습니다. 잠시 후 다시 시도해주세요.'}];
+      });
     } finally { setAskLoading(false); }
   };
 
