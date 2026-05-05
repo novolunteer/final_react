@@ -2,11 +2,8 @@ import jwtAxios, { API_BASE_URL } from "../jwtAxios";
 
 const host="/api/staff_schedule";
 
-export const getScheduleList=async(startDate, endDate)=>{
-    const params = { size: 200 };
-    if (startDate) params.startDate = startDate;
-    if (endDate)   params.endDate   = endDate;
-    const res=await jwtAxios.get(`${host}/list`, { params });
+export const getScheduleList=async()=>{
+    const res=await jwtAxios.get(`${host}/list?size=200`);
     return res.data?.content ?? res.data;
 };
 
