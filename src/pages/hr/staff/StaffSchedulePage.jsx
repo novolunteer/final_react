@@ -197,9 +197,8 @@ const StaffSchedulePage = () => {
   const fetchInitData = async () => {
     try {
       const [d, st, sT, rL, pL] = await Promise.all([
-        getDepartmentList(), getStaffList(), getSchedulePolicyList(), getRoleList(),
-      getolicyList()
-    ]);
+        getDepartmentList(), getStaffList(), getSchedulePolicyList(), getRoleList(), getPolicyList(),
+      ]);
       setDepartmentList(d || []); 
       setStaffList(st || []); 
       setScheduleTypeList(sT || []); 
