@@ -37,13 +37,6 @@ const getTodayString = () => {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 };
 
-const getMonthRange = (date = new Date()) => {
-  const y = date.getFullYear();
-  const m = date.getMonth();
-  const start = `${y}-${String(m+1).padStart(2,"0")}-01`;
-  const end   = `${y}-${String(m+1).padStart(2,"0")}-${String(new Date(y, m+1, 0).getDate()).padStart(2,"0")}`;
-  return { startDate: start, endDate: end };
-};
 
 const DepartmentScheduleGroup = ({ departmentName, items, columns, deptTableData }) => {
   const { pagedData, page, setPage, totalPages } = usePagination(items, 5);
@@ -79,6 +72,7 @@ const StaffSchedulePage = () => {
   const [selectedDepartmentId, setSelectedDepartmentId]   = useState("");
   const [selectedScheduleTypeId, setSelectedScheduleTypeId] = useState("");
   const [selectedDate, setSelectedDate]       = useState(getTodayString());
+  const [calendarRange, setCalendarRange]     = useState({ start: null, end: null });
   const [viewMode, setViewMode]               = useState("month");
   const [open, setOpen]                       = useState(false);
   const [formData, setFormData]               = useState(initialForm);
@@ -148,7 +142,11 @@ const StaffSchedulePage = () => {
   }, [scheduleList, selectedDepartmentId, filteredWeekStaffList, selectedScheduleTypeId]);
 
   const events = useMemo(() => {
-    const dateMap = scheduleList.reduce((acc, item) => {
+    const { start, end } = calendarRange;
+    const visible = (start && end)
+      ? scheduleList.filter(i => i.workDate >= start && i.workDate <= end)
+      : scheduleList;
+    const dateMap = visible.reduce((acc, item) => {
       const d = item.workDate;
       if (!acc[d]) acc[d] = { date: d, workCount: 0, offCount: 0 };
       if (!item.startTime) acc[d].offCount += 1;
@@ -159,7 +157,7 @@ const StaffSchedulePage = () => {
       { title: `근무 ${item.workCount}명`, date: item.date, backgroundColor: "#3b82f6", borderColor: "#3b82f6" },
       { title: `휴무 ${item.offCount}명`,  date: item.date, backgroundColor: "#f43f5e", borderColor: "#f43f5e" },
     ]);
-  }, [scheduleList]);
+  }, [scheduleList, calendarRange]);
 
   const columns = [
     { key: "select", title: (
@@ -184,20 +182,13 @@ const StaffSchedulePage = () => {
 
   const fetchInitData = async () => {
     try {
-      const { startDate, endDate } = getMonthRange();
-      const [s, d, st, sT, rL] = await Promise.all([getScheduleList(startDate, endDate), getDepartmentList(), getStaffList(), getSchedulePolicyList(), getRoleList()]);
+      const [s, d, st, sT, rL] = await Promise.all([getScheduleList(), getDepartmentList(), getStaffList(), getSchedulePolicyList(), getRoleList()]);
       setScheduleList(s || []); setDepartmentList(d || []); setStaffList(st || []); setScheduleTypeList(sT || []); setRoleList(rL || []);
     } catch { alert("데이터를 불러오는 중 오류가 발생했습니다"); }
   };
 
-  const fetchScheduleData = async (startDate, endDate) => {
-    try {
-      if (!startDate || !endDate) {
-        const calDate = calendarRef.current?.getApi().getDate() ?? new Date();
-        ({ startDate, endDate } = getMonthRange(calDate));
-      }
-      setScheduleList((await getScheduleList(startDate, endDate)) || []);
-    } catch (e) { console.error(e); }
+  const fetchScheduleData = async () => {
+    try { setScheduleList((await getScheduleList()) || []); } catch (e) { console.error(e); }
   };
 
   const hasDuplicateSchedule = (target) =>
@@ -378,9 +369,9 @@ const StaffSchedulePage = () => {
               headerToolbar={{ right: "prev,next myToday", center: "title", left: "" }}
               customButtons={{ myToday: { text: "오늘", click: handleToday } }}
               datesSet={info => {
-                const mid = new Date((info.start.getTime() + info.end.getTime()) / 2);
-                const { startDate, endDate } = getMonthRange(mid);
-                fetchScheduleData(startDate, endDate);
+                const start = info.startStr.slice(0, 10);
+                const end   = info.endStr.slice(0, 10);
+                setCalendarRange({ start, end });
               }}
               dateClick={info => setSelectedDate(info.dateStr)}
               dayCellClassNames={info => {
