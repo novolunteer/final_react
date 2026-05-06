@@ -55,7 +55,7 @@ const routeRoles = {
   "/notification":  null,
   "/patient/mypage": ["PATIENT"],
   "/patient/mypage/information": ["PATIENT"]
-
+  "/reservationconfirm": [...DOCTORS, "DOCTOR", ...NURSES, "NURSE", ...ADMIN_STAFF],
   // 아래는 비로그인도 접근 가능 (routeRoles에 없으면 PatientLayout에서 처리)
 };
 
@@ -117,7 +117,6 @@ const Router = () => (
 
         {/* 비로그인 접근 가능 */}
         <Route path="/communication"   element={<CommunicationPage />} />
-        <Route path="/reservationconfirm" element={<ReservationConfirm />} />
         <Route path="/inquiry/chatbot" element={<InquiryChatBotPage />} />
 
         {/* 로그인 + 권한 필요 */}
@@ -135,6 +134,7 @@ const Router = () => (
         <Route path="/operation/dept_schedule_policy" element={<StaffRoute allowedRoles={routeRoles["/operation/dept_schedule_policy"]}><DepartmentSchedulePolicyPage /></StaffRoute>} />
         <Route path="/admin"       element={<StaffRoute allowedRoles={routeRoles["/admin"]}><AdminPage /></StaffRoute>} />
         <Route path="/notification" element={<StaffRoute allowedRoles={routeRoles["/notification"]}><NotificationPage /></StaffRoute>} />
+        <Route path="/reservationconfirm" element={<StaffRoute allowedRoles={routeRoles["/reservationconfirm"]}><ReservationConfirm /></StaffRoute>} />
 
         {/* 환자 페이지 */}
         <Route path="/reservation"     element={<ReservationPage />} />
