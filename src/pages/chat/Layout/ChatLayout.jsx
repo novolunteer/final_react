@@ -21,6 +21,7 @@ const ChatLayout = () => {
 
   const accessToken = sessionStorage.getItem('accessToken');
   const roles       = sessionStorage.getItem("roles") || [];
+  const userId      = sessionStorage.getItem('userId');
 
   useEffect(() => {
     if (!accessToken) navigate("/login", { replace: true });
@@ -77,7 +78,7 @@ const ChatLayout = () => {
     const client = clientRef.current;
     if (!client || !connected) return;
 
-    const sub = client.subscribe('/user/queue/chat.list', async (message) => {
+    const sub = client.subscribe(`/topic/chat.list.${userId}`, async (message) => {
       const payload = JSON.parse(message.body);
       if (payload.type === 'ROOM_LIST_REFRESH') {
         await getRooms();
@@ -86,7 +87,7 @@ const ChatLayout = () => {
     });
 
     return () => sub.unsubscribe();
-  }, [connected, getRooms, selectedRoomId]);
+  }, [connected, getRooms, selectedRoomId, userId]);
 
   const handleReadRoom = (roomId) => {
     setRooms(prev => prev.map(room =>
