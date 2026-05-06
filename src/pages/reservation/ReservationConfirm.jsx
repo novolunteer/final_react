@@ -19,6 +19,19 @@ const STATUS_TABS = [
   { key: "CONFIRMED", label: "확정" },
 ];
 
+const SCHEDULE_TYPE_LABELS = {
+  DAY:     '주간',
+  EVENING: '야간근무',
+  NIGHT:   '당직근무',
+  OFF:     '휴무',
+};
+const SCHEDULE_TYPE_COLORS = {
+  DAY:     '#0ea5e9',
+  EVENING: '#8b5cf6',
+  NIGHT:   '#f97316',
+  OFF:     '#adadad',
+};
+
 const ReservationConfirm = () => {
   const [slotBlocked, setSlotBlocked]   = useState(false);
   const [blockMessage, setBlockMessage] = useState("");
@@ -82,14 +95,19 @@ const ReservationConfirm = () => {
         : { monthly: currentMonth, departmentId: selectedDept };
 
     jwtAxios.get(url, { params }).then(res => {
+      console.log("슬롯 데이터:", res.data.content); 
       const data = res.data.content ?? [];
       setEvents(data.filter(s => dayjs(s.date).day() !== 0).map(slot => ({
-        title: slot.available ? `가능 (${slot.totalCapacity}명)` : (slot.scheduleType || 'OFF'),
+        title: slot.available
+          ? `가능 (${slot.totalCapacity}명)`
+          : (SCHEDULE_TYPE_LABELS[slot.scheduleType] || slot.scheduleType || '휴무'),
         start: slot.date,
-        color: slot.available ? "#3b82f6" : "#e5e7eb",
-        textColor: slot.available ? "#fff" : "#9ca3af",
+        color: slot.available
+          ? "#3b82f6"
+          : (SCHEDULE_TYPE_COLORS[slot.scheduleType] || "#e5e7eb"),
+        textColor: '#fff',
         allDay: true,
-        extendedProps: { available: slot.available, blocked: !slot.available }
+        extendedProps: { available: slot.available, blocked: !slot.available, scheduleType: slot.scheduleType }
       })));
     }).catch(console.error);
   }, [selectedDoc, currentMonth, selectedDept, calendarRefreshKey]);

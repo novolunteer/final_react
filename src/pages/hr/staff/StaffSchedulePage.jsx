@@ -27,7 +27,7 @@ import {
 import { getStaffList } from "../../../api/hr/staffApi";
 import { getDepartmentList } from "../../../api/hr/departmentApi";
 import { getRoleList } from "../../../api/hr/roleApi";
-import { getSchedulePolicyList } from "../../../api/hr/schedulePolicyApi";
+import { getSchedulePolicyList, getPolicyList } from "../../../api/hr/schedulePolicyApi";
 
 const initialForm     = { scheduleId: "", departmentId: "", staffId: "", workDate: "", scheduleTypeId: "", status: "TEMP" };
 const initialBulkForm = { departmentId: "", staffIds: [], startDate: "", endDate: "", scheduleTypeId: "", status: "TEMP" };
@@ -86,6 +86,7 @@ const StaffSchedulePage = () => {
   const [autoConfirmLoading, setAutoConfirmLoading] = useState(false);
   const [selectedIds, setSelectedIds]         = useState([]);
   const calendarRef = useRef(null);
+  const [policyList, setPolicyList] = useState([]);
 
   const sortedDepartmentList = useMemo(() =>
     [...departmentList].sort((a,b) => (a.departmentName||"").localeCompare(b.departmentName||"","ko")),
@@ -94,6 +95,16 @@ const StaffSchedulePage = () => {
   const sortedScheduleTypeList = useMemo(() =>
     [...scheduleTypeList].sort((a,b) => (a.typeName||"").localeCompare(b.typeName||"","ko")),
     [scheduleTypeList]);
+
+  const allDepartmentsForFilter = useMemo(() => {
+    const deptMap = new Map();
+    departmentList.forEach(d => deptMap.set(String(d.departmentId), d));
+    staffList.forEach(s => {
+      if (s.departmentId && s.departmentName && !deptMap.has(String(s.departmentId)))
+        deptMap.set(String(s.departmentId), { departmentId: s.departmentId, departmentName: s.departmentName });
+    });
+    return [...deptMap.values()].sort((a,b) => (a.departmentName||"").localeCompare(b.departmentName||"","ko"));
+  }, [departmentList, staffList]);
 
   const filteredScheduleList = useMemo(() => {
     let r = scheduleList;
@@ -104,13 +115,15 @@ const StaffSchedulePage = () => {
     return r;
   }, [scheduleList, searchKeyword, selectedDate, selectedDepartmentId, selectedScheduleTypeId]);
 
-  const allGroupedScheduleList = useMemo(() =>
-    filteredScheduleList.reduce((acc, item) => {
-      const k = item.departmentName || "미지정 부서";
+  const allGroupedScheduleList = useMemo(() => {
+    const staffMap = new Map(staffList.map(s => [String(s.staffId), s]));
+    return filteredScheduleList.reduce((acc, item) => {
+      const k = item.departmentName || staffMap.get(String(item.staffId))?.departmentName || "미지정 부서";
       if (!acc[k]) acc[k] = [];
       acc[k].push(item);
       return acc;
-    }, {}), [filteredScheduleList]);
+    }, {});
+  }, [filteredScheduleList, staffList]);
 
   const departmentNames = useMemo(() => Object.keys(allGroupedScheduleList), [allGroupedScheduleList]);
   const { pagedData: pagedDeptNames, page: schedulePage, setPage: setSchedulePage, totalPages: scheduleTotalPages } = usePagination(departmentNames, 2);
@@ -133,8 +146,9 @@ const StaffSchedulePage = () => {
     if (selectedDepartmentId) r = r.filter(i => String(i.departmentId) === String(selectedDepartmentId));
     if (selectedScheduleTypeId) r = r.filter(i => String(i.scheduleTypeId) === String(selectedScheduleTypeId));
     r = r.filter(i => ids.has(String(i.staffId)));
+    const staffMap = new Map(staffList.map(s => [String(s.staffId), s]));
     return r.reduce((acc, item) => {
-      const k = item.departmentName || "미지정 부서";
+      const k = item.departmentName || staffMap.get(String(item.staffId))?.departmentName || "미지정 부서";
       if (!acc[k]) acc[k] = [];
       acc[k].push(item);
       return acc;
@@ -176,19 +190,28 @@ const StaffSchedulePage = () => {
 
   useEffect(() => { fetchInitData(); }, []);
   useEffect(() => {
-    if (viewMode === "week" && !selectedDepartmentId && sortedDepartmentList.length > 0)
-      setSelectedDepartmentId(String(sortedDepartmentList[0].departmentId));
-  }, [viewMode, selectedDepartmentId, sortedDepartmentList]);
+    if (viewMode === "week" && !selectedDepartmentId && allDepartmentsForFilter.length > 0)
+      setSelectedDepartmentId(String(allDepartmentsForFilter[0].departmentId));
+  }, [viewMode, selectedDepartmentId, allDepartmentsForFilter]);
 
   const fetchInitData = async () => {
     try {
-      const [s, d, st, sT, rL] = await Promise.all([getScheduleList(), getDepartmentList(), getStaffList(), getSchedulePolicyList(), getRoleList()]);
-      setScheduleList(s || []); setDepartmentList(d || []); setStaffList(st || []); setScheduleTypeList(sT || []); setRoleList(rL || []);
+      const [d, st, sT, rL, pL] = await Promise.all([
+        getDepartmentList(), getStaffList(), getSchedulePolicyList(), getRoleList(), getPolicyList(),
+      ]);
+      setDepartmentList(d || []); 
+      setStaffList(st || []); 
+      setScheduleTypeList(sT || []); 
+      setRoleList(rL || []);
+      setPolicyList(pL || []);
     } catch { alert("데이터를 불러오는 중 오류가 발생했습니다"); }
   };
 
-  const fetchScheduleData = async () => {
-    try { setScheduleList((await getScheduleList()) || []); } catch (e) { console.error(e); }
+  const fetchScheduleData = async (startDate, endDate) => {
+    const start = startDate ?? calendarRange.start;
+    const end = endDate ?? calendarRange.end;
+    const size = staffList.length > 0 ? Math.max(200, staffList.length * 31) : 500;
+    try { setScheduleList((await getScheduleList(start, end, size)) || []); } catch (e) { console.error(e); }
   };
 
   const hasDuplicateSchedule = (target) =>
@@ -279,12 +302,12 @@ const StaffSchedulePage = () => {
   const handleMonthView = () => { setViewMode("month"); setSelectedDepartmentId(""); };
   const handleWeekView  = () => {
     setViewMode("week");
-    if (sortedDepartmentList.length > 0) setSelectedDepartmentId(p => p || String(sortedDepartmentList[0].departmentId));
+    if (allDepartmentsForFilter.length > 0) setSelectedDepartmentId(p => p || String(allDepartmentsForFilter[0].departmentId));
   };
   const handleResetAll = () => {
     const t = getTodayString();
     setSearchKeyword(""); setSelectedDate(t); setSelectedScheduleTypeId("");
-    setSelectedDepartmentId(viewMode==="week" && sortedDepartmentList.length>0 ? String(sortedDepartmentList[0].departmentId) : "");
+    setSelectedDepartmentId(viewMode==="week" && allDepartmentsForFilter.length>0 ? String(allDepartmentsForFilter[0].departmentId) : "");
   };
 
   const deptTableData = (list) => list.map(item => ({
@@ -335,7 +358,7 @@ const StaffSchedulePage = () => {
         <SearchBar value={searchKeyword} onChange={e => setSearchKeyword(e.target.value)} showButton={false} placeholder="직원 이름 검색" />
         <select value={selectedDepartmentId} onChange={e => setSelectedDepartmentId(e.target.value)} className={selectClass}>
           {viewMode === "month" && <option value="">전체부서</option>}
-          {sortedDepartmentList.map(d => <option key={d.departmentId} value={d.departmentId}>{d.departmentName}</option>)}
+          {allDepartmentsForFilter.map(d => <option key={d.departmentId} value={d.departmentId}>{d.departmentName}</option>)}
         </select>
         <select value={selectedScheduleTypeId} onChange={e => setSelectedScheduleTypeId(e.target.value)} className={selectClass}>
           <option value="">전체 유형</option>
@@ -369,9 +392,17 @@ const StaffSchedulePage = () => {
               headerToolbar={{ right: "prev,next myToday", center: "title", left: "" }}
               customButtons={{ myToday: { text: "오늘", click: handleToday } }}
               datesSet={info => {
-                const start = info.startStr.slice(0, 10);
-                const end   = info.endStr.slice(0, 10);
+                const calApi = calendarRef.current?.getApi();
+                const currentDate = calApi ? calApi.getDate() : new Date(
+                  (info.start.getTime() + info.end.getTime()) / 2
+                );
+                const y = currentDate.getFullYear();
+                const m = String(currentDate.getMonth() + 1).padStart(2, "0");
+                const lastDay = new Date(y, currentDate.getMonth() + 1, 0).getDate();
+                const start = `${y}-${m}-01`;
+                const end = `${y}-${m}-${String(lastDay).padStart(2, "0")}`;
                 setCalendarRange({ start, end });
+                fetchScheduleData(start, end);
               }}
               dateClick={info => setSelectedDate(info.dateStr)}
               dayCellClassNames={info => {
@@ -426,8 +457,12 @@ const StaffSchedulePage = () => {
 
       {/* AI 자동 스케줄 모달 */}
       <CommonModal open={autoOpen} onClose={!autoLoading ? handleAutoClose : undefined} title="자동 스케줄 조건 설정">
-        <AutoScheduleConditionForm onSubmit={handleAutoSubmit} onClose={handleAutoClose}
-          departmentList={departmentList} isLoading={autoLoading} />
+        <AutoScheduleConditionForm 
+        onSubmit={handleAutoSubmit} 
+        onClose={handleAutoClose}
+        departmentList={departmentList} 
+        policyList={policyList}
+        isLoading={autoLoading} />
       </CommonModal>
 
       {/* AI 결과 리뷰 모달 */}
