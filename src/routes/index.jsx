@@ -54,8 +54,8 @@ const routeRoles = {
   "/admin":         ["ADMIN"],
   "/notification":  null,
   "/patient/mypage": ["PATIENT"],
-  "/patient/mypage/information": ["PATIENT"]
-  "/reservationconfirm": [...DOCTORS, "DOCTOR", ...NURSES, "NURSE", ...ADMIN_STAFF],
+  "/patient/mypage/information": ["PATIENT"],
+  "/reservationconfirm": [...DOCTORS, "DOCTOR", ...NURSES, "NURSE", ...ADMIN_STAFF]
   // 아래는 비로그인도 접근 가능 (routeRoles에 없으면 PatientLayout에서 처리)
 };
 
