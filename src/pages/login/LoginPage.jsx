@@ -31,7 +31,10 @@ const LoginPage = () => {
 
   const kakaoMutation = useMutation({
     mutationFn: socialUserLogin,
-    onSuccess: (result) => { dispatch(loginSuccess(result)); navigate("/", { replace: true }); },
+    onSuccess: (result) => { 
+      dispatch(loginSuccess(result)); 
+      navigate("/", { replace: true }); 
+    },
     onError: () => setError("카카오 로그인에 실패했습니다."),
   });
 

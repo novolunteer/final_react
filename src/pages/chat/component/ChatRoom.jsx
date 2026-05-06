@@ -256,6 +256,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
       const msg = JSON.parse(message.body);
       const nearBottom = isNearBottom(), isMine = Number(msg.senderId) === Number(userId);
       setMessageSlice(prev => ({ ...prev, messages: [...prev.messages, { ...msg, mine: isMine }] }));
+      getRooms();
       if (nearBottom || isMine) {
         await markAsRead(roomId); onReadRoom(roomId);
         setTimeout(() => { const c = messageAreaRef.current; if (c) c.scrollTop = c.scrollHeight; }, 0);
@@ -287,7 +288,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
     });
 
     return () => { [subscriptionRef, readSubscriptionRef, updateSubscriptionRef].forEach(r => { if (r.current) { r.current.unsubscribe(); r.current = null; } }); };
-  }, [roomId, clientRef, connected, isGroup]);
+  }, [roomId, clientRef, connected, isGroup, getRooms]);
 
   useEffect(() => {
     if (!roomId || roomRefresh === 0) return;
