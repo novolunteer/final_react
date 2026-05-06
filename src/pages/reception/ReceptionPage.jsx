@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ClipboardList, Search, User, Stethoscope, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import dayjs from 'dayjs';
 
 const STATUS_TABS = [
   { key: "",           label: "전체" },
@@ -121,7 +122,7 @@ const ReceptionPage = () => {
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-zinc-400">
                   <Clock size={12} className="text-zinc-300" />
-                  {item.reservationDate}
+                  {dayjs(item.reservationDate).format('YYYY.MM.DD HH:mm:ss')}
                 </div>
               </div>
               {item.status !== "COMPLETED" && (
