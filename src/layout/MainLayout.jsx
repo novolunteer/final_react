@@ -35,7 +35,7 @@ const MainLayout = () => {
           🩺 새 예약
           {"\n"}예약 번호: {data.reservationId}
           {"\n"}환자: {data.patientName}
-          {"\n"}날짜: {data.reservationDate}
+          {"\n"}날짜: {formatDate(data.reservationDate)}
         </div>
       );
   };
