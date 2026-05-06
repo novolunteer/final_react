@@ -281,7 +281,7 @@ const ChatRoom = ({ roomId, clientRef, connected, onReadRoom, onLeaveRoom, roomR
       } catch (e) { console.log(e); } finally { syncingReadRef.current = false; }
     });
 
-    updateSubscriptionRef.current = client.subscribe(`/user/queue/chat.room.${roomId}.message.update`, async (message) => {
+    updateSubscriptionRef.current = client.subscribe(`/topic/chat.room.${roomId}.message.update`, async (message) => {
       const payload = JSON.parse(message.body);
       if (payload.result.lastMessage) await getRooms();
       updateMessageInState(payload.result);
