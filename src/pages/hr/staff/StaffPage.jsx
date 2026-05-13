@@ -109,7 +109,7 @@ const StaffPage = () => {
     const next = item.isActive === "Y" ? "N" : "Y";
     if (!window.confirm(item.isActive === "Y" ? "이 직원을 비활성(퇴사)처리하시겠습니까?" : "이 직원을 다시 활성화하시겠습니까?")) return;
     try {
-      await updateStaff({ staffId: item.staffId, userId: item.userId, departmentId: item.departmentId, managerId: item.managerId, roleId: item.roleId, name: item.name, phone: item.phone, address: item.address, isActive: next });
+      await updateStaff({ staffId: item.staffId, userId: item.userId, departmentId: item.departmentId, managerId: item.managerId, roleIds: [item.roleId], name: item.name, phone: item.phone, address: item.address, isActive: next });
       await loadStaffList();
     } catch (err) { console.error("활성 상태 변경 실패", err); alert("상태 변경 중 오류가 발생했습니다."); }
   };

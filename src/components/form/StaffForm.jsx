@@ -90,7 +90,7 @@ const StaffForm = ({ onSubmit, onClose, initialData, departmentList = [], staffL
       email: form.email || null, password: form.password || null,
       departmentId: isDoctorRole && form.departmentId ? Number(form.departmentId) : null,
       managerId: form.managerId ? Number(form.managerId) : null,
-      roleId: Number(form.roleId),
+      roleIds: [Number(form.roleId)],
       name: form.name, phone: form.phone,
       address: form.address, isActive: form.isActive,
     });

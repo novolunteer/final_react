@@ -107,7 +107,7 @@ const StaffBulkUpload = ({open, onClose, onSuccess, departmentList = [], roleLis
         password,
         name,
         deptName: dept_name,
-        roleId: Number(role_id),
+        roleIds: [Number(role_id)],
         phone,
         address,
         managerId: manager_id || null,
