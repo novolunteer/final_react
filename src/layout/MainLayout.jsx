@@ -20,6 +20,7 @@ const MainLayout = () => {
       : data.message;
       
       const formatDate = (d) => d ? d.toString().split("T")[0] : "";
+      console.log(formatDate);
       const startDate = formatDate(msg.startDate);
       const endDate = formatDate(msg.endDate);
       const dateText = startDate && endDate
