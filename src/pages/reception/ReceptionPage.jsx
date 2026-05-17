@@ -51,7 +51,7 @@ const ReceptionPage = () => {
 
   const { data, isLoading } = useQuery({
     queryKey: ['receptionList', status, debouncedName, page],
-    queryFn: () => jwtAxios.get('/api/reception', {
+    queryFn: () => jwtAxios.get('/api/administration', {
       params: { status: status || undefined, name: debouncedName, page, size: 5 }
     }).then(r => r.data),
     placeholderData: (prev) => prev,
