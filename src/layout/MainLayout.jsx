@@ -13,6 +13,7 @@ const MainLayout = () => {
   
   const handleSse = (data) => {
     //스케줄 확정 알림
+    const formatDate = (d) => d ? d.toString().split("T")[0] : ""; 
     if (data.type === "scheduleConfirmed"){
       const msg = typeof data.message === "string"
       ? JSON.parse(data.message)
@@ -35,7 +36,7 @@ const MainLayout = () => {
           🩺 새 예약
           {"\n"}예약 번호: {data.reservationId}
           {"\n"}환자: {data.patientName}
-          {"\n"}날짜: {data.reservationDate ? data.reservationDate.toString().split("T")[0] : ""}
+          {"\n"}날짜: {formatDate(data.reservationDate)}
         </div>
       );
   };
