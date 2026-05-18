@@ -166,7 +166,7 @@ const MedicalRecordPage = () => {
             <div key={item.receptionId}
               onClick={() => { setPendingReceptionId(item.receptionId); setPendingPatientId(item.patientId); setSelectedPat(item.patientId); setSelectedDepartmentId(item.departmentId); setSelectedDepartmentName(item.departmentName); setShowStatusModal(item.status === "RECEIVED"); }}
               className={cn("flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors",
-                selectedPat === item.patientId ? "border-blue-400 bg-blue-50" : "border-zinc-200 bg-zinc-50 hover:bg-zinc-100"
+                pendingReceptionId === item.receptionId ? "border-blue-400 bg-blue-50" : "border-zinc-200 bg-zinc-50 hover:bg-zinc-100"
               )}
             >
               <div>
@@ -329,7 +329,7 @@ const MedicalRecordPage = () => {
                       </div>
                     )}
                     <div className="text-sm text-zinc-700 leading-relaxed whitespace-pre-wrap">
-                      <strong>증상:</strong> {selectedRecord.symptom || '-'}<br /><br />
+                      <strong>증상:</strong> {selectedRecord.symptom || '증상 없음'}<br /><br />
                       {selectedRecord.content}
                     </div>
                   </div>
