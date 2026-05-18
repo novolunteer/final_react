@@ -19,7 +19,7 @@ const MainLayout = () => {
       ? JSON.parse(data.message)
       : data.message;
       
-      const formatDate = (d) => d ? d.toString().split("T")[0] : "";
+      const formatDateTime = (d) => d ? dayjs(d).format("YYYY-MM-DD HH:mm:ss") : "";
       console.log(formatDate);
       const startDate = formatDate(msg.startDate);
       const endDate = formatDate(msg.endDate);
@@ -37,7 +37,7 @@ const MainLayout = () => {
           🩺 새 예약
           {"\n"}예약 번호: {data.reservationId}
           {"\n"}환자: {data.patientName}
-          {"\n"}날짜: {formatDate(data.reservationDate)}
+          {"\n"}날짜: {formatDateTime(data.reservationDate)}
         </div>
       );
   };
