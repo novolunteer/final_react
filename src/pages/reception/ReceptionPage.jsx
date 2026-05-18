@@ -28,6 +28,7 @@ const ReceptionPage = () => {
   const [name, setName]               = useState("");
   const [debouncedName, setDebouncedName] = useState("");
   const [page, setPage]               = useState(0);
+  const [selectedCard, setSelectedCard] = useState(null);
   const queryClient = useQueryClient();
 
   useEffect(() => { setPage(0); }, [status, debouncedName]);
@@ -107,7 +108,16 @@ const ReceptionPage = () => {
       ) : (
         <div className="space-y-3">
           {list.map((item) => (
-            <div key={item.receptionId} className="bg-white rounded-xl border border-zinc-200 p-4 shadow-sm">
+            <div
+              key={item.receptionId}
+              className={cn(
+                "bg-white rounded-xl border p-4 shadow-sm cursor-pointer transition-colors",
+                selectedCard === item.receptionId
+                  ? "border-blue-400 bg-blue-50"
+                  : "border-zinc-200 hover:border-zinc-300"
+              )}
+              onClick={() => setSelectedCard(item.receptionId)}
+            >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <User size={15} className="text-zinc-400" />
