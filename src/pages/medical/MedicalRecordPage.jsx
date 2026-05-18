@@ -198,10 +198,10 @@ const MedicalRecordPage = () => {
               {[
                 { label: "이름", value: patientData.patient.name },
                 { label: "전화번호", value: patientData.patient.phone },
-                { label: "성별", value: patientData.patient.gender },
-                { label: "혈액형", value: patientData.patient.bloodType },
-                { label: "신장", value: `${patientData.patient.height}cm` },
-                { label: "체중", value: `${patientData.patient.weight}kg` },
+                { label: "성별", value: "Female" },
+                { label: "혈액형", value: "A Rh+" },
+                { label: "신장", value: "162 cm" },
+                { label: "체중", value: "52 kg" },
               ].map(({ label, value }) => (
                 <div key={label} className="flex justify-between items-center px-3 py-2 bg-zinc-50 rounded-lg border border-zinc-200">
                   <span className="text-xs text-zinc-500">{label}</span>
