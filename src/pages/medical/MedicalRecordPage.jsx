@@ -171,6 +171,7 @@ const MedicalRecordPage = () => {
             >
               <div>
                 <p className="text-sm font-semibold text-zinc-900">{item.patientName}</p>
+                 <p className="text-xs text-zinc-600">{item.symptom}</p>
                 <p className="text-xs text-zinc-400">접수 #{item.receptionId}</p>
               </div>
               <Badge className={wBadge(item.status).className}>{wBadge(item.status).label}</Badge>
