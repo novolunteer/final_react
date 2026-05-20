@@ -36,14 +36,17 @@ const ChatLayout = () => {
       );
       setRooms(roomRes);
 
-      const staffRes = await getStaffList();
-      setStaffList(staffRes.result);
-
       if (selectedRoomId && !roomRes.some(room => room.roomId === selectedRoomId)) {
         setSelectedRoomId(null);
       }
-      setWebSocketReady(true);
-    } catch (error) { console.log(error); }
+    } catch (error) { console.error("채팅방 목록 오류:", error); }
+
+    try {
+      const staffRes = await getStaffList();
+      setStaffList(staffRes.result);
+    } catch (error) { console.error("직원 목록 오류:", error); }
+
+    setWebSocketReady(true);
   }, [selectedRoomId]);
 
   useEffect(() => { getRooms(); }, [getRooms]);
