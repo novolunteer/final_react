@@ -132,7 +132,7 @@ const MedicalRecordPage = () => {
     try {
       const res = await jwtAxios.post(`${API_BASE_URL}/ai/diagnose`, { patientId: parseInt(selectedPat), departmentId: parseInt(selectedDepartmentId), departmentName: selectedDepartmentName, symptom: newRecord.symptom }, { headers: { "Content-Type": "application/json" } });
       const data = res.data;
-      const warning = `⚠️ 본 기록에는 AI 보조 진단 결과가 포함되어 있습니다.\nAI는 참고용이며, 최종 진단 및 치료 결정에 대한 책임은 담당 의사에게 있습니다.\n----------------------------------------\n`;
+      const warning = `⚠️ 본 기록에는 AI 보조 진단 결과가 포함되어 있습니다. AI는 참고용이며, 최종 진단 및 치료 결정에 대한 책임은 담당 의사에게 있습니다.\n----------------------------------------\n`;
       setAiResult(data);
       setNewRecord(prev => ({ ...prev, content: warning + data.ai_diagnosis }));
     } catch (err) { console.error("AI 진단 오류:", err); alert("AI 진단 요청 실패"); }
